@@ -20,29 +20,27 @@
 >sudo yum install libtiff-devel openslide-devel jsoncpp-devel
 
 
-### How to build #1:
+### How to build
 
->cd %dicomizerDir% 
+If you're using Ubuntu then we have a script to help download dependencies and build the tool:
 
->mkdir build 
+```shell
+sudo ./cloud_build/ubuntuBuild.sh
+```
 
->cp -R %dcmtkDir% ./build/dcmtk-3.6.2 
+Otherwise, make sure you've downloaded and installed the required dependencies and then run:
+```shell
+mkdir build
+cd build
+cp -R %dcmtkDir% ./dcmtk-3.6.2 
+cmake ..
+make -j%threads%
+```
 
->cd build 
-
->cmake .. 
-
->make -j%threads% 
-
-### How to build #2:
-
->cd %dicomizerDir% 
-
->./downloadAndBuild.sh
 
 ### How to use:
 #### minimal
->./wsi2dcm --input <wsiFIle> --outFolder <folder for generated files> --seriesDescription <text description>
+>./wsi2dcm --input <wsiFile> --outFolder <folder for generated files> --seriesDescription <text description>
 #### all options
 ##### tileHeight 
 tile height in px, 500 by default

@@ -12,8 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-sudo apt-get install libtiff-dev libjsoncpp-dev libjpeg8-dev libcairo2-dev cmake3 libglib2.0-dev libopenjp2-7-dev g++-8 
-sudo cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
+# This script updates environment and build wsi2dcm by steps:
+# 1: update of ubuntu deb repos
+# 2: install of tools and libs for build
+# 3: download and unpack source code of libs for build
+# 4: build
+
+#1
+echo "deb http://us.archive.ubuntu.com/ubuntu/ cosmic universe" | tee -a /etc/apt/sources.list
+apt-get update
+#2
+apt-get install wget libtiff-dev unzip libjsoncpp-dev libjpeg8-dev libgdk-pixbuf2.0-dev libcairo2-dev libsqlite3-dev cmake libglib2.0-dev libxml2-dev libopenjp2-7-dev g++-8 -y
+#3
+cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
 cd build
 wget https://github.com/uclouvain/openjpeg/archive/v2.3.0.zip > /dev/null
@@ -28,6 +39,6 @@ wget https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3
 tar xvzf openslide-3.4.1.tar.gz  > /dev/null
 wget https://www.ijg.org/files/jpegsr9c.zip
 unzip jpegsr9c.zip > /dev/null
-cmake --version
+#4
 cmake -DSTATIC_BUILD=ON  ..
 make -j12
