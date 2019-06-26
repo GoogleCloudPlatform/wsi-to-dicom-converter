@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ENUMS_H
-#define ENUMS_H
+#ifndef SRC_ENUMS_H_
+#define SRC_ENUMS_H_
 
 typedef enum { UNKNOWN = -1, JPEG2000 = 0, JPEG = 1, RAW = 2 } DCM_Compression;
 
-#endif  // ENUMS_H
+#endif  // SRC_ENUMS_H_

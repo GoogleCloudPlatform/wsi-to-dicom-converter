@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPRESSOR_H
-#define COMPRESSOR_H
-#include <stddef.h>
+#ifndef SRC_COMPRESSOR_H_
+#define SRC_COMPRESSOR_H_
 #include <boost/gil/typedefs.hpp>
+#include <cstdint>
 
 class Compressor {
  public:
-  virtual void compress(uint8_t*& output, const boost::gil::rgb8_view_t& view,
-                        size_t& size) = 0;
+  virtual void compress(const boost::gil::rgb8_view_t& view, uint8_t** output,
+                        size_t* size) = 0;
 };
-#endif  // COMPRESSOR_H
+#endif  // SRC_COMPRESSOR_H_

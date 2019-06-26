@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DCMTAGS_H
-#define DCMTAGS_H
+#ifndef SRC_DCMTAGS_H_
+#define SRC_DCMTAGS_H_
 #include <dcmtk/dcmdata/dcdatset.h>
 #include <dcmtk/dcmdata/dcdeftag.h>
 #include <dcmtk/dcmdata/dcsequen.h>
@@ -28,4 +28,4 @@ class DcmTags {
   void populateDataset(DcmDataset* dataset);
 };
 
-#endif  // DCMTAGS_H
+#endif  // SRC_DCMTAGS_H_

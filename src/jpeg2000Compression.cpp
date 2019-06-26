@@ -12,19 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "jpeg2000Compression.h"
+#include "src/jpeg2000Compression.h"
 #include <openjpeg.h>
-#include <string.h>
 #include <boost/gil/image.hpp>
 #include <vector>
-using namespace std;
 
-Jpeg2000Compression::~Jpeg2000Compression() { free(buffer_); }
+Jpeg2000Compression::~Jpeg2000Compression() {}
 
-void Jpeg2000Compression::writeToMemory(uint8_t*& compressed,
-                                        unsigned int width, unsigned int height,
+void Jpeg2000Compression::writeToMemory(unsigned int width, unsigned int height,
                                         unsigned int pitch, uint8_t* buffer,
-                                        size_t& size) {
+                                        uint8_t** compressed, size_t* size) {
   opj_cparameters_t parameters;
   opj_set_default_encoder_parameters(&parameters);
   parameters.cp_disto_alloc = 1;
@@ -81,7 +78,7 @@ void Jpeg2000Compression::writeToMemory(uint8_t*& compressed,
   cio = opj_stream_default_create(0);
   opj_stream_set_user_data(cio, this, {});
   opj_stream_set_write_function(
-      cio, [](void* buffer, unsigned long size, void* userData) {
+      cio, [](void* buffer, uint64_t size, void* userData) {
         Jpeg2000Compression* jpeg2000Compression =
             reinterpret_cast<Jpeg2000Compression*>(userData);
         jpeg2000Compression->buffer_ = reinterpret_cast<uint8_t*>(buffer);
@@ -92,19 +89,21 @@ void Jpeg2000Compression::writeToMemory(uint8_t*& compressed,
   opj_start_compress(cinfo, opjImage, cio);
   opj_encode(cinfo, cio);
   opj_end_compress(cinfo, cio);
+  *compressed = new uint8_t[size_];
+  memcpy(*compressed, buffer_, size_);
 
-  compressed = new uint8_t[size_];
-  memcpy(compressed, buffer_, size_);
-  size = size_;
+  opj_image_destroy(opjImage);
+  opj_stream_destroy(cio);
+  opj_destroy_codec(cinfo);
+  *size = size_;
 }
 
-void Jpeg2000Compression::compress(uint8_t*& output,
-                                   const boost::gil::rgb8_view_t& view,
-                                   size_t& size) {
+void Jpeg2000Compression::compress(const boost::gil::rgb8_view_t& view,
+                                   uint8_t** output, size_t* size) {
   uint8_t* storage;
-  getRawData(storage, view, size);
+  getRawData(view, &storage, size);
 
-  this->writeToMemory(output, view.width(), view.height(), view.width() * 3,
-                      &storage[0], size);
-  free(storage);
+  this->writeToMemory(view.width(), view.height(), view.width() * 3, storage,
+                      output, size);
+  delete[] storage;
 }

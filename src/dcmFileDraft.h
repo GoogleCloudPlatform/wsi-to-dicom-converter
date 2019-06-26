@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DCMFILEDRAFT_H
-#define DCMFILEDRAFT_H
+#ifndef SRC_DCMFILEDRAFT_H_
+#define SRC_DCMFILEDRAFT_H_
 
 #include <dcmtk/dcmdata/dcdatset.h>
 #include <dcmtk/dcmdata/dcofsetl.h>
@@ -22,10 +22,10 @@
 #include <dcmtk/ofstd/ofcond.h>
 #include <string>
 #include <vector>
-#include "dcmTags.h"
-#include "dcmtkImgDataInfo.h"
-#include "enums.h"
-#include "frame.h"
+#include "src/dcmTags.h"
+#include "src/dcmtkImgDataInfo.h"
+#include "src/enums.h"
+#include "src/frame.h"
 
 class dcmFileDraft {
  private:
@@ -63,15 +63,15 @@ class dcmFileDraft {
   static OFCondition startConversion(
       OFString outputFileName, int64_t imageHeight, int64_t imageWidth,
       uint32_t rowSize, std::string studyId, std::string seriesId,
-      std::string imageName, DcmPixelData* pixelData, DcmtkImgDataInfo& imgInfo,
-      uint32_t numberOfFrames, uint32_t row, uint32_t column, int level,
-      int batchNumber, unsigned int offset, uint32_t totalNumberOfFrames,
-      bool tiled, DcmTags* additionalTags, double firstLevelWidthMm,
-      double firstLevelHeightMm);
+      std::string imageName, DcmPixelData* pixelData,
+      const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
+      uint32_t column, int level, int batchNumber, unsigned int offset,
+      uint32_t totalNumberOfFrames, bool tiled, DcmTags* additionalTags,
+      double firstLevelWidthMm, double firstLevelHeightMm);
 
   ~dcmFileDraft();
 
   void saveFile();
 };
 
-#endif  // DCMFILEDRAFT_H
+#endif  // SRC_DCMFILEDRAFT_H_

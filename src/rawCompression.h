@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RAWCOMPRESSION_H
-#define RAWCOMPRESSION_H
-#include "compressor.h"
+#ifndef SRC_RAWCOMPRESSION_H_
+#define SRC_RAWCOMPRESSION_H_
+#include "src/compressor.h"
 
 class RawCompression : public Compressor {
  public:
-  RawCompression();
-  void compress(uint8_t*& output, const boost::gil::rgb8_view_t& view,
-                size_t& size);
-  void getRawData(uint8_t*& output, const boost::gil::rgb8_view_t& view,
-                  size_t& size);
+  void compress(const boost::gil::rgb8_view_t& view, uint8_t** output,
+                size_t* size);
+  void getRawData(const boost::gil::rgb8_view_t& view, uint8_t** output,
+                  size_t* size);
 };
 
-#endif  // RAWCOMPRESSION_H
+#endif  // SRC_RAWCOMPRESSION_H_

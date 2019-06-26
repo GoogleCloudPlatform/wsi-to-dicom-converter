@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "jpegCompression.h"
+#include "src/jpegCompression.h"
 #include <boost/bind/bind.hpp>
 #include <boost/gil/extension/io/jpeg/old.hpp>
-using namespace boost::gil;
+#include <algorithm>
+#include <vector>
 JpegCompression::JpegCompression(int quality) {
   _quality = quality;
   _cinfo.err = jpeg_std_error(&_jerr);
@@ -24,32 +25,33 @@ JpegCompression::JpegCompression(int quality) {
 
 JpegCompression::~JpegCompression() { jpeg_destroy_compress(&_cinfo); }
 
-void JpegCompression::compress(uint8_t *&output, const rgb8_view_t &view,
-                               size_t &size) {
-  typedef
-      typename channel_type<typename rgb8_view_t::value_type>::type channel_t;
+void JpegCompression::compress(const boost::gil::rgb8_view_t &view,
+                               uint8_t **output, size_t *size) {
+  typedef typename boost::gil::channel_type<
+      typename boost::gil::rgb8_view_t::value_type>::type channel_t;
   _cinfo.image_width = (JDIMENSION)view.width();
   _cinfo.image_height = (JDIMENSION)view.height();
-  _cinfo.input_components = num_channels<rgb8_view_t>::value;
-  _cinfo.in_color_space = detail::jpeg_write_support<
-      channel_t, typename color_space_type<rgb8_view_t>::type>::_color_space;
+  _cinfo.input_components =
+      boost::gil::num_channels<boost::gil::rgb8_view_t>::value;
+  _cinfo.in_color_space = boost::gil::detail::jpeg_write_support<
+      channel_t, typename boost::gil::color_space_type<
+                     boost::gil::rgb8_view_t>::type>::_color_space;
 
-  unsigned char *imgd = 0;
-  unsigned long outlen = 0;
-  jpeg_mem_dest(&_cinfo, &imgd, &outlen);
+  uint64_t outlen = 0;
+  jpeg_mem_dest(&_cinfo, output, &outlen);
   jpeg_set_defaults(&_cinfo);
   jpeg_set_quality(&_cinfo, _quality, TRUE);
   jpeg_start_compress(&_cinfo, TRUE);
-  std::vector<
-      pixel<uint8_t, layout<typename color_space_type<rgb8_view_t>::type> > >
+  std::vector<boost::gil::pixel<
+      uint8_t, boost::gil::layout<typename boost::gil::color_space_type<
+                   boost::gil::rgb8_view_t>::type> > >
       row(view.width());
-  JSAMPLE *row_address = (JSAMPLE *)&row.front();
+  JSAMPLE *row_address = reinterpret_cast<JSAMPLE *>(&row.front());
   for (int y = 0; y < view.height(); ++y) {
     std::copy(view.row_begin(y), view.row_end(y), row.begin());
     jpeg_write_scanlines(&_cinfo, (JSAMPARRAY)&row_address, 1) != 1;
   }
   jpeg_finish_compress(&_cinfo);
   jpeg_destroy_compress(&_cinfo);
-  output = imgd;
-  size = outlen;
+  *size = outlen;
 }
