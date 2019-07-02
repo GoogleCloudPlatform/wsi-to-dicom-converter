@@ -30,98 +30,100 @@
 #include <ctime>
 #include <iomanip>
 #include <string>
+#include <utility>
 #include <vector>
 
-inline DcmItem *generateFramePositionMetadata(DcmDataset *resultObject,
-                                              uint32_t numberOfFrames,
-                                              uint32_t rowSize, uint32_t row,
-                                              uint32_t column, uint32_t x,
-                                              uint32_t y) {
-  DcmSequenceOfItems *PerFrameFunctionalGroupsSequence =
-      new DcmSequenceOfItems(DCM_PerFrameFunctionalGroupsSequence);
+inline OFCondition generateFramePositionMetadata(DcmDataset* resultObject,
+                                                 uint32_t numberOfFrames,
+                                                 uint32_t rowSize, uint32_t row,
+                                                 uint32_t column, uint32_t x,
+                                                 uint32_t y) {
+  std::unique_ptr<DcmSequenceOfItems> PerFrameFunctionalGroupsSequence =
+      std::make_unique<DcmSequenceOfItems>(
+          DCM_PerFrameFunctionalGroupsSequence);
   for (uint32_t frameNumber = 0; frameNumber < numberOfFrames; frameNumber++) {
     if (column > rowSize) {
       column = 1;
       row++;
     }
     std::string index = std::to_string(column) + "\\" + std::to_string(row);
-    DcmItem *dimension = new DcmItem;
+    std::unique_ptr<DcmItem> dimension = std::make_unique<DcmItem>();
     dimension->putAndInsertString(DCM_DimensionIndexValues, index.c_str());
 
-    DcmSequenceOfItems *sequenceDimension =
-        new DcmSequenceOfItems(DCM_FrameContentSequence);
-    sequenceDimension->insert(dimension);
+    std::unique_ptr<DcmSequenceOfItems> sequenceDimension =
+        std::make_unique<DcmSequenceOfItems>(DCM_FrameContentSequence);
+    sequenceDimension->insert(dimension.release());
 
-    DcmItem *pixelPosition = new DcmItem;
+    std::unique_ptr<DcmItem> pixelPosition = std::make_unique<DcmItem>();
     pixelPosition->putAndInsertSint32(DCM_ColumnPositionInTotalImagePixelMatrix,
                                       (column - 1) * x + 1);
     pixelPosition->putAndInsertSint32(DCM_RowPositionInTotalImagePixelMatrix,
                                       (row - 1) * y + 1);
 
-    DcmSequenceOfItems *sequencePosition =
-        new DcmSequenceOfItems(DCM_PlanePositionSlideSequence);
-    sequencePosition->insert(pixelPosition);
+    std::unique_ptr<DcmSequenceOfItems> sequencePosition =
+        std::make_unique<DcmSequenceOfItems>(DCM_PlanePositionSlideSequence);
+    sequencePosition->insert(pixelPosition.release());
 
-    DcmItem *positionItem = new DcmItem;
-    positionItem->insert(sequenceDimension);
-    positionItem->insert(sequencePosition);
-    PerFrameFunctionalGroupsSequence->insert(positionItem);
+    std::unique_ptr<DcmItem> positionItem = std::make_unique<DcmItem>();
+    positionItem->insert(sequenceDimension.release());
+    positionItem->insert(sequencePosition.release());
+    PerFrameFunctionalGroupsSequence->insert(positionItem.release());
     column++;
   }
-  resultObject->insert(PerFrameFunctionalGroupsSequence);
-  return resultObject;
+  return resultObject->insert(PerFrameFunctionalGroupsSequence.release());
 }
 
-inline DcmItem *generateSharedFunctionalGroupsSequence(DcmDataset *resultObject,
-                                                       double pixelSizeMm) {
+inline OFCondition generateSharedFunctionalGroupsSequence(
+    DcmDataset* resultObject, double pixelSizeMm) {
   if (pixelSizeMm <= 0) {
     pixelSizeMm = 0.1;
   }
-  DcmItem *sharedFunctionalGroupsSequence = new DcmItem();
-  DcmItem *pixelMeasuresSequence = new DcmItem();
+  std::unique_ptr<DcmItem> sharedFunctionalGroupsSequence =
+      std::make_unique<DcmItem>();
+  std::unique_ptr<DcmItem> pixelMeasuresSequence = std::make_unique<DcmItem>();
   std::string pixelSizeMmStr = std::to_string(pixelSizeMm);
   pixelSizeMmStr = pixelSizeMmStr + "\\" + pixelSizeMmStr;
   pixelMeasuresSequence->putAndInsertString(DCM_PixelSpacing,
                                             pixelSizeMmStr.c_str());
-  sharedFunctionalGroupsSequence->insertSequenceItem(DCM_PixelMeasuresSequence,
-                                                     pixelMeasuresSequence);
-  resultObject->insertSequenceItem(DCM_SharedFunctionalGroupsSequence,
-                                   sharedFunctionalGroupsSequence);
-  return resultObject;
+  sharedFunctionalGroupsSequence->insertSequenceItem(
+      DCM_PixelMeasuresSequence, pixelMeasuresSequence.release());
+  return resultObject->insertSequenceItem(
+      DCM_SharedFunctionalGroupsSequence,
+      sharedFunctionalGroupsSequence.release());
 }
 
-inline DcmItem *pointerItem(char *dimensionOrganizationUIDstr) {
-  DcmItem *pointerItem = new DcmItem;
+inline std::unique_ptr<DcmItem> pointerItem(char* dimensionOrganizationUIDstr) {
+  std::unique_ptr<DcmItem> pointerItem = std::make_unique<DcmItem>();
   pointerItem->putAndInsertOFStringArray(DCM_DimensionOrganizationUID,
-                                        dimensionOrganizationUIDstr);
-  DcmAttributeTag *slideSequence =
-      new DcmAttributeTag(DCM_FunctionalGroupPointer);
+                                         dimensionOrganizationUIDstr);
+  std::unique_ptr<DcmAttributeTag> slideSequence =
+      std::make_unique<DcmAttributeTag>(DCM_FunctionalGroupPointer);
   slideSequence->putTagVal(DCM_PlanePositionSlideSequence);
-  DcmAttributeTag *columnPosition =
-      new DcmAttributeTag(DCM_DimensionIndexPointer);
+  std::unique_ptr<DcmAttributeTag> columnPosition =
+      std::make_unique<DcmAttributeTag>(DCM_DimensionIndexPointer);
   columnPosition->putTagVal(DCM_ColumnPositionInTotalImagePixelMatrix);
-  pointerItem->insert(slideSequence);
-  pointerItem->insert(columnPosition);
+  pointerItem->insert(slideSequence.release());
+  pointerItem->insert(columnPosition.release());
   return pointerItem;
 }
-inline DcmItem *generateDimensionIndexSequence(DcmDataset *resultObject) {
-  DcmItem *dimensionOrganizationUID = new DcmItem;
+inline OFCondition generateDimensionIndexSequence(DcmDataset* resultObject) {
+  std::unique_ptr<DcmItem> dimensionOrganizationUID =
+      std::make_unique<DcmItem>();
   char dimensionOrganizationUIDstr[100];
   dimensionOrganizationUID->putAndInsertOFStringArray(
       DCM_DimensionOrganizationUID,
       dcmGenerateUniqueIdentifier(dimensionOrganizationUIDstr,
                                   SITE_STUDY_UID_ROOT));
-  DcmSequenceOfItems *dimensionOrganizationSequence =
-      new DcmSequenceOfItems(DCM_DimensionOrganizationSequence);
-  dimensionOrganizationSequence->insert(dimensionOrganizationUID);
-  resultObject->insert(dimensionOrganizationSequence);
+  std::unique_ptr<DcmSequenceOfItems> dimensionOrganizationSequence =
+      std::make_unique<DcmSequenceOfItems>(DCM_DimensionOrganizationSequence);
+  dimensionOrganizationSequence->insert(dimensionOrganizationUID.release());
+  resultObject->insert(dimensionOrganizationSequence.release());
 
-  DcmSequenceOfItems *sequence =
-      new DcmSequenceOfItems(DCM_DimensionIndexSequence);
-  sequence->insert(pointerItem(dimensionOrganizationUIDstr));
-  sequence->insert(pointerItem(dimensionOrganizationUIDstr));
-  resultObject->insert(sequence);
-  return resultObject;
+  std::unique_ptr<DcmSequenceOfItems> sequence =
+      std::make_unique<DcmSequenceOfItems>(DCM_DimensionIndexSequence);
+  sequence->insert(pointerItem(dimensionOrganizationUIDstr).release());
+  sequence->insert(pointerItem(dimensionOrganizationUIDstr).release());
+  return resultObject->insert(sequence.release());
 }
 
 std::string formatTime(std::string format) {
@@ -136,73 +138,69 @@ std::string formatTime(std::string format) {
 std::string currentDate() { return formatTime("%Y%m%d"); }
 std::string currentTime() { return formatTime("%OH%OM%OS"); }
 
-OFCondition insertPixelMetadata(DcmDataset *dset,
-                                const DcmtkImgDataInfo &imgInfo,
+OFCondition insertPixelMetadata(DcmDataset* dataset,
+                                const DcmtkImgDataInfo& imgInfo,
                                 uint32_t numberOfFrames) {
   OFCondition cond =
-      dset->putAndInsertUint16(DCM_SamplesPerPixel, imgInfo.samplesPerPixel);
+      dataset->putAndInsertUint16(DCM_SamplesPerPixel, imgInfo.samplesPerPixel);
   if (cond.bad()) return cond;
 
-  cond = dset->putAndInsertOFStringArray(DCM_PhotometricInterpretation,
-                                         imgInfo.photoMetrInt);
+  cond = dataset->putAndInsertOFStringArray(DCM_PhotometricInterpretation,
+                                            imgInfo.photoMetrInt);
   if (cond.bad()) return cond;
 
-  cond = dset->putAndInsertUint16(DCM_PlanarConfiguration, imgInfo.planConf);
+  cond = dataset->putAndInsertUint16(DCM_PlanarConfiguration, imgInfo.planConf);
   if (cond.bad()) return cond;
 
-  cond = dset->putAndInsertUint16(DCM_Rows, imgInfo.rows);
+  cond = dataset->putAndInsertUint16(DCM_Rows, imgInfo.rows);
   if (cond.bad()) return cond;
 
-  cond = dset->putAndInsertUint16(DCM_Columns, imgInfo.cols);
+  cond = dataset->putAndInsertUint16(DCM_Columns, imgInfo.cols);
   if (cond.bad()) return cond;
 
-  cond = dset->putAndInsertUint16(DCM_BitsAllocated, imgInfo.bitsAlloc);
+  cond = dataset->putAndInsertUint16(DCM_BitsAllocated, imgInfo.bitsAlloc);
   if (cond.bad()) return cond;
 
-  cond = dset->putAndInsertUint16(DCM_BitsStored, imgInfo.bitsStored);
+  cond = dataset->putAndInsertUint16(DCM_BitsStored, imgInfo.bitsStored);
   if (cond.bad()) return cond;
 
-  cond = dset->putAndInsertUint16(DCM_HighBit, imgInfo.highBit);
+  cond = dataset->putAndInsertUint16(DCM_HighBit, imgInfo.highBit);
   if (cond.bad()) return cond;
 
   if (numberOfFrames >= 1) {
     char buf[10];
     int err = snprintf(buf, sizeof(buf), "%u", numberOfFrames);
     if (err == -1) return EC_IllegalCall;
-    cond = dset->putAndInsertOFStringArray(DCM_NumberOfFrames, buf);
+    cond = dataset->putAndInsertOFStringArray(DCM_NumberOfFrames, buf);
     if (cond.bad()) return cond;
 
-    cond = dset->putAndInsertString(DCM_FrameIncrementPointer, "");
+    cond = dataset->putAndInsertString(DCM_FrameIncrementPointer, "");
     if (cond.bad()) return cond;
   }
 
-  return dset->putAndInsertUint16(DCM_PixelRepresentation, imgInfo.pixelRepr);
+  return dataset->putAndInsertUint16(DCM_PixelRepresentation,
+                                     imgInfo.pixelRepr);
 }
 
-OFCondition generateDcmDataset(I2DOutputPlug *outPlug, DcmDataset **resultDset,
-                               const DcmtkImgDataInfo &imgInfo,
+OFCondition generateDcmDataset(I2DOutputPlug* outPlug, DcmDataset* resultDset,
+                               const DcmtkImgDataInfo& imgInfo,
                                uint32_t numberOfFrames) {
   if (!outPlug) return EC_IllegalParameter;
 
   OFCondition cond;
 
-  OFunique_ptr<DcmDataset> tempDataset(*resultDset);
-
-  if (!tempDataset.get()) return EC_MemoryExhausted;
-
   if (cond.bad()) return cond;
 
-  cond = insertPixelMetadata(tempDataset.get(), imgInfo, numberOfFrames);
+  cond = insertPixelMetadata(resultDset, imgInfo, numberOfFrames);
 
   if (cond.bad()) {
     return cond;
   }
-
   OFBool srcIsLossy = imgInfo.transSyn == EXS_JPEGProcess1;
 
   if (srcIsLossy) {
-    cond = tempDataset->putAndInsertOFStringArray(DCM_LossyImageCompression,
-                                                  "01", true);
+    cond = resultDset->putAndInsertOFStringArray(DCM_LossyImageCompression,
+                                                 "01", true);
     if (cond.bad())
       return makeOFCondition(
           OFM_dcmdata, 18, OF_error,
@@ -210,7 +208,7 @@ OFCondition generateDcmDataset(I2DOutputPlug *outPlug, DcmDataset **resultDset,
           "Image Compression Method to result dataset");
   }
 
-  cond = outPlug->convert(*tempDataset);
+  cond = outPlug->convert(*resultDset);
   if (cond.bad()) {
     return cond;
   }
@@ -218,12 +216,10 @@ OFCondition generateDcmDataset(I2DOutputPlug *outPlug, DcmDataset **resultDset,
   if (cond.bad()) {
     return cond;
   }
-
-  *resultDset = tempDataset.release();
   return EC_Normal;
 }
 
-dcmFileDraft::dcmFileDraft(std::vector<Frame *> framesData,
+DcmFileDraft::DcmFileDraft(std::vector<std::unique_ptr<Frame> > framesData,
                            std::string outputFileMask, uint32_t numberOfFrames,
                            int64_t imageWidth, int64_t imageHeight,
                            int32_t level, int32_t batchNumber, uint32_t batch,
@@ -231,9 +227,10 @@ dcmFileDraft::dcmFileDraft(std::vector<Frame *> framesData,
                            int64_t frameHeight, std::string studyId,
                            std::string seriesId, std::string imageName,
                            DCM_Compression compression, bool tiled,
-                           DcmTags *additionalTags, double firstLevelWidthMm,
+                           DcmTags* additionalTags,
+                           double firstLevelWidthMm,
                            double firstLevelHeightMm) {
-  framesData_ = framesData;
+  framesData_ = std::move(framesData);
   outputFileMask_ = outputFileMask;
   numberOfFrames_ = numberOfFrames;
   imageWidth_ = imageWidth;
@@ -254,21 +251,17 @@ dcmFileDraft::dcmFileDraft(std::vector<Frame *> framesData,
   firstLevelWidthMm_ = firstLevelWidthMm;
   firstLevelHeightMm_ = firstLevelHeightMm;
 }
+DcmFileDraft::~DcmFileDraft() {}
 
-dcmFileDraft::~dcmFileDraft() {
-  for (Frame *frameData : framesData_) {
-    delete frameData;
-  }
-  framesData_.clear();
-}
-
-void dcmFileDraft::saveFile() {
-  DcmPixelData *pixelData = new DcmPixelData(DCM_PixelData);
+void DcmFileDraft::saveFile() {
+  std::unique_ptr<DcmPixelData> pixelData =
+      std::make_unique<DcmPixelData>(DCM_PixelData);
   DcmOffsetList offsetList;
-  DcmPixelSequence *compressedPixelSequence =
-      new DcmPixelSequence(DCM_PixelSequenceTag);
-  DcmPixelItem *offsetTable = new DcmPixelItem(DcmTag(DCM_Item, EVR_OB));
-  compressedPixelSequence->insert(offsetTable);
+  std::unique_ptr<DcmPixelSequence> compressedPixelSequence =
+      std::make_unique<DcmPixelSequence>(DCM_PixelSequenceTag);
+  std::unique_ptr<DcmPixelItem> offsetTable =
+      std::make_unique<DcmPixelItem>(DcmTag(DCM_Item, EVR_OB));
+  compressedPixelSequence->insert(offsetTable.release());
   DcmtkImgDataInfo imgInfo;
   std::vector<uint8_t> frames;
   for (size_t frameNumber = 0; frameNumber < framesData_.size();
@@ -276,32 +269,34 @@ void dcmFileDraft::saveFile() {
     while (!framesData_[frameNumber]->isDone()) {
       boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
     }
-    if (compression_ == JPEG || compression_ == JPEG2000) {
-      compressedPixelSequence->storeCompressedFrame(
-          offsetList, framesData_[frameNumber]->getData(),
-          framesData_[frameNumber]->getSize(), 0U);
-    } else {
-      frames.insert(frames.end(), framesData_[frameNumber]->getData(),
-                    framesData_[frameNumber]->getData() +
-                        framesData_[frameNumber]->getSize());
+    {
+      std::unique_ptr<Frame> frame = std::move(framesData_[frameNumber]);
+
+      if (compression_ == JPEG || compression_ == JPEG2000) {
+        compressedPixelSequence->storeCompressedFrame(
+            offsetList, frame->getData(), frame->getSize(), 0U);
+      } else {
+        frames.insert(frames.end(), frame->getData(),
+                      frame->getData() + frame->getSize());
+      }
     }
   }
+  framesData_.clear();
 
   switch (compression_) {
     case JPEG:
       imgInfo.transSyn = EXS_JPEGProcess1;
       pixelData->putOriginalRepresentation(imgInfo.transSyn, nullptr,
-                                           compressedPixelSequence);
+                                           compressedPixelSequence.release());
       break;
     case JPEG2000:
       imgInfo.transSyn = EXS_JPEG2000LosslessOnly;
       pixelData->putOriginalRepresentation(imgInfo.transSyn, nullptr,
-                                           compressedPixelSequence);
+                                           compressedPixelSequence.release());
       break;
     default:
       imgInfo.transSyn = EXS_LittleEndianExplicit;
       pixelData->putUint8Array(&frames[0], frames.size());
-      delete compressedPixelSequence;
   }
   imgInfo.samplesPerPixel = 3;
   imgInfo.photoMetrInt = "RGB";
@@ -320,22 +315,23 @@ void dcmFileDraft::saveFile() {
   uint32_t rowSize = 1 + ((imageWidth_ - 1) / frameWidth_);
   uint32_t totalNumberOfFrames =
       rowSize * (1 + ((imageHeight_ - 1) / frameHeight_));
-  dcmFileDraft::startConversion(
+  DcmFileDraft::startConversion(
       fileName, imageHeight_, imageWidth_, rowSize, studyId_, seriesId_,
-      imageName_, pixelData, imgInfo, batchSize_, row_, column_, level_,
-      batchNumber_, numberOfFrames_ - batchSize_, totalNumberOfFrames, tiled_,
-      additionalTags_, firstLevelWidthMm_, firstLevelHeightMm_);
+      imageName_, std::move(pixelData), imgInfo, batchSize_, row_, column_,
+      level_, batchNumber_, numberOfFrames_ - batchSize_, totalNumberOfFrames,
+      tiled_, additionalTags_, firstLevelWidthMm_, firstLevelHeightMm_);
 }
 
-OFCondition dcmFileDraft::startConversion(
+OFCondition DcmFileDraft::startConversion(
     OFString outputFileName, int64_t imageHeight, int64_t imageWidth,
     uint32_t rowSize, std::string studyId, std::string seriesId,
-    std::string imageName, DcmPixelData *pixelData,
-    const DcmtkImgDataInfo &imgInfo, uint32_t numberOfFrames, uint32_t row,
+    std::string imageName, std::unique_ptr<DcmPixelData> pixelData,
+    const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
     uint32_t column, int level, int batchNumber, unsigned int offset,
-    uint32_t totalNumberOfFrames, bool tiled, DcmTags *additionalTags,
-    double firstLevelWidthMm, double firstLevelHeightMm) {
-  I2DOutputPlug *outPlug = nullptr;
+    uint32_t totalNumberOfFrames, bool tiled,
+    DcmTags* additionalTags, double firstLevelWidthMm,
+    double firstLevelHeightMm) {
+  std::unique_ptr<I2DOutputPlug> outPlug;
   E_GrpLenEncoding grpLenEncoding = EGL_recalcGL;
   E_EncodingType encodingType = EET_ExplicitLength;
   E_PaddingEncoding paddingEncoding = EPD_noChange;
@@ -349,9 +345,8 @@ OFCondition dcmFileDraft::startConversion(
   } else {
     outputFile = outputFileName;
   }
-  outPlug = new I2DOutputPlugSC();
-
-  if (outPlug == nullptr) return EC_MemoryExhausted;
+  outPlug = std::make_unique<I2DOutputPlugSC>();
+  if (outPlug.get() == nullptr) return EC_MemoryExhausted;
 
   OFBool insertType2 = OFTrue;
   OFBool inventType1 = OFTrue;
@@ -361,18 +356,19 @@ OFCondition dcmFileDraft::startConversion(
 
   OFCondition cond;
 
-  DcmDataset *resultObject = new DcmDataset();
+  std::unique_ptr<DcmDataset> resultObject = std::make_unique<DcmDataset>();
 
   if (!dcmDataDict.isDictionaryLoaded()) {
     dcmDataDict.wrlock().reloadDictionaries(true, false);
     dcmDataDict.unlock();
   }
 
-  cond = generateDcmDataset(outPlug, &resultObject, imgInfo, numberOfFrames);
+  cond = generateDcmDataset(outPlug.get(), resultObject.get(), imgInfo,
+                            numberOfFrames);
   if (!cond.good()) {
     BOOST_LOG_TRIVIAL(error) << "error" << cond.text();
   }
-  resultObject->insert(pixelData);
+  resultObject->insert(pixelData.release());
 
   resultObject->putAndInsertOFStringArray(DCM_ContentDate,
                                           currentDate().c_str());
@@ -432,8 +428,8 @@ OFCondition dcmFileDraft::startConversion(
   } else {
     resultObject->putAndInsertOFStringArray(DCM_DimensionOrganizationType,
                                             "TILED_SPARSE");
-    generateFramePositionMetadata(resultObject, numberOfFrames, rowSize, row,
-                                  column, imgInfo.rows, imgInfo.cols);
+    generateFramePositionMetadata(resultObject.get(), numberOfFrames, rowSize,
+                                  row, column, imgInfo.rows, imgInfo.cols);
   }
   if (firstLevelWidthMm > 0 && firstLevelHeightMm > 0) {
     resultObject->putAndInsertFloat32(DCM_ImagedVolumeWidth, firstLevelWidthMm);
@@ -445,12 +441,12 @@ OFCondition dcmFileDraft::startConversion(
                                           "DERIVED\\PRIMARY\\VOLUME\\NONE");
   resultObject->putAndInsertOFStringArray(DCM_ImageOrientationSlide,
                                           "0\\-1\\0\\-1\\0\\0");
-  generateSharedFunctionalGroupsSequence(resultObject,
+  generateSharedFunctionalGroupsSequence(resultObject.get(),
                                          firstLevelHeightMm / imageHeight);
 
-  generateDimensionIndexSequence(resultObject);
-  additionalTags->populateDataset(resultObject);
-  DcmFileFormat dcmFileFormat(resultObject);
+  generateDimensionIndexSequence(resultObject.get());
+  additionalTags->populateDataset(resultObject.get());
+  DcmFileFormat dcmFileFormat(resultObject.get());
   cond = dcmFileFormat.saveFile(outputFile.c_str(), imgInfo.transSyn,
                                 encodingType, grpLenEncoding, paddingEncoding,
                                 OFstatic_cast(Uint32, filepad),
@@ -461,8 +457,6 @@ OFCondition dcmFileDraft::startConversion(
     BOOST_LOG_TRIVIAL(error)
         << "error" << outputFile.c_str() << ": " << cond.text();
   }
-  delete outPlug;
   outPlug = nullptr;
-  delete resultObject;
   return cond;
 }

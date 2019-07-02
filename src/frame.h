@@ -16,12 +16,13 @@
 #define SRC_FRAME_H_
 #include <openslide.h>
 #include <stdlib.h>
+#include <memory>
 #include <vector>
 #include "src/compressor.h"
 #include "src/enums.h"
 class Frame {
  private:
-  uint8_t *data_;
+  std::unique_ptr<uint8_t[]> data_;
   size_t size_;
   bool done_;
   openslide_t *osr_;
@@ -33,7 +34,7 @@ class Frame {
   int64_t frameWidht_;
   int64_t frameHeight_;
   double multiplicator_;
-  Compressor *compressor_;
+  std::unique_ptr<Compressor> compressor_;
 
  public:
   Frame(openslide_t *osr, int64_t locationX, int64_t locationY, int32_t level,

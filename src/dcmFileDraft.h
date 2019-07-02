@@ -20,6 +20,7 @@
 #include <dcmtk/dcmdata/dcpixel.h>
 #include <dcmtk/dcmdata/libi2d/i2dimgs.h>
 #include <dcmtk/ofstd/ofcond.h>
+#include <memory>
 #include <string>
 #include <vector>
 #include "src/dcmTags.h"
@@ -27,9 +28,9 @@
 #include "src/enums.h"
 #include "src/frame.h"
 
-class dcmFileDraft {
+class DcmFileDraft {
  private:
-  std::vector<Frame*> framesData_;
+  std::vector<std::unique_ptr<Frame> > framesData_;
   std::string outputFileMask_;
   std::string studyId_;
   std::string seriesId_;
@@ -52,9 +53,14 @@ class dcmFileDraft {
   bool tiled_;
 
  public:
-  dcmFileDraft(std::vector<Frame*> framesData, std::string outputFileMask,
-               uint32_t numberOfFrames, int64_t imageWidth, int64_t imageHeight,
-               int32_t level, int32_t batchNumber, uint32_t batch, uint32_t row,
+  // DcmTags* additionalTags - is read-only input, but can't be marked const
+  // since contains and using dcmtk objects
+  // std::vector<std::unique_ptr<Frame> > framesData - requre transfer of
+  // ownership to perform efficent memory managment and thread-save execution
+  DcmFileDraft(std::vector<std::unique_ptr<Frame> > framesData,
+               std::string outputFileMask, uint32_t numberOfFrames,
+               int64_t imageWidth, int64_t imageHeight, int32_t level,
+               int32_t batchNumber, uint32_t batch, uint32_t row,
                uint32_t column, int64_t frameWidth, int64_t frameHeight,
                std::string studyId, std::string seriesId, std::string imageName,
                DCM_Compression compression, bool tiled, DcmTags* additionalTags,
@@ -63,13 +69,13 @@ class dcmFileDraft {
   static OFCondition startConversion(
       OFString outputFileName, int64_t imageHeight, int64_t imageWidth,
       uint32_t rowSize, std::string studyId, std::string seriesId,
-      std::string imageName, DcmPixelData* pixelData,
+      std::string imageName, std::unique_ptr<DcmPixelData> pixelData,
       const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
       uint32_t column, int level, int batchNumber, unsigned int offset,
       uint32_t totalNumberOfFrames, bool tiled, DcmTags* additionalTags,
       double firstLevelWidthMm, double firstLevelHeightMm);
 
-  ~dcmFileDraft();
+  ~DcmFileDraft();
 
   void saveFile();
 };

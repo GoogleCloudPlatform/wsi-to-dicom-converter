@@ -15,6 +15,7 @@
 #ifndef SRC_JPEG2000COMPRESSION_H_
 #define SRC_JPEG2000COMPRESSION_H_
 
+#include <memory>
 #include "rawCompression.h"
 
 class Jpeg2000Compression : public RawCompression {
@@ -22,11 +23,13 @@ class Jpeg2000Compression : public RawCompression {
   Jpeg2000Compression() {}
 
   ~Jpeg2000Compression();
-  virtual void writeToMemory(unsigned int width, unsigned int height,
-                             unsigned int pitch, uint8_t* buffer,
-                             uint8_t** compressed, size_t* size);
-  void compress(const boost::gil::rgb8_view_t& view, uint8_t** output,
-                size_t* size);
+  virtual std::unique_ptr<uint8_t[]> writeToMemory(unsigned int width,
+                                                   unsigned int height,
+                                                   unsigned int pitch,
+                                                   uint8_t* buffer,
+                                                   size_t* size);
+  std::unique_ptr<uint8_t[]> compress(const boost::gil::rgb8_view_t& view,
+                                      size_t* size);
 
  private:
   uint8_t* buffer_;

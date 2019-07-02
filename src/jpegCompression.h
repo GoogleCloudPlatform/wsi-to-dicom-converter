@@ -15,7 +15,9 @@
 #ifndef SRC_JPEGCOMPRESSION_H_
 #define SRC_JPEGCOMPRESSION_H_
 #include <boost/gil/extension/io/jpeg.hpp>
+#include <memory>
 #include "src/compressor.h"
+
 class JpegCompression : public Compressor {
   jpeg_compress_struct _cinfo;
   jpeg_error_mgr _jerr;
@@ -24,7 +26,7 @@ class JpegCompression : public Compressor {
  public:
   explicit JpegCompression(const int quality);
   ~JpegCompression();
-  void compress(const boost::gil::rgb8_view_t& view, uint8_t** output,
-                size_t* size);
+  std::unique_ptr<uint8_t[]> compress(const boost::gil::rgb8_view_t& view,
+                                      size_t* size);
 };
 #endif  // SRC_JPEGCOMPRESSION_H_

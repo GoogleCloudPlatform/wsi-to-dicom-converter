@@ -16,7 +16,9 @@
 #include <boost/bind/bind.hpp>
 #include <boost/gil/extension/io/jpeg/old.hpp>
 #include <algorithm>
+#include <utility>
 #include <vector>
+
 JpegCompression::JpegCompression(int quality) {
   _quality = quality;
   _cinfo.err = jpeg_std_error(&_jerr);
@@ -25,8 +27,8 @@ JpegCompression::JpegCompression(int quality) {
 
 JpegCompression::~JpegCompression() { jpeg_destroy_compress(&_cinfo); }
 
-void JpegCompression::compress(const boost::gil::rgb8_view_t &view,
-                               uint8_t **output, size_t *size) {
+std::unique_ptr<uint8_t[]> JpegCompression::compress(
+    const boost::gil::rgb8_view_t &view, size_t *size) {
   typedef typename boost::gil::channel_type<
       typename boost::gil::rgb8_view_t::value_type>::type channel_t;
   _cinfo.image_width = (JDIMENSION)view.width();
@@ -38,7 +40,8 @@ void JpegCompression::compress(const boost::gil::rgb8_view_t &view,
                      boost::gil::rgb8_view_t>::type>::_color_space;
 
   uint64_t outlen = 0;
-  jpeg_mem_dest(&_cinfo, output, &outlen);
+  unsigned char *imgd = 0;
+  jpeg_mem_dest(&_cinfo, &imgd, &outlen);
   jpeg_set_defaults(&_cinfo);
   jpeg_set_quality(&_cinfo, _quality, TRUE);
   jpeg_start_compress(&_cinfo, TRUE);
@@ -52,6 +55,9 @@ void JpegCompression::compress(const boost::gil::rgb8_view_t &view,
     jpeg_write_scanlines(&_cinfo, (JSAMPARRAY)&row_address, 1) != 1;
   }
   jpeg_finish_compress(&_cinfo);
+  std::unique_ptr<uint8_t[]> output = std::make_unique<uint8_t[]>(outlen);
+  std::move(imgd, imgd + outlen, output.get());
   jpeg_destroy_compress(&_cinfo);
   *size = outlen;
+  return output;
 }

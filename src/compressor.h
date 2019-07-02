@@ -16,10 +16,11 @@
 #define SRC_COMPRESSOR_H_
 #include <boost/gil/typedefs.hpp>
 #include <cstdint>
+#include <memory>
 
 class Compressor {
  public:
-  virtual void compress(const boost::gil::rgb8_view_t& view, uint8_t** output,
-                        size_t* size) = 0;
+  virtual std::unique_ptr<uint8_t[]> compress(
+      const boost::gil::rgb8_view_t& view, size_t* size) = 0;
 };
 #endif  // SRC_COMPRESSOR_H_

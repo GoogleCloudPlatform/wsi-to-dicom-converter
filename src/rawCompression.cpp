@@ -15,6 +15,7 @@
 #include "src/rawCompression.h"
 #include <boost/gil/image.hpp>
 #include <algorithm>
+#include <utility>
 #include <vector>
 
 struct PixelInserter {
@@ -28,19 +29,20 @@ struct PixelInserter {
   }
 };
 
-void RawCompression::compress(const boost::gil::rgb8_view_t &view,
-                              uint8_t **output, size_t *size) {
-  getRawData(view, output, size);
+std::unique_ptr<uint8_t[]> RawCompression::compress(
+    const boost::gil::rgb8_view_t &view, size_t *size) {
+  return getRawData(view, size);
 }
 
-void RawCompression::getRawData(const boost::gil::rgb8_view_t &view,
-                                uint8_t **output, size_t *size) {
+std::unique_ptr<uint8_t[]> RawCompression::getRawData(
+    const boost::gil::rgb8_view_t &view, size_t *size) {
   std::vector<uint8_t> storage;
   storage.reserve(view.width() * view.height() *
                   boost::gil::num_channels<boost::gil::rgb8_image_t>());
   for_each_pixel(view, PixelInserter(&storage));
-  *output = new uint8_t[storage.size()];
-  std::copy(storage.begin(), storage.end(), *output);
+  std::unique_ptr<uint8_t[]> output =
+      std::make_unique<uint8_t[]>(storage.size());
+  std::move(storage.begin(), storage.end(), output.get());
   *size = storage.size();
-  storage.clear();
+  return output;
 }

@@ -18,6 +18,7 @@
 #include <dcmtk/dcmdata/dcvrat.h>
 #include <json/json.h>
 #include <boost/log/trivial.hpp>
+#include <memory>
 #include <string>
 static const char VALUE[] = "Value";
 
@@ -46,7 +47,7 @@ inline std::string tagValueAsString(Json::Value value) {
   return "";
 }
 
-void parseJsonTag(Json::Value jsonNode, DcmItem* dcmItem) {
+DcmItem* parseJsonTag(Json::Value jsonNode, DcmItem* dcmItem) {
   const Json::Value::Members tags = jsonNode.getMemberNames();
   for (size_t subNodeIndex = 0; subNodeIndex < tags.size(); subNodeIndex++) {
     DcmTag tag;
@@ -56,7 +57,7 @@ void parseJsonTag(Json::Value jsonNode, DcmItem* dcmItem) {
     Json::Value value = jsonNode[tags[subNodeIndex]][VALUE];
     Json::Value firstValue = jsonNode[tags[subNodeIndex]][VALUE][0];
     DcmVR vr = DcmVR(jsonNode[tags[subNodeIndex]]["vr"].asCString());
-    DcmItem* element = new DcmItem();
+    auto element = std::make_unique<DcmItem>();
     std::string stringValue;
     switch (vr.getEVR()) {
       case EVR_IS:
@@ -111,19 +112,20 @@ void parseJsonTag(Json::Value jsonNode, DcmItem* dcmItem) {
         stringValue = firstValue.asString();
         stringValue = splitTagName(stringValue);
         DcmTag::findTagFromName(stringValue.c_str(), tagValue);
-        DcmAttributeTag* attributeTag = new DcmAttributeTag(tag);
+        auto attributeTag = std::make_unique<DcmAttributeTag>(tag);
         attributeTag->putTagVal(tagValue);
-        dcmItem->insert(attributeTag);
+        dcmItem->insert(attributeTag.release());
         break;
       }
       case EVR_SQ:
-        parseJsonTag(firstValue, element);
-        dcmItem->insertSequenceItem(tag, element);
+        dcmItem->insertSequenceItem(
+            tag, parseJsonTag(firstValue, element.release()));
         break;
       default:
         BOOST_LOG_TRIVIAL(warning) << "unknown tag " << vr.getVRName();
     }
   }
+  return dcmItem;
 }
 
 void DcmTags::readJsonFile(std::string fileName) {
@@ -146,11 +148,10 @@ void DcmTags::readJsonFile(std::string fileName) {
 
 void DcmTags::populateDataset(DcmDataset* dataset) {
   uint64_t elementIndex = 0;
-  DcmElement* element = dataset_.getElement(elementIndex);
+  DcmElement* element;
+  element = dataset_.getElement(elementIndex);
   while (element != nullptr) {
-    DcmElement* elementClone;
-    elementClone = OFstatic_cast(DcmElement*, element->clone());
-    dataset->insert(elementClone);
+    dataset->insert(OFstatic_cast(DcmElement*, element->clone()));
     element = dataset_.getElement(++elementIndex);
   }
 }
