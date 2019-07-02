@@ -20,7 +20,8 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/src/ DICOMIZER_SOURCES)
-target_include_directories(wsi2dcmCli PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/)
+include_directories(wsi2dcmCli PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/)
+include_directories(wsi2dcmCli PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/)
 
 set(STATIC_BUILD OFF CACHE PATH ON)
 
@@ -50,5 +51,5 @@ set_target_properties(wsi2dcm PROPERTIES
 set_target_properties(wsi2dcmCli PROPERTIES
                         OUTPUT_NAME wsi2dcm
                       )
-target_link_libraries(wsi2dcm pthread glib-2.0 png jpeg gthread-2.0 gio-2.0 gobject-2.0 tiff rt z m lzma xml2 cairo sqlite3 gdk_pixbuf-2.0 -static-libgcc -static-libstdc++ )
+target_link_libraries(wsi2dcm pthread glib-2.0 png jpeg gthread-2.0 gio-2.0 gobject-2.0 tiff rt z m lzma xml2 cairo sqlite3 gdk_pixbuf-2.0 -static-libgcc -static-libstdc++)
 target_link_libraries(wsi2dcmCli wsi2dcm)

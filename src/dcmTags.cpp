@@ -12,50 +12,52 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "dcmTags.h"
+#include "src/dcmTags.h"
 #include <dcmtk/dcmdata/dcitem.h>
 #include <dcmtk/dcmdata/dctag.h>
 #include <dcmtk/dcmdata/dcvrat.h>
 #include <json/json.h>
 #include <boost/log/trivial.hpp>
-using namespace std;
-using namespace Json;
-static const string VALUE = "Value";
+#include <string>
+static const char VALUE[] = "Value";
 
 DcmTags::DcmTags() {}
 
-inline Value readJsonTag(Value obj, string tag) {
+inline Json::Value readJsonTag(Json::Value obj, std::string tag) {
   if (obj[tag][VALUE] != nullptr) {
     return obj[tag][VALUE][0];
-  } else
-    return Value();
+  } else {
+    return Json::Value();
+  }
 }
-inline void splitTagName(string& tagName) { tagName.insert(4, ","); }
-inline string tagValueAsString(Value value) {
+inline std::string splitTagName(std::string tagName) {
+  return tagName.insert(4, ",");
+}
+inline std::string tagValueAsString(Json::Value value) {
   if (value.type() == Json::stringValue) {
     return value.asString();
   }
   if (value.type() == Json::intValue) {
-    return to_string(value.asInt());
+    return std::to_string(value.asInt());
   }
   if (value.type() == Json::realValue) {
-    return to_string(value.asDouble());
+    return std::to_string(value.asDouble());
   }
   return "";
 }
 
-void parseJsonTag(Value jsonNode, DcmItem* dcmItem) {
-  const Value::Members tags = jsonNode.getMemberNames();
+void parseJsonTag(Json::Value jsonNode, DcmItem* dcmItem) {
+  const Json::Value::Members tags = jsonNode.getMemberNames();
   for (size_t subNodeIndex = 0; subNodeIndex < tags.size(); subNodeIndex++) {
     DcmTag tag;
-    string tagName = tags[subNodeIndex];
-    splitTagName(tagName);
+    std::string tagName = tags[subNodeIndex];
+    tagName = splitTagName(tagName);
     DcmTag::findTagFromName(tagName.c_str(), tag);
-    Value value = jsonNode[tags[subNodeIndex]][VALUE];
-    Value firstValue = jsonNode[tags[subNodeIndex]][VALUE][0];
+    Json::Value value = jsonNode[tags[subNodeIndex]][VALUE];
+    Json::Value firstValue = jsonNode[tags[subNodeIndex]][VALUE][0];
     DcmVR vr = DcmVR(jsonNode[tags[subNodeIndex]]["vr"].asCString());
     DcmItem* element = new DcmItem();
-    string stringValue;
+    std::string stringValue;
     switch (vr.getEVR()) {
       case EVR_IS:
       case EVR_DS:
@@ -107,7 +109,7 @@ void parseJsonTag(Value jsonNode, DcmItem* dcmItem) {
       case EVR_AT: {
         DcmTag tagValue;
         stringValue = firstValue.asString();
-        splitTagName(stringValue);
+        stringValue = splitTagName(stringValue);
         DcmTag::findTagFromName(stringValue.c_str(), tagValue);
         DcmAttributeTag* attributeTag = new DcmAttributeTag(tag);
         attributeTag->putTagVal(tagValue);
@@ -124,16 +126,16 @@ void parseJsonTag(Value jsonNode, DcmItem* dcmItem) {
   }
 }
 
-void DcmTags::readJsonFile(string fileName) {
-  ifstream fileStream(fileName);
-  CharReaderBuilder charReader;
-  Value jsonRoot;
-  string errors;
+void DcmTags::readJsonFile(std::string fileName) {
+  std::ifstream fileStream(fileName);
+  Json::CharReaderBuilder charReader;
+  Json::Value jsonRoot;
+  std::string errors;
   if (parseFromStream(charReader, fileStream, &jsonRoot, &errors)) {
     try {
       parseJsonTag(jsonRoot, &dataset_);
     } catch (const std::exception& e) {
-      BOOST_LOG_TRIVIAL(warning) << "can't read DCM tags from JSON" << endl
+      BOOST_LOG_TRIVIAL(warning) << "can't read DCM tags from JSON" << std::endl
                                  << e.what();
     }
   } else {
@@ -143,7 +145,7 @@ void DcmTags::readJsonFile(string fileName) {
 }
 
 void DcmTags::populateDataset(DcmDataset* dataset) {
-  unsigned long elementIndex = 0;
+  uint64_t elementIndex = 0;
   DcmElement* element = dataset_.getElement(elementIndex);
   while (element != nullptr) {
     DcmElement* elementClone;

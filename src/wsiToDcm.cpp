@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "wsiToDcm.h"
-#include <dcmtk/dcmdata/dcuid.h>
-#include <algorithm>
+#include "src/wsiToDcm.h"
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/filesystem.hpp>
@@ -22,45 +20,49 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/thread/thread.hpp>
+#include <dcmtk/dcmdata/dcuid.h>
+#include <algorithm>
 #include <fstream>
-#include <thread>
+#include <string>
 #include <utility>
 #include <vector>
-#include "dcmFileDraft.h"
-#include "dcmTags.h"
-#include "frame.h"
-using namespace std;
+#include "src/dcmFileDraft.h"
+#include "src/dcmTags.h"
+#include "src/frame.h"
 
-inline void dimensionDownsampling(int64_t &frameWidhtDownsampled,
-                                  int64_t &frameHeightDownsampled,
-                                  int64_t &levelWidhtDownsampled,
-                                  int64_t &levelHeightDownsampled,
-                                  int64_t levelWidht, int64_t levelHeight,
+namespace wsiToDicomConverter {
+
+inline void dimensionDownsampling(int64_t levelWidht, int64_t levelHeight,
                                   bool retile, int level,
-                                  double downsampleOfLevel) {
+                                  double downsampleOfLevel,
+                                  int64_t *frameWidhtDownsampled,
+                                  int64_t *frameHeightDownsampled,
+                                  int64_t *levelWidhtDownsampled,
+                                  int64_t *levelHeightDownsampled) {
   if (retile && level > 0) {
-    frameWidhtDownsampled = frameWidhtDownsampled * downsampleOfLevel;
-    frameHeightDownsampled = frameHeightDownsampled * downsampleOfLevel;
+    *frameWidhtDownsampled = *frameWidhtDownsampled * downsampleOfLevel;
+    *frameHeightDownsampled = *frameHeightDownsampled * downsampleOfLevel;
   }
 
-  if (levelWidht <= frameWidhtDownsampled &&
-      levelHeight <= frameHeightDownsampled) {
+  if (levelWidht <= *frameWidhtDownsampled &&
+      levelHeight <= *frameHeightDownsampled) {
     if (levelWidht >= levelHeight) {
-      double smallLevelDownsample =
-          double(levelWidht) / double(frameWidhtDownsampled);
-      frameHeightDownsampled = frameHeightDownsampled * smallLevelDownsample;
-      frameWidhtDownsampled = levelWidht;
+      double smallLevelDownsample = static_cast<double>(levelWidht) /
+                                    static_cast<double>(*frameWidhtDownsampled);
+      *frameHeightDownsampled = *frameHeightDownsampled * smallLevelDownsample;
+      *frameWidhtDownsampled = levelWidht;
     } else {
       double smallLevelDownsample =
-          double(levelHeight) / double(frameHeightDownsampled);
-      frameWidhtDownsampled = frameWidhtDownsampled * smallLevelDownsample;
-      frameHeightDownsampled = levelHeight;
+          static_cast<double>(levelHeight) /
+          static_cast<double>(*frameHeightDownsampled);
+      *frameWidhtDownsampled = *frameWidhtDownsampled * smallLevelDownsample;
+      *frameHeightDownsampled = levelHeight;
     }
   }
 
   if (retile && level > 0) {
-    levelWidhtDownsampled = levelWidht / downsampleOfLevel;
-    levelHeightDownsampled = levelHeight / downsampleOfLevel;
+    *levelWidhtDownsampled = levelWidht / downsampleOfLevel;
+    *levelHeightDownsampled = levelHeight / downsampleOfLevel;
   }
 }
 
@@ -85,7 +87,7 @@ inline void initLogger(bool debug) {
   }
 }
 
-inline DCM_Compression compressionFromString(string compressionStr) {
+inline DCM_Compression compressionFromString(std::string compressionStr) {
   DCM_Compression compression = UNKNOWN;
   std::transform(compressionStr.begin(), compressionStr.end(),
                  compressionStr.begin(), ::tolower);
@@ -101,14 +103,14 @@ inline DCM_Compression compressionFromString(string compressionStr) {
   return compression;
 }
 
-void WsiToDcm::checkArguments(string inputFile, string outputFileMask,
-                              long frameSizeX, long frameSizeY,
+void WsiToDcm::checkArguments(std::string inputFile, std::string outputFileMask,
+                              int64_t frameSizeX, int64_t frameSizeY,
                               DCM_Compression compression, int quality,
                               int32_t startOnLevel, int32_t stopOnLevel,
-                              string imageName, string studyId, string seriesId,
-                              int32_t retileLevels,
+                              std::string imageName, std::string studyId,
+                              std::string seriesId, int32_t retileLevels,
                               std::vector<double> downsamples, bool tiled,
-                              int batchLimit, int threads, bool debug) {
+                              int batchLimit, int8_t threads, bool debug) {
   initLogger(debug);
   isFileExist(inputFile);
   isFileExist(outputFileMask);
@@ -135,14 +137,15 @@ void WsiToDcm::checkArguments(string inputFile, string outputFileMask,
   }
 }
 
-int WsiToDcm::dicomizeTiff(string inputFile, string outputFileMask,
-                           long frameWidht, long frameHeight,
+int WsiToDcm::dicomizeTiff(std::string inputFile, std::string outputFileMask,
+                           int64_t frameWidht, int64_t frameHeight,
                            DCM_Compression compression, int quality,
                            int32_t startOnLevel, int32_t stopOnLevel,
-                           string imageName, string studyId, string seriesId,
-                           string jsonFile, int32_t retileLevels,
-                           vector<double> downsamples, bool tiled,
-                           int batchLimit, int threads) {
+                           std::string imageName, std::string studyId,
+                           std::string seriesId, std::string jsonFile,
+                           int32_t retileLevels,
+                           std::vector<double> downsamples, bool tiled,
+                           int batchLimit, int8_t threads) {
   bool retile = retileLevels > 0;
 
   if (studyId.size() < 1) {
@@ -193,13 +196,14 @@ int WsiToDcm::dicomizeTiff(string inputFile, string outputFileMask,
     firstLevelHeightMm = firstLevelHeight * std::stod(firstLevelMppY) / 1000;
   }
 
-  size_t threadsForPool = thread::hardware_concurrency();
+  int8_t threadsForPool = boost::thread::hardware_concurrency();
+  std::cout << threadsForPool;
   if (threads > 0) {
     threadsForPool = threads;
   }
 
   BOOST_LOG_TRIVIAL(info) << "dicomization is started";
-  vector<thread> Pool;
+  std::vector<boost::thread> Pool;
   boost::asio::thread_pool pool(threadsForPool);
   for (int32_t level = startOnLevel;
        level < levels && (stopOnLevel < startOnLevel || level <= stopOnLevel);
@@ -222,7 +226,7 @@ int WsiToDcm::dicomizeTiff(string inputFile, string outputFileMask,
     openslide_get_level_dimensions(osr, levelToGet, &levelWidht, &levelHeight);
     double multiplicator = openslide_get_level_downsample(osr, levelToGet);
     BOOST_LOG_TRIVIAL(debug) << "level size: " << levelWidht << ' '
-                             << levelHeight << ' ' << multiplicator << endl;
+                             << levelHeight << ' ' << multiplicator;
     int batchNumber = 0;
     int64_t frameWidhtDownsampled = frameWidht;
     int64_t frameHeightDownsampled = frameHeight;
@@ -232,17 +236,17 @@ int WsiToDcm::dicomizeTiff(string inputFile, string outputFileMask,
     int64_t y = 0;
     uint32_t numberOfFrames = 0;
     uint32_t batch = 0;
-    vector<Frame *> framesData;
+    std::vector<Frame *> framesData;
     double downsampleOfLevel = downsample / multiplicator;
-    dimensionDownsampling(frameWidhtDownsampled, frameHeightDownsampled,
-                          levelWidhtDownsampled, levelHeightDownsampled,
-                          levelWidht, levelHeight, retile, level,
-                          downsampleOfLevel);
+    dimensionDownsampling(levelWidht, levelHeight, retile, level,
+                          downsampleOfLevel, &frameWidhtDownsampled,
+                          &frameHeightDownsampled, &levelWidhtDownsampled,
+                          &levelHeightDownsampled);
     while (y < levelHeight) {
       while (x < levelWidht) {
         assert(osr != nullptr && openslide_get_error(osr) == nullptr);
         BOOST_LOG_TRIVIAL(debug)
-            << "x: " << x << " y: " << y << " level: " << level << endl;
+            << "x: " << x << " y: " << y << " level: " << level;
         Frame *frameData =
             new Frame(osr, x, y, levelToGet, frameWidhtDownsampled,
                       frameHeightDownsampled, multiplicator, frameWidht,
@@ -289,50 +293,55 @@ int WsiToDcm::dicomizeTiff(string inputFile, string outputFileMask,
   return 0;
 }
 
-int WsiToDcm::wsi2dcm(string inputFile, string outputFileMask, long frameSizeX,
-                      long frameSizeY, string compressionStr, int quality,
+int WsiToDcm::wsi2dcm(std::string inputFile, std::string outputFileMask,
+                      int64_t frameSizeX, int64_t frameSizeY,
+                      std::string compressionStr, int quality,
                       int32_t startOnLevel, int32_t stopOnLevel,
-                      string imageName, string studyId, string seriesId,
-                      string jsonFile, int32_t retileLevels,
-                      double *downsamples, bool tiled, int batchLimit,
-                      int threads, bool debug) {
+                      std::string imageName, std::string studyId,
+                      std::string seriesId, std::string jsonFile,
+                      int32_t retileLevels, double *downsamples, bool tiled,
+                      int batchLimit, int8_t threads, bool debug) {
   DCM_Compression compression = compressionFromString(compressionStr);
   try {
-    checkArguments(inputFile, outputFileMask, frameSizeX, frameSizeY,
-                   compression, quality, startOnLevel, stopOnLevel, imageName,
-                   studyId, seriesId, retileLevels,
-                   vector<double>(downsamples, downsamples + retileLevels + 1),
-                   tiled, batchLimit, threads, debug);
+    checkArguments(
+        inputFile, outputFileMask, frameSizeX, frameSizeY, compression, quality,
+        startOnLevel, stopOnLevel, imageName, studyId, seriesId, retileLevels,
+        std::vector<double>(downsamples, downsamples + retileLevels + 1), tiled,
+        batchLimit, threads, debug);
 
     return dicomizeTiff(
         inputFile, outputFileMask, frameSizeX, frameSizeY, compression, quality,
         startOnLevel, stopOnLevel, imageName, studyId, seriesId, jsonFile,
         retileLevels,
-        vector<double>(downsamples, downsamples + retileLevels + 1), tiled,
+        std::vector<double>(downsamples, downsamples + retileLevels + 1), tiled,
         batchLimit, threads);
   } catch (int exception) {
     return 1;
   }
 }
 
-int WsiToDcm::wsi2dcm(string inputFile, string outputFileMask, long frameSizeX,
-                      long frameSizeY, string compression, int quality,
+int WsiToDcm::wsi2dcm(std::string inputFile, std::string outputFileMask,
+                      int64_t frameSizeX, int64_t frameSizeY,
+                      std::string compression, int quality,
                       int32_t startOnLevel, int32_t stopOnLevel,
-                      string imageName, string studyId, string seriesId,
-                      int32_t retileLevels, double *downsamples, bool tiled,
-                      int batchLimit, int threads, bool debug) {
+                      std::string imageName, std::string studyId,
+                      std::string seriesId, int32_t retileLevels,
+                      double *downsamples, bool tiled, int batchLimit,
+                      int8_t threads, bool debug) {
   return wsi2dcm(inputFile, outputFileMask, frameSizeX, frameSizeY, compression,
                  quality, startOnLevel, stopOnLevel, imageName, studyId,
                  seriesId, "", retileLevels, downsamples, tiled, batchLimit,
                  threads, debug);
 }
 
-int WsiToDcm::wsi2dcm(string inputFile, string outputFileMask, long frameSizeX,
-                      long frameSizeY, string compression, int quality,
-                      int32_t startWith, int32_t stopOnLevel, bool tiled,
-                      int batchLimit, int threads) {
+int WsiToDcm::wsi2dcm(std::string inputFile, std::string outputFileMask,
+                      int64_t frameSizeX, int64_t frameSizeY,
+                      std::string compression, int quality, int32_t startWith,
+                      int32_t stopOnLevel, bool tiled, int batchLimit,
+                      int8_t threads) {
   double *empty;
   return wsi2dcm(inputFile, outputFileMask, frameSizeX, frameSizeY, compression,
                  quality, startWith, stopOnLevel, "", "", "", 0, empty, tiled,
                  batchLimit, threads, false);
 }
+}  // namespace wsiToDicomConverter

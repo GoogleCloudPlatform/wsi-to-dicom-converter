@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DCMTKIMGDATAINFO_H
-#define DCMTKIMGDATAINFO_H
+#ifndef SRC_DCMTKIMGDATAINFO_H_
+#define SRC_DCMTKIMGDATAINFO_H_
 
 #include <dcmtk/dcmdata/libi2d/i2d.h>
 #include <dcmtk/dcmdata/libi2d/i2doutpl.h>
@@ -41,11 +41,11 @@ struct DcmtkImgDataInfo {
            (highBit == other.highBit) && (pixelRepr == other.pixelRepr) &&
            (planConf == other.planConf) && (pixAspectH == other.pixAspectH) &&
            (pixAspectV == other.pixAspectV) && (transSyn == other.transSyn);
-  };
+  }
 
   OFBool operator!=(const DcmtkImgDataInfo &other) {
     return !(*this == other);
-  };
+  }
 };
 
-#endif  // DCMTKIMGDATAINFO_H
+#endif  // SRC_DCMTKIMGDATAINFO_H_

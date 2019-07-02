@@ -12,56 +12,59 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WSITODCM_H
-#define WSITODCM_H
+#ifndef SRC_WSITODCM_H_
+#define SRC_WSITODCM_H_
 #include <boost/cstdint.hpp>
 #include <iostream>
 #include <string>
 #include <vector>
-#include "enums.h"
-
+#include "src/enums.h"
+namespace wsiToDicomConverter {
 class WsiToDcm {
  private:
   static int dicomizeTiff(std::string inputFile, std::string outputFileMask,
-                          long frameSizeX, long frameSizeY,
-                          DCM_Compression compression, int quality,
+                          int64_t frameSizeX, int64_t frameSizeY,
+                          DCM_Compression compression, int32_t quality,
                           int32_t startOnLevel, int32_t stopOnLevel,
                           std::string imageName, std::string studyId,
                           std::string seriesId, std::string jsonFile,
                           int32_t retileLevels, std::vector<double> downsamples,
-                          bool tiled, int batchLimit, int threads);
+                          bool tiled, int32_t batchLimit, int8_t threads);
 
   static void checkArguments(std::string inputFile, std::string outputFileMask,
-                             long frameSizeX, long frameSizeY,
-                             DCM_Compression compression, int quality,
+                             int64_t frameSizeX, int64_t frameSizeY,
+                             DCM_Compression compression, int32_t quality,
                              int32_t startOnLevel, int32_t stopOnLevel,
                              std::string imageName, std::string studyId,
                              std::string seriesId, int32_t retileLevels,
                              std::vector<double> downsamples, bool tiled,
-                             int batchLimit, int threads, bool debug);
+                             int32_t batchLimit, int8_t threads, bool debug);
 
  public:
   static int wsi2dcm(std::string inputFile, std::string outputFileMask,
-                     long frameSizeX, long frameSizeY, std::string compression,
-                     int quality, int32_t startOnLevel, int32_t stopOnLevel,
+                     int64_t frameSizeX, int64_t frameSizeY,
+                     std::string compression, int32_t quality,
+                     int32_t startOnLevel, int32_t stopOnLevel,
                      std::string imageName, std::string studyId,
                      std::string seriesId, int32_t retileLevels,
-                     double* downsamples, bool tiled, int batchLimit,
-                     int threads, bool debug);
+                     double* downsamples, bool tiled, int32_t batchLimit,
+                     int8_t threads, bool debug);
 
   static int wsi2dcm(std::string inputFile, std::string outputFileMask,
-                     long frameSizeX, long frameSizeY, std::string compression,
-                     int quality, int32_t startOnLevel, int32_t stopOnLevel,
+                     int64_t frameSizeX, int64_t frameSizeY,
+                     std::string compression, int32_t quality,
+                     int32_t startOnLevel, int32_t stopOnLevel,
                      std::string imageName, std::string studyId,
                      std::string seriesId, std::string jsonFile,
                      int32_t retileLevels, double* downsamples, bool tiled,
-                     int batchLimit, int threads, bool debug);
+                     int32_t batchLimit, int8_t threads, bool debug);
 
   static int wsi2dcm(std::string inputFile, std::string outputFileMask,
-                     long frameSizeX, long frameSizeY, std::string compression,
-                     int quality, int32_t startWith, int32_t stopOnLevel,
-                     bool tiled, int batchLimit, int threads);
+                     int64_t frameSizeX, int64_t frameSizeY,
+                     std::string compression, int32_t quality,
+                     int32_t startWith, int32_t stopOnLevel, bool tiled,
+                     int32_t batchLimit, int8_t threads);
   WsiToDcm();
 };
-
-#endif  // WSITODCM_H
+}  // namespace wsiToDicomConverter
+#endif  // SRC_WSITODCM_H_
