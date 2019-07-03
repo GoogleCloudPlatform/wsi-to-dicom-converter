@@ -13,8 +13,7 @@
 # limitations under the License.
 
 wget https://raw.githubusercontent.com/google/styleguide/gh-pages/cpplint/cpplint.py 2> /dev/null;
-cpplintReport=$((python ./cpplint.py ./src/*) 2>&1)
-if [[ "$cpplintReport" != *"Total errors found: 0" ]]; then
-    echo "$cpplintReport";
+python ./cpplint.py ./src/*
+if [ $? -eq 1 ]; then
     exit 1;
 fi
