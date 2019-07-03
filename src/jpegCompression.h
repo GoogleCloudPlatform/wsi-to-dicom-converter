@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GIL_JPEG_IO_PRIVATE2_H
-#define GIL_JPEG_IO_PRIVATE2_H
+#ifndef SRC_JPEGCOMPRESSION_H_
+#define SRC_JPEGCOMPRESSION_H_
 #include <boost/gil/extension/io/jpeg.hpp>
-#include "compressor.h"
+#include "src/compressor.h"
 class JpegCompression : public Compressor {
   jpeg_compress_struct _cinfo;
   jpeg_error_mgr _jerr;
   int _quality;
 
  public:
-  JpegCompression(int quality = 80);
+  explicit JpegCompression(const int quality);
   ~JpegCompression();
-  void compress(uint8_t*& output, const boost::gil::rgb8_view_t& view,
-                size_t& size);
+  void compress(const boost::gil::rgb8_view_t& view, uint8_t** output,
+                size_t* size);
 };
-#endif
+#endif  // SRC_JPEGCOMPRESSION_H_

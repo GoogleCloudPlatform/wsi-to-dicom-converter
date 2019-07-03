@@ -13,12 +13,10 @@
 // limitations under the License.
 
 #include <boost/program_options.hpp>
-#include <cstring>
 #include <iostream>
 #include <string>
 #include <vector>
-#include "wsiToDcm.h"
-using namespace std;
+#include "src/wsiToDcm.h"
 namespace {
 const size_t ERROR_IN_COMMAND_LINE = 1;
 const size_t SUCCESS = 1;
@@ -26,13 +24,13 @@ const size_t ERROR_UNHANDLED_EXCEPTION = 2;
 
 }  // namespace
 int main(int argc, char *argv[]) {
-  string inputFile;
-  string jsonFile;
-  string outputFolder;
-  string compression;
-  string seriesDescription;
-  string seriesId;
-  string studyId;
+  std::string inputFile;
+  std::string jsonFile;
+  std::string outputFolder;
+  std::string compression;
+  std::string seriesDescription;
+  std::string seriesId;
+  std::string studyId;
   int tileHeight;
   int tileWidth;
   int levels;
@@ -41,16 +39,16 @@ int main(int argc, char *argv[]) {
   int batch;
   int threads;
   bool debug;
-  vector<double> downsamples;
+  std::vector<double> downsamples;
   downsamples.resize(1);
   bool sparse;
   try {
     namespace programOptions = boost::program_options;
     programOptions::options_description desc("Options");
     desc.add_options()("help", "Print help messages")(
-        "input", programOptions::value<string>(&inputFile)->required(),
+        "input", programOptions::value<std::string>(&inputFile)->required(),
         "input file")("outFolder",
-                      programOptions::value<string>(&outputFolder)
+                      programOptions::value<std::string>(&outputFolder)
                           ->required()
                           ->default_value("./"),
                       "folder to store dcm files")(
@@ -64,7 +62,7 @@ int main(int argc, char *argv[]) {
                          "number of levels, levels == 0 means number of levels "
                          "will be readed from wsi file")(
         "downsamples",
-        programOptions::value<vector<double> >(&downsamples)->multitoken(),
+        programOptions::value<std::vector<double> >(&downsamples)->multitoken(),
         "downsample for each level, downsample is size factor for each level")(
         "startOn", programOptions::value<int>(&start)->default_value(0),
         "level to start")("stopOn",
@@ -73,18 +71,21 @@ int main(int argc, char *argv[]) {
         "sparse", programOptions::bool_switch(&sparse)->default_value(false),
         "use TILED_SPARSE frame organization, by default it's TILED_FULL")(
         "compression",
-        programOptions::value<string>(&compression)->default_value("jpeg"),
+        programOptions::value<std::string>(&compression)->default_value("jpeg"),
         "compression, supported compressions: jpeg, jpeg2000, raw")(
         "seriesDescription",
-        programOptions::value<string>(&seriesDescription)->required(),
+        programOptions::value<std::string>(&seriesDescription)->required(),
         "series description in SeriesDescription tag")(
         "studyId",
-        programOptions::value<string>(&studyId)->required()->default_value(""),
-        "StudyID")(
-        "seriesId",
-        programOptions::value<string>(&seriesId)->required()->default_value(""),
-        "SeriesID")("jsonFile", programOptions::value<string>(&jsonFile),
-                    "json file with additional tags")(
+        programOptions::value<std::string>(&studyId)->required()->default_value(
+            ""),
+        "StudyID")("seriesId",
+                   programOptions::value<std::string>(&seriesId)
+                       ->required()
+                       ->default_value(""),
+                   "SeriesID")("jsonFile",
+                               programOptions::value<std::string>(&jsonFile),
+                               "json file with additional tags")(
         "batch", programOptions::value<int>(&batch)->default_value(0),
         "maximum frames in one file")(
         "threads",
@@ -107,24 +108,21 @@ int main(int argc, char *argv[]) {
         std::cout << "Wsi2dcm" << std::endl << desc << std::endl;
         return SUCCESS;
       }
-
       programOptions::notify(vm);
-
     } catch (programOptions::error &e) {
       std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
       std::cerr << desc << std::endl;
       return ERROR_IN_COMMAND_LINE;
     }
-
   } catch (std::exception &exception) {
     std::cerr << "Unhandled Exception reached the top of main: "
               << exception.what() << ", application will now exit" << std::endl;
     return ERROR_UNHANDLED_EXCEPTION;
   }
-  WsiToDcm::wsi2dcm(inputFile, outputFolder, tileHeight, tileWidth, compression,
-                    80, start, stop, seriesDescription, studyId, seriesId,
-                    jsonFile, levels, &downsamples[0], !sparse, batch, threads,
-                    debug);
+  wsiToDicomConverter::WsiToDcm::wsi2dcm(
+      inputFile, outputFolder, tileHeight, tileWidth, compression, 80, start,
+      stop, seriesDescription, studyId, seriesId, jsonFile, levels,
+      &downsamples[0], !sparse, batch, threads, debug);
 
   return SUCCESS;
 }

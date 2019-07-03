@@ -11,20 +11,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-#ifndef WSI2DCM_H
-#define WSI2DCM_H
+#include <cstdint>
+#ifndef SRC_WSI2DCM_H_
+#define SRC_WSI2DCM_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int wsi2dcm(char* inputFile, char* outputFileMask, long frameSizeX,
-            long frameSizeY, char* compression, int quality, int startOnLevel,
-            int stopOnLevel, char* imageName, char* studyId, char* seriesId,
-            int retileLevels, double* downsamples, bool tiled, int batchLimit,
-            int threads, bool debug);
-int wsi2dcmJson(char* inputFile, char* outputFileMask, long frameSizeX,
-                long frameSizeY, char* compression, int quality,
+int wsi2dcm(char* inputFile, char* outputFileMask, int64_t frameSizeX,
+            int64_t frameSizeY, char* compression, int quality,
+            int startOnLevel, int stopOnLevel, char* imageName, char* studyId,
+            char* seriesId, int retileLevels, double* downsamples, bool tiled,
+            int batchLimit, int threads, bool debug);
+int wsi2dcmJson(char* inputFile, char* outputFileMask, int64_t frameSizeX,
+                int64_t frameSizeY, char* compression, int quality,
                 int startOnLevel, int stopOnLevel, char* imageName,
                 char* studyId, char* seriesId, char* jsonFile, int retileLevels,
                 double* downsamples, bool tiled, int batchLimit, int threads,
@@ -33,4 +33,4 @@ int wsi2dcmJson(char* inputFile, char* outputFileMask, long frameSizeX,
 }
 #endif
 
-#endif  // WSI2DCM_H
+#endif  // SRC_WSI2DCM_H_

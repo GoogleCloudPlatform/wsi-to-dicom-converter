@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FRAME_H
-#define FRAME_H
+#ifndef SRC_FRAME_H_
+#define SRC_FRAME_H_
 #include <openslide.h>
 #include <stdlib.h>
 #include <vector>
-#include "compressor.h"
-#include "enums.h"
+#include "src/compressor.h"
+#include "src/enums.h"
 class Frame {
  private:
   uint8_t *data_;
@@ -47,4 +47,4 @@ class Frame {
   size_t getSize();
 };
 
-#endif  // FRAME_H
+#endif  // SRC_FRAME_H_

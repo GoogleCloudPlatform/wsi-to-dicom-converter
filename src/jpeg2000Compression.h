@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef JPEG2000COMPRESSION_H
-#define JPEG2000COMPRESSION_H
+#ifndef SRC_JPEG2000COMPRESSION_H_
+#define SRC_JPEG2000COMPRESSION_H_
 
-#include <string>
 #include "rawCompression.h"
 
 class Jpeg2000Compression : public RawCompression {
@@ -23,15 +22,15 @@ class Jpeg2000Compression : public RawCompression {
   Jpeg2000Compression() {}
 
   ~Jpeg2000Compression();
-  virtual void writeToMemory(uint8_t*& compressed, unsigned int width,
-                             unsigned int height, unsigned int pitch,
-                             uint8_t* buffer, size_t& size);
-  void compress(uint8_t*& output, const boost::gil::rgb8_view_t& view,
-                size_t& size);
+  virtual void writeToMemory(unsigned int width, unsigned int height,
+                             unsigned int pitch, uint8_t* buffer,
+                             uint8_t** compressed, size_t* size);
+  void compress(const boost::gil::rgb8_view_t& view, uint8_t** output,
+                size_t* size);
 
  private:
   uint8_t* buffer_;
-  unsigned long size_;
+  uint64_t size_;
 };
 
-#endif  // JPEG2000COMPRESSION_H
+#endif  // SRC_JPEG2000COMPRESSION_H_

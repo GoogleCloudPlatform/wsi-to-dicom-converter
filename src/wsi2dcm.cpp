@@ -12,28 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "wsi2dcm.h"
+#include "src/wsi2dcm.h"
 #include "wsiToDcm.h"
 
-int wsi2dcm(char *inputFile, char *outputFileMask, long frameSizeX,
-            long frameSizeY, char *compression, int quality, int startOnLevel,
-            int stopOnLevel, char *imageName, char *studyId, char *seriesId,
-            int retileLevels, double *downsamples, bool tiled, int batchLimit,
-            int threads, bool debug) {
-  return WsiToDcm::wsi2dcm(inputFile, outputFileMask, frameSizeX, frameSizeY,
-                           compression, quality, startOnLevel, stopOnLevel,
-                           imageName, studyId, seriesId, retileLevels,
-                           downsamples, tiled, batchLimit, threads, debug);
+int wsi2dcm(char *inputFile, char *outputFileMask, int64_t frameSizeX,
+            int64_t frameSizeY, char *compression, int quality,
+            int startOnLevel, int stopOnLevel, char *imageName, char *studyId,
+            char *seriesId, int retileLevels, double *downsamples, bool tiled,
+            int batchLimit, int threads, bool debug) {
+  return wsiToDicomConverter::WsiToDcm::wsi2dcm(
+      inputFile, outputFileMask, frameSizeX, frameSizeY, compression, quality,
+      startOnLevel, stopOnLevel, imageName, studyId, seriesId, retileLevels,
+      downsamples, tiled, batchLimit, threads, debug);
 }
 
-int wsi2dcmJson(char *inputFile, char *outputFileMask, long frameSizeX,
-                long frameSizeY, char *compression, int quality,
+int wsi2dcmJson(char *inputFile, char *outputFileMask, int64_t frameSizeX,
+                int64_t frameSizeY, char *compression, int quality,
                 int startOnLevel, int stopOnLevel, char *imageName,
                 char *studyId, char *seriesId, char *jsonFile, int retileLevels,
                 double *downsamples, bool tiled, int batchLimit, int threads,
                 bool debug) {
-  return WsiToDcm::wsi2dcm(inputFile, outputFileMask, frameSizeX, frameSizeY,
-                           compression, quality, startOnLevel, stopOnLevel,
-                           imageName, studyId, seriesId, jsonFile, retileLevels,
-                           downsamples, tiled, batchLimit, threads, debug);
+  return wsiToDicomConverter::WsiToDcm::wsi2dcm(
+      inputFile, outputFileMask, frameSizeX, frameSizeY, compression, quality,
+      startOnLevel, stopOnLevel, imageName, studyId, seriesId, jsonFile,
+      retileLevels, downsamples, tiled, batchLimit, threads, debug);
 }
