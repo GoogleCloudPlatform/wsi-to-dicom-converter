@@ -1,0 +1,8 @@
+Package: wsi2dcm
+Version:
+Section: base
+Priority: optional
+Architecture: amd64
+Maintainer: Google LLC
+Description: wsi2dcm is a library to create DICOM files from whole slide imaging files
+
