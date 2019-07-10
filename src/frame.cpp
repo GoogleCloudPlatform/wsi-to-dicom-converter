@@ -40,19 +40,17 @@ Frame::Frame(openslide_t *osr, int64_t locationX, int64_t locationY,
   frameHeight_ = frameHeight;
   switch (compression) {
     case JPEG:
-      compressor_ = new JpegCompression(quality);
+      compressor_ = std::make_unique<JpegCompression>(quality);
       break;
     case JPEG2000:
-      compressor_ = new Jpeg2000Compression();
+      compressor_ = std::make_unique<Jpeg2000Compression>();
       break;
     default:
-      compressor_ = new RawCompression();
+      compressor_ = std::make_unique<RawCompression>();
   }
 }
 
 Frame::~Frame() {
-  delete[] data_;
-  delete compressor_;
 }
 
 class convert_rgba_to_rgb {
@@ -96,7 +94,7 @@ void Frame::sliceFrame() {
   boost::gil::rgb8_image_t exp(frameWidht_, frameHeight_);
   boost::gil::rgb8_view_t rgbView = view(exp);
   boost::gil::copy_and_convert_pixels(gil, rgbView, convert_rgba_to_rgb());
-  compressor_->compress(rgbView, &data_, &size_);
+  data_ = compressor_->compress(rgbView, &size_);
   BOOST_LOG_TRIVIAL(debug) << " frame size: " << size_ / 1024 << "kb";
   free(buf);
   done_ = true;
@@ -104,6 +102,6 @@ void Frame::sliceFrame() {
 
 bool Frame::isDone() { return done_; }
 
-uint8_t *Frame::getData() { return data_; }
+uint8_t *Frame::getData() { return data_.get(); }
 
 size_t Frame::getSize() { return size_; }

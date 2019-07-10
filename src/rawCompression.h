@@ -14,14 +14,15 @@
 
 #ifndef SRC_RAWCOMPRESSION_H_
 #define SRC_RAWCOMPRESSION_H_
+#include <memory>
 #include "src/compressor.h"
 
 class RawCompression : public Compressor {
  public:
-  void compress(const boost::gil::rgb8_view_t& view, uint8_t** output,
-                size_t* size);
-  void getRawData(const boost::gil::rgb8_view_t& view, uint8_t** output,
-                  size_t* size);
+  std::unique_ptr<uint8_t[]> compress(const boost::gil::rgb8_view_t& view,
+                                      size_t* size);
+  std::unique_ptr<uint8_t[]> getRawData(const boost::gil::rgb8_view_t& view,
+                                        size_t* size);
 };
 
 #endif  // SRC_RAWCOMPRESSION_H_

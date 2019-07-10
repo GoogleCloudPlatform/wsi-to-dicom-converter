@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/wsiToDcm.h"
+#include <dcmtk/dcmdata/dcuid.h>
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/filesystem.hpp>
@@ -20,9 +21,9 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/thread/thread.hpp>
-#include <dcmtk/dcmdata/dcuid.h>
 #include <algorithm>
 #include <fstream>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -64,13 +65,6 @@ inline void dimensionDownsampling(int64_t levelWidht, int64_t levelHeight,
     *levelWidhtDownsampled = levelWidht / downsampleOfLevel;
     *levelHeightDownsampled = levelHeight / downsampleOfLevel;
   }
-}
-
-void sliceFrame(Frame *frame) { frame->sliceFrame(); }
-
-void saveFile(dcmFileDraft *dcmdraft) {
-  dcmdraft->saveFile();
-  delete dcmdraft;
 }
 
 inline void isFileExist(const std::string &name) {
@@ -160,7 +154,7 @@ int WsiToDcm::dicomizeTiff(std::string inputFile, std::string outputFileMask,
     seriesId = seriesIdGenerated;
   }
 
-  DcmTags *tags = new DcmTags();
+  std::unique_ptr<DcmTags> tags = std::make_unique<DcmTags>();
   if (jsonFile.size() > 0) {
     tags->readJsonFile(jsonFile);
   }
@@ -197,7 +191,6 @@ int WsiToDcm::dicomizeTiff(std::string inputFile, std::string outputFileMask,
   }
 
   int8_t threadsForPool = boost::thread::hardware_concurrency();
-  std::cout << threadsForPool;
   if (threads > 0) {
     threadsForPool = threads;
   }
@@ -236,7 +229,7 @@ int WsiToDcm::dicomizeTiff(std::string inputFile, std::string outputFileMask,
     int64_t y = 0;
     uint32_t numberOfFrames = 0;
     uint32_t batch = 0;
-    std::vector<Frame *> framesData;
+    std::vector<std::unique_ptr<Frame> > framesData;
     double downsampleOfLevel = downsample / multiplicator;
     dimensionDownsampling(levelWidht, levelHeight, retile, level,
                           downsampleOfLevel, &frameWidhtDownsampled,
@@ -247,29 +240,33 @@ int WsiToDcm::dicomizeTiff(std::string inputFile, std::string outputFileMask,
         assert(osr != nullptr && openslide_get_error(osr) == nullptr);
         BOOST_LOG_TRIVIAL(debug)
             << "x: " << x << " y: " << y << " level: " << level;
-        Frame *frameData =
-            new Frame(osr, x, y, levelToGet, frameWidhtDownsampled,
-                      frameHeightDownsampled, multiplicator, frameWidht,
-                      frameHeight, compression, quality);
-        framesData.push_back(frameData);
-        boost::asio::post(pool, boost::bind(sliceFrame, frameData));
+        std::unique_ptr<Frame> frameData = std::make_unique<Frame>(
+            osr, x, y, levelToGet, frameWidhtDownsampled,
+            frameHeightDownsampled, multiplicator, frameWidht, frameHeight,
+            compression, quality);
+        boost::asio::post(
+            pool, [frameData = frameData.get()]() { frameData->sliceFrame(); });
+        framesData.push_back(std::move(frameData));
         numberOfFrames++;
         batch++;
         x += frameWidhtDownsampled;
 
         if (batchLimit > 0 && batch >= batchLimit) {
-          dcmFileDraft *filedraft = new dcmFileDraft(
-              framesData, outputFileMask, numberOfFrames, levelWidhtDownsampled,
-              levelHeightDownsampled, level, batchNumber, batch, row, column,
-              frameWidht, frameHeight, studyId, seriesId, imageName,
-              compression, tiled, tags, firstLevelWidthMm, firstLevelHeightMm);
-          boost::asio::post(pool, boost::bind(saveFile, filedraft));
+          std::unique_ptr<DcmFileDraft> filedraft =
+              std::make_unique<DcmFileDraft>(
+                  std::move(framesData), outputFileMask, numberOfFrames,
+                  levelWidhtDownsampled, levelHeightDownsampled, level,
+                  batchNumber, batch, row, column, frameWidht, frameHeight,
+                  studyId, seriesId, imageName, compression, tiled, tags.get(),
+                  firstLevelWidthMm, firstLevelHeightMm);
+          boost::asio::post(pool, [filedraft = std::move(filedraft)]() {
+            filedraft->saveFile();
+          });
           batchNumber++;
           row = uint32_t((y + frameHeightDownsampled + 1) /
                          (frameHeightDownsampled - 1));
           column = uint32_t((x + frameWidhtDownsampled + 1) /
                             (frameWidhtDownsampled - 1));
-          framesData.clear();
           batch = 0;
         }
       }
@@ -277,18 +274,19 @@ int WsiToDcm::dicomizeTiff(std::string inputFile, std::string outputFileMask,
       x = 0;
     }
     if (framesData.size() > 0) {
-      dcmFileDraft *filedraft = new dcmFileDraft(
-          framesData, outputFileMask, numberOfFrames, levelWidhtDownsampled,
-          levelHeightDownsampled, level, batchNumber, batch, row, column,
-          frameWidht, frameHeight, studyId, seriesId, imageName, compression,
-          tiled, tags, firstLevelWidthMm, firstLevelHeightMm);
-      boost::asio::post(pool, boost::bind(saveFile, filedraft));
-      framesData.clear();
+      std::unique_ptr<DcmFileDraft> filedraft = std::make_unique<DcmFileDraft>(
+          std::move(framesData), outputFileMask, numberOfFrames,
+          levelWidhtDownsampled, levelHeightDownsampled, level, batchNumber,
+          batch, row, column, frameWidht, frameHeight, studyId, seriesId,
+          imageName, compression, tiled, tags.get(), firstLevelWidthMm,
+          firstLevelHeightMm);
+      boost::asio::post(pool, [filedraft = std::move(filedraft)]() {
+        filedraft->saveFile();
+      });
     }
   }
   pool.join();
   openslide_close(osr);
-  delete tags;
   BOOST_LOG_TRIVIAL(info) << "dicomization is done";
   return 0;
 }

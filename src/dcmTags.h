@@ -20,7 +20,7 @@
 #include <string>
 class DcmTags {
  private:
-  DcmDataset dataset_;
+  DcmItem dataset_;
 
  public:
   DcmTags();
