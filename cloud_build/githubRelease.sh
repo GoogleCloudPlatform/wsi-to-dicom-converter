@@ -19,20 +19,40 @@ version=${tagName:1}
 IFS='_' read -r -a repoArray <<< "$repositoryString"
 githubUser="${repoArray[1]}"
 githubRepo="${repoArray[2]}"
+if [ -z "$githubUser" ]
+then
+    githubUser="GoogleCloudPlatform"
+    githubRepo=$1
+fi
+
 #method to upload files to github release page
 upload () {
   path=$1
   file=$2
-  curl -# -XPOST -H "Authorization:token "$accessToken -H "Content-Type:application/octet-stream" \
---data-binary @"$path/$file" https://uploads.github.com/repos/$githubUser/$githubRepo/releases/$releaseId/assets?name=$file
+  responseCode=$(curl -# -XPOST -H "Authorization:token "$accessToken -H "Content-Type:application/octet-stream" \
+--data-binary @"$path/$file" -w "%{http_code}" https://uploads.github.com/repos/$githubUser/$githubRepo/releases/$releaseId/assets?name=$file -o response.json)
+  if [ $responseCode -ne 201 ]; then
+    cat response.json
+    exit 1;
+  fi
 }
+
+echo "release: $tagName"
+echo "user: $githubUser"
+echo "repo: $githubRepo"
 
 # request to create release
 echo {\"tag_name\": \"$tagName\",\"name\": \"$tagName\",\"body\": \"$tagName\"} > /workspace/request.json
-curl -# -XPOST -H 'Content-Type:application/json' -H 'Accept:application/json' --data-binary @/workspace/request.json \
-https://api.github.com/repos/$githubUser/$githubRepo/releases?access_token=$accessToken -o response.json
+responseCode=$(curl -# -XPOST -H 'Content-Type:application/json' -H 'Accept:application/json' -w "%{http_code}" --data-binary @/workspace/request.json \
+https://api.github.com/repos/$githubUser/$githubRepo/releases?access_token=$accessToken -o response.json)  
+if [ $responseCode -ne 201   ]; then
+    cat response.json
+    exit 1;
+fi
+
 #get id of new release
 releaseId=$(grep -wm 1 "id" /workspace/response.json | grep -Eo "[[:digit:]]+")
+
 #upload bins to release page
 upload /workspace/build wsi2dcm 
 upload /workspace/build libwsi2dcm.so 
