@@ -196,17 +196,14 @@ OFCondition generateDcmDataset(I2DOutputPlug* outPlug, DcmDataset* resultDset,
   if (cond.bad()) {
     return cond;
   }
+
   OFBool srcIsLossy = imgInfo.transSyn == EXS_JPEGProcess1;
 
   if (srcIsLossy) {
     cond = resultDset->putAndInsertOFStringArray(DCM_LossyImageCompression,
                                                  "01", true);
-    if (cond.bad())
-      return makeOFCondition(
-          OFM_dcmdata, 18, OF_error,
-          "Unable to write attribute Lossy Image Compression and/or Lossy "
-          "Image Compression Method to result dataset");
   }
+  if (cond.bad()) return cond;
 
   cond = outPlug->convert(*resultDset);
   if (cond.bad()) {
@@ -227,8 +224,7 @@ DcmFileDraft::DcmFileDraft(std::vector<std::unique_ptr<Frame> > framesData,
                            int64_t frameHeight, std::string studyId,
                            std::string seriesId, std::string imageName,
                            DCM_Compression compression, bool tiled,
-                           DcmTags* additionalTags,
-                           double firstLevelWidthMm,
+                           DcmTags* additionalTags, double firstLevelWidthMm,
                            double firstLevelHeightMm) {
   framesData_ = std::move(framesData);
   outputFileMask_ = outputFileMask;
@@ -328,9 +324,8 @@ OFCondition DcmFileDraft::startConversion(
     std::string imageName, std::unique_ptr<DcmPixelData> pixelData,
     const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
     uint32_t column, int level, int batchNumber, unsigned int offset,
-    uint32_t totalNumberOfFrames, bool tiled,
-    DcmTags* additionalTags, double firstLevelWidthMm,
-    double firstLevelHeightMm) {
+    uint32_t totalNumberOfFrames, bool tiled, DcmTags* additionalTags,
+    double firstLevelWidthMm, double firstLevelHeightMm) {
   std::unique_ptr<I2DOutputPlug> outPlug;
   E_GrpLenEncoding grpLenEncoding = EGL_recalcGL;
   E_EncodingType encodingType = EET_ExplicitLength;
@@ -445,7 +440,9 @@ OFCondition DcmFileDraft::startConversion(
                                          firstLevelHeightMm / imageHeight);
 
   generateDimensionIndexSequence(resultObject.get());
-  additionalTags->populateDataset(resultObject.get());
+  if (additionalTags != nullptr) {
+    additionalTags->populateDataset(resultObject.get());
+  }
   DcmFileFormat dcmFileFormat(resultObject.get());
   cond = dcmFileFormat.saveFile(outputFile.c_str(), imgInfo.transSyn,
                                 encodingType, grpLenEncoding, paddingEncoding,
@@ -459,4 +456,18 @@ OFCondition DcmFileDraft::startConversion(
   }
   outPlug = nullptr;
   return cond;
+}
+
+OFCondition DcmFileDraft::startConversion(
+    OFString outputFileName, int64_t imageHeight, int64_t imageWidth,
+    uint32_t rowSize, std::string studyId, std::string seriesId,
+    std::string imageName, std::unique_ptr<DcmPixelData> pixelData,
+    const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
+    uint32_t column, int level, int batchNumber, unsigned int offset,
+    uint32_t totalNumberOfFrames, bool tiled) {
+  return startConversion(outputFileName, imageHeight, imageWidth, rowSize,
+                         studyId, seriesId, imageName, std::move(pixelData),
+                         imgInfo, numberOfFrames, row, column, level,
+                         batchNumber, offset, totalNumberOfFrames, tiled,
+                         nullptr, 0.0, 0.0);
 }

@@ -19,14 +19,15 @@
 #include "src/compressor.h"
 
 class JpegCompression : public Compressor {
-  jpeg_compress_struct _cinfo;
-  jpeg_error_mgr _jerr;
-  int _quality;
-
  public:
   explicit JpegCompression(const int quality);
   ~JpegCompression();
   std::unique_ptr<uint8_t[]> compress(const boost::gil::rgb8_view_t& view,
                                       size_t* size);
+
+ private:
+  jpeg_compress_struct _cinfo;
+  jpeg_error_mgr _jerr;
+  int _quality;
 };
 #endif  // SRC_JPEGCOMPRESSION_H_

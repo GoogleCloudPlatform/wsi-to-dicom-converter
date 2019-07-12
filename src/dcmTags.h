@@ -18,14 +18,16 @@
 #include <dcmtk/dcmdata/dcdeftag.h>
 #include <dcmtk/dcmdata/dcsequen.h>
 #include <string>
-class DcmTags {
- private:
-  DcmItem dataset_;
 
+// Parses Json file with DICOM tags and populates DcmDataset with it
+class DcmTags {
  public:
   DcmTags();
   void readJsonFile(std::string fileName);
   void populateDataset(DcmDataset* dataset);
+
+ private:
+  DcmItem dataset_;
 };
 
 #endif  // SRC_DCMTAGS_H_

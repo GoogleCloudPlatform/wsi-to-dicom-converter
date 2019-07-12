@@ -19,6 +19,7 @@
 #include <dcmtk/dcmdata/libi2d/i2doutpl.h>
 #include <dcmtk/dcmdata/libi2d/i2dplsc.h>
 
+// Structure for image metadata
 struct DcmtkImgDataInfo {
   Uint16 rows;
   Uint16 cols;
