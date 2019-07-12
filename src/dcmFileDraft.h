@@ -28,7 +28,63 @@
 #include "src/enums.h"
 #include "src/frame.h"
 
+// Represents single DICOM file with metadata
 class DcmFileDraft {
+ public:
+  // DcmTags* additionalTags - is read-only input, but can't be marked const
+  // since contains and using dcmtk objects
+  // std::vector<std::unique_ptr<Frame> > framesData - requre transfer of
+  // ownership to perform efficent memory managment and thread-save execution
+  DcmFileDraft(std::vector<std::unique_ptr<Frame> > framesData,
+               std::string outputFileMask, uint32_t numberOfFrames,
+               int64_t imageWidth, int64_t imageHeight, int32_t level,
+               int32_t batchNumber, uint32_t batch, uint32_t row,
+               uint32_t column, int64_t frameWidth, int64_t frameHeight,
+               std::string studyId, std::string seriesId, std::string imageName,
+               DCM_Compression compression, bool tiled, DcmTags* additionalTags,
+               double firstLevelWidthMm, double firstLevelHeightMm);
+
+  // Generates DICOM file based on outputFileName
+  // imageHeight, imageWidth - size of complete image
+  // rowSize - how many frames in one row of this image
+  // studyId, seriesId, imageName - required DICOM metadata
+  // pixelData - pixel data, requre transfer of ownership
+  // imgInfo - image metadata
+  // numberOfFrames - how many frames in this file
+  // row, column - position to start
+  // level - which level represent this file
+  // batchNumber - index number of this file for one level
+  // offset - how many frames where already generated
+  //          for this level
+  // totalNumberOfFrames - how many frames in this level
+  // tiled - frame organizationtype
+  //           true:TILED_FULL
+  //           false:TILED_SPARSE
+  // additionalTags - additional DICOM metadata
+  // firstLevelWidthMm, firstLevelHeightMm - physical size
+  // of first level
+  static OFCondition startConversion(
+      OFString outputFileName, int64_t imageHeight, int64_t imageWidth,
+      uint32_t rowSize, std::string studyId, std::string seriesId,
+      std::string imageName, std::unique_ptr<DcmPixelData> pixelData,
+      const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
+      uint32_t column, int level, int batchNumber, unsigned int offset,
+      uint32_t totalNumberOfFrames, bool tiled, DcmTags* additionalTags,
+      double firstLevelWidthMm, double firstLevelHeightMm);
+
+  // Wrapper for startConversion without additional parameters
+  static OFCondition startConversion(
+      OFString outputFileName, int64_t imageHeight, int64_t imageWidth,
+      uint32_t rowSize, std::string studyId, std::string seriesId,
+      std::string imageName, std::unique_ptr<DcmPixelData> pixelData,
+      const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
+      uint32_t column, int level, int batchNumber, unsigned int offset,
+      uint32_t totalNumberOfFrames, bool tiled);
+
+  ~DcmFileDraft();
+
+  void saveFile();
+
  private:
   std::vector<std::unique_ptr<Frame> > framesData_;
   std::string outputFileMask_;
@@ -51,33 +107,6 @@ class DcmFileDraft {
   double firstLevelHeightMm_;
   double downsample_;
   bool tiled_;
-
- public:
-  // DcmTags* additionalTags - is read-only input, but can't be marked const
-  // since contains and using dcmtk objects
-  // std::vector<std::unique_ptr<Frame> > framesData - requre transfer of
-  // ownership to perform efficent memory managment and thread-save execution
-  DcmFileDraft(std::vector<std::unique_ptr<Frame> > framesData,
-               std::string outputFileMask, uint32_t numberOfFrames,
-               int64_t imageWidth, int64_t imageHeight, int32_t level,
-               int32_t batchNumber, uint32_t batch, uint32_t row,
-               uint32_t column, int64_t frameWidth, int64_t frameHeight,
-               std::string studyId, std::string seriesId, std::string imageName,
-               DCM_Compression compression, bool tiled, DcmTags* additionalTags,
-               double firstLevelWidthMm, double firstLevelHeightMm);
-
-  static OFCondition startConversion(
-      OFString outputFileName, int64_t imageHeight, int64_t imageWidth,
-      uint32_t rowSize, std::string studyId, std::string seriesId,
-      std::string imageName, std::unique_ptr<DcmPixelData> pixelData,
-      const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
-      uint32_t column, int level, int batchNumber, unsigned int offset,
-      uint32_t totalNumberOfFrames, bool tiled, DcmTags* additionalTags,
-      double firstLevelWidthMm, double firstLevelHeightMm);
-
-  ~DcmFileDraft();
-
-  void saveFile();
 };
 
 #endif  // SRC_DCMFILEDRAFT_H_

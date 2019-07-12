@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <memory>
 
+// Interface for different type of compressions
 class Compressor {
  public:
   virtual std::unique_ptr<uint8_t[]> compress(
