@@ -22,7 +22,7 @@
 echo "deb http://us.archive.ubuntu.com/ubuntu/ cosmic universe" | tee -a /etc/apt/sources.list
 apt-get update
 #2
-apt-get install wget libtiff-dev unzip libjsoncpp-dev libjpeg8-dev libgdk-pixbuf2.0-dev libcairo2-dev libsqlite3-dev cmake libglib2.0-dev libxml2-dev libopenjp2-7-dev g++-8 -y
+apt-get install wget libtiff-dev unzip libjsoncpp-dev libjpeg8-dev libgdk-pixbuf2.0-dev libcairo2-dev libsqlite3-dev cmake libglib2.0-dev libxml2-dev libopenjp2-7-dev g++-8 libgtest-dev -y
 #3
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
@@ -40,5 +40,6 @@ tar xvzf openslide-3.4.1.tar.gz  > /dev/null
 wget https://www.ijg.org/files/jpegsr9c.zip
 unzip jpegsr9c.zip > /dev/null
 #4
-cmake -DSTATIC_BUILD=ON  ..
+cmake -DSTATIC_BUILD=ON -DTESTS_BUILD=ON ..
 make -j12
+./gTests
