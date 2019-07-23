@@ -30,7 +30,7 @@ void dimensionDownsampling(int64_t frameWidht, int64_t frameHeight,
   if (retile && level > 0) {
     *frameWidhtDownsampled *= downsampleOfLevel;
     *frameHeightDownsampled *= downsampleOfLevel;
-    *levelWidhtDownsampled /=  downsampleOfLevel;
+    *levelWidhtDownsampled /= downsampleOfLevel;
     *levelHeightDownsampled /= downsampleOfLevel;
   }
   if (levelWidht <= *frameWidhtDownsampled &&

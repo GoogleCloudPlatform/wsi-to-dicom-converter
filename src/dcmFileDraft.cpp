@@ -130,10 +130,10 @@ void DcmFileDraft::saveFile() {
   uint32_t rowSize = 1 + ((imageWidth_ - 1) / frameWidth_);
   uint32_t totalNumberOfFrames =
       rowSize * (1 + ((imageHeight_ - 1) / frameHeight_));
-  DcmtkUtils::startConversion(fileName, imageHeight_, imageWidth_, rowSize, studyId_,
-                  seriesId_, imageName_, std::move(pixelData), imgInfo,
-                  batchSize_, row_, column_, level_, batchNumber_,
-                  numberOfFrames_ - batchSize_, totalNumberOfFrames, tiled_,
-                  additionalTags_, firstLevelWidthMm_, firstLevelHeightMm_);
+  DcmtkUtils::startConversion(
+      fileName, imageHeight_, imageWidth_, rowSize, studyId_, seriesId_,
+      imageName_, std::move(pixelData), imgInfo, batchSize_, row_, column_,
+      level_, batchNumber_, numberOfFrames_ - batchSize_, totalNumberOfFrames,
+      tiled_, additionalTags_, firstLevelWidthMm_, firstLevelHeightMm_);
 }
 }  // namespace wsiToDicomConverter
