@@ -35,7 +35,7 @@ class Frame {
         double multiplicator, int64_t frameWidht, int64_t frameHeight_,
         DCM_Compression compression, int quality);
   ~Frame();
-  //Gets frame by openslide library, performs scaling it and compressing
+  // Gets frame by openslide library, performs scaling it and compressing
   void sliceFrame();
   bool isDone();
   uint8_t *getData();

@@ -78,7 +78,7 @@ TEST(insertStaticTagsTest, correctInsert) {
   Uint16 frameNumber;
   findElement(dataSet.get(), DCM_RepresentativeFrameNumber)
       ->getUint16(frameNumber);
-  ASSERT_EQ(0, frameNumber);
+  ASSERT_EQ(1, frameNumber);
 }
 
 TEST(insertIdsTest, correctInsert) {

@@ -23,8 +23,10 @@ namespace wsiToDicomConverter {
 // based on base level, expected downsample and frame size
 // frameWidht, frameHeight - expected size of frame
 // levelWidht, levelHeight - size of level with source data
-// frameWidhtDownsampled, frameHeightDownsampled - size of frame to get from source level
-// levelWidhtDownsampled, levelHeightDownsampled - size of level according to downsampling
+// frameWidhtDownsampled, frameHeightDownsampled - size of frame to
+//                                                 get from source level
+// levelWidhtDownsampled, levelHeightDownsampled - size of level
+//                                                 according to downsampling
 void dimensionDownsampling(int64_t frameWidht, int64_t frameHeight,
                            int64_t levelWidht, int64_t levelHeight, bool retile,
                            int level, double downsampleOfLevel,

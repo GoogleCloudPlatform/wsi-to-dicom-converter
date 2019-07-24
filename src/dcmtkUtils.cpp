@@ -196,12 +196,12 @@ OFCondition generateDcmDataset(I2DOutputPlug* outPlug, DcmDataset* resultDset,
     return cond;
   }
 
-  OFBool srcIsLossy = imgInfo.transSyn == EXS_JPEGProcess1;
-
-  if (srcIsLossy) {
-    cond = resultDset->putAndInsertOFStringArray(DCM_LossyImageCompression,
-                                                 "01", true);
+  std::string lossy = "00";
+  if (imgInfo.transSyn == EXS_JPEGProcess1) {
+    lossy = "01";
   }
+  cond = resultDset->putAndInsertOFStringArray(DCM_LossyImageCompression,
+                                               lossy.c_str(), true);
 
   if (cond.bad()) return cond;
 
@@ -310,13 +310,14 @@ OFCondition DcmtkUtils::insertStaticTags(DcmDataset* dataSet) {
   cond = dataSet->putAndInsertOFStringArray(DCM_ImageOrientationSlide,
                                             "0\\-1\\0\\-1\\0\\0");
   if (cond.bad()) return cond;
-  dataSet->putAndInsertUint16(DCM_RepresentativeFrameNumber, 0);
+  dataSet->putAndInsertUint16(DCM_RepresentativeFrameNumber, 1);
 
   return cond;
 }
 
-OFCondition DcmtkUtils::insertIds(const std::string& studyId, const std::string& seriesId,
-                      DcmDataset* dataSet) {
+OFCondition DcmtkUtils::insertIds(const std::string& studyId,
+                                  const std::string& seriesId,
+                                  DcmDataset* dataSet) {
   char instanceUidGenerated[100];
   dcmGenerateUniqueIdentifier(instanceUidGenerated, SITE_INSTANCE_UID_ROOT);
   OFCondition cond = dataSet->putAndInsertOFStringArray(DCM_SOPInstanceUID,
@@ -331,11 +332,11 @@ OFCondition DcmtkUtils::insertIds(const std::string& studyId, const std::string&
 }
 
 OFCondition DcmtkUtils::insertBaseImageTags(const std::string& imageName,
-                                const int64_t imageHeight,
-                                const int64_t imageWidth,
-                                const double firstLevelWidthMm,
-                                const double firstLevelHeightMm,
-                                DcmDataset* dataSet) {
+                                            const int64_t imageHeight,
+                                            const int64_t imageWidth,
+                                            const double firstLevelWidthMm,
+                                            const double firstLevelHeightMm,
+                                            DcmDataset* dataSet) {
   OFCondition cond = dataSet->putAndInsertOFStringArray(DCM_SeriesDescription,
                                                         imageName.c_str());
   if (cond.bad()) return cond;
@@ -352,14 +353,12 @@ OFCondition DcmtkUtils::insertBaseImageTags(const std::string& imageName,
   return cond;
 }
 
-OFCondition DcmtkUtils::insertMultiFrameTags(const DcmtkImgDataInfo& imgInfo,
-                                 const uint32_t numberOfFrames,
-                                 const uint32_t rowSize, const uint32_t row,
-                                 const uint32_t column, const int level,
-                                 const int batchNumber, const uint32_t offset,
-                                 const uint32_t totalNumberOfFrames,
-                                 const bool tiled, const std::string& seriesId,
-                                 DcmDataset* dataSet) {
+OFCondition DcmtkUtils::insertMultiFrameTags(
+    const DcmtkImgDataInfo& imgInfo, const uint32_t numberOfFrames,
+    const uint32_t rowSize, const uint32_t row, const uint32_t column,
+    const int level, const int batchNumber, const uint32_t offset,
+    const uint32_t totalNumberOfFrames, const bool tiled,
+    const std::string& seriesId, DcmDataset* dataSet) {
   unsigned int concatenationTotalNumber;
 
   if (totalNumberOfFrames - offset == numberOfFrames) {
