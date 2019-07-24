@@ -12,8 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-wget https://raw.githubusercontent.com/google/styleguide/gh-pages/cpplint/cpplint.py 2> /dev/null;
-python ./cpplint.py ./src/*
-if [ $? -eq 1 ]; then
+#method to check folder
+checkFolder () {
+  python ./cpplint.py --root ./ ./$1/* 
+  if [ $? -eq 1 ]; then
     exit 1;
-fi
+  fi
+}
+
+wget https://raw.githubusercontent.com/google/styleguide/gh-pages/cpplint/cpplint.py 2> /dev/null;
+
+checkFolder ./src
+checkFolder ./tests
