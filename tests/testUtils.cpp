@@ -12,23 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_DCMTAGS_H_
-#define SRC_DCMTAGS_H_
-#include <dcmtk/dcmdata/dcdatset.h>
-#include <dcmtk/dcmdata/dcdeftag.h>
-#include <dcmtk/dcmdata/dcsequen.h>
-#include <string>
+#include "tests/testUtils.h"
 
-// Parses Json file with DICOM tags and populates DcmDataset with it
-class DcmTags {
- public:
-  DcmTags();
-  void readJsonFile(std::string fileName);
-  void readInputStream(std::istream& inputStream);
-  void populateDataset(DcmDataset* dataset);
-
- private:
-  DcmItem dataset_;
-};
-
-#endif  // SRC_DCMTAGS_H_
+DcmElement* findElement(DcmItem* dataSet, const DcmTagKey& tag) {
+  DcmElement* element;
+  if (dataSet->findAndGetElement(tag, element).good()) {
+    return element;
+  }
+  return nullptr;
+}
