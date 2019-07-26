@@ -67,6 +67,7 @@ class DcmFileDraft {
   ~DcmFileDraft();
 
   void saveFile();
+  void write(DcmOutputStream* outStream);
 
  private:
   std::vector<std::unique_ptr<Frame> > framesData_;
