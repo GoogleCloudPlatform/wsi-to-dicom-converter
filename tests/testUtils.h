@@ -19,10 +19,13 @@
 #include <dcmtk/dcmdata/dcsequen.h>
 #include <dcmtk/dcmdata/dcuid.h>
 #include <cstdint>
+#include <string>
 #include "src/enums.h"
 
 // Performs search of sub elemenet in DcmItem by DcmTagKey
 // returns nullprt if tag is not present in sub elemenets
 DcmElement* findElement(DcmItem* dataSet, const DcmTagKey& tag);
 
+const char testPath[] = "../tests/";
+const char tiffFileName[] = "../tests/CMU-1-Small-Region.svs";
 #endif  // TESTS_TESTUTILS_H_
