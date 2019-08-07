@@ -16,10 +16,12 @@
 #include <dcmtk/dcmdata/dcdeftag.h>
 #include <dcmtk/dcmdata/dcdict.h>
 #include <dcmtk/dcmdata/dcfilefo.h>
+#include <dcmtk/dcmdata/dcostrmf.h>
 #include <dcmtk/dcmdata/dcpixseq.h>
 #include <dcmtk/dcmdata/dcpxitem.h>
 #include <dcmtk/dcmdata/dcuid.h>
 #include <dcmtk/dcmdata/dcvrat.h>
+#include <dcmtk/dcmdata/dcwcache.h>
 #include <dcmtk/dcmdata/libi2d/i2d.h>
 #include <dcmtk/dcmdata/libi2d/i2doutpl.h>
 #include <dcmtk/dcmdata/libi2d/i2dplsc.h>
@@ -404,32 +406,28 @@ OFCondition DcmtkUtils::insertMultiFrameTags(
 }
 
 OFCondition DcmtkUtils::startConversion(
-    OFString outputFileName, int64_t imageHeight, int64_t imageWidth,
-    uint32_t rowSize, std::string studyId, std::string seriesId,
-    std::string imageName, std::unique_ptr<DcmPixelData> pixelData,
+    int64_t imageHeight, int64_t imageWidth, uint32_t rowSize,
+    const std::string& studyId, const std::string& seriesId,
+    const std::string& imageName, std::unique_ptr<DcmPixelData> pixelData,
     const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
-    uint32_t column, int level, int batchNumber, unsigned int offset,
-    uint32_t totalNumberOfFrames, bool tiled) {
-  return startConversion(outputFileName, imageHeight, imageWidth, rowSize,
-                         studyId, seriesId, imageName, std::move(pixelData),
-                         imgInfo, numberOfFrames, row, column, level,
-                         batchNumber, offset, totalNumberOfFrames, tiled,
-                         nullptr, 0.0, 0.0);
+    uint32_t column, int level, int batchNumber, uint32_t offset,
+    uint32_t totalNumberOfFrames, bool tiled, DcmOutputStream* outStream) {
+  return startConversion(imageHeight, imageWidth, rowSize, studyId, seriesId,
+                         imageName, std::move(pixelData), imgInfo,
+                         numberOfFrames, row, column, level, batchNumber,
+                         offset, totalNumberOfFrames, tiled, nullptr, 0.0, 0.0,
+                         outStream);
 }
 
 OFCondition DcmtkUtils::startConversion(
-    OFString outputFileName, int64_t imageHeight, int64_t imageWidth,
-    uint32_t rowSize, std::string studyId, std::string seriesId,
-    std::string imageName, std::unique_ptr<DcmPixelData> pixelData,
+    int64_t imageHeight, int64_t imageWidth, uint32_t rowSize,
+    const std::string& studyId, const std::string& seriesId,
+    const std::string& imageName, std::unique_ptr<DcmPixelData> pixelData,
     const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
     uint32_t column, int level, int batchNumber, unsigned int offset,
     uint32_t totalNumberOfFrames, bool tiled, DcmTags* additionalTags,
-    double firstLevelWidthMm, double firstLevelHeightMm) {
-  if (outputFileName.empty()) {
-    return EC_IllegalCall;
-  }
-
-  OFString outputFile = outputFileName;
+    double firstLevelWidthMm, double firstLevelHeightMm,
+    DcmOutputStream* outStream) {
   E_GrpLenEncoding grpLenEncoding = EGL_recalcGL;
   E_EncodingType encodingType = EET_ExplicitLength;
   E_PaddingEncoding paddingEncoding = EPD_noChange;
@@ -446,15 +444,20 @@ OFCondition DcmtkUtils::startConversion(
       firstLevelWidthMm, firstLevelHeightMm, resultObject.get());
 
   DcmFileFormat dcmFileFormat(resultObject.get());
-  cond = dcmFileFormat.saveFile(outputFile.c_str(), imgInfo.transSyn,
-                                encodingType, grpLenEncoding, paddingEncoding,
-                                OFstatic_cast(Uint32, filepad),
-                                OFstatic_cast(Uint32, itempad), writeMode);
+
+  DcmWriteCache wcache;
+  cond = outStream->status();
   if (cond.good()) {
-    BOOST_LOG_TRIVIAL(info) << outputFile.c_str() << " is created";
-  } else {
-    BOOST_LOG_TRIVIAL(error)
-        << "error" << outputFile.c_str() << ": " << cond.text();
+    dcmFileFormat.transferInit();
+    cond = dcmFileFormat.write(*outStream, imgInfo.transSyn, encodingType,
+                               &wcache, grpLenEncoding, paddingEncoding,
+                               OFstatic_cast(Uint32, filepad),
+                               OFstatic_cast(Uint32, itempad), 0, writeMode);
+    dcmFileFormat.transferEnd();
+  }
+  if (cond.bad()) {
+    BOOST_LOG_TRIVIAL(error) << "error"
+                             << ": " << cond.text();
   }
   return cond;
 }
