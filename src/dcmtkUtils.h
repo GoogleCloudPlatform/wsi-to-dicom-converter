@@ -51,22 +51,23 @@ class DcmtkUtils {
   // firstLevelWidthMm, firstLevelHeightMm - physical size
   // of first level
   static OFCondition startConversion(
-      OFString outputFileName, int64_t imageHeight, int64_t imageWidth,
-      uint32_t rowSize, std::string studyId, std::string seriesId,
-      std::string imageName, std::unique_ptr<DcmPixelData> pixelData,
+      int64_t imageHeight, int64_t imageWidth, uint32_t rowSize,
+      const std::string& studyId, const std::string& seriesId,
+      const std::string& imageName, std::unique_ptr<DcmPixelData> pixelData,
       const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
-      uint32_t column, int level, int batchNumber, uint32_t offset,
+      uint32_t column, int level, int batchNumber, unsigned int offset,
       uint32_t totalNumberOfFrames, bool tiled, DcmTags* additionalTags,
-      double firstLevelWidthMm, double firstLevelHeightMm);
+      double firstLevelWidthMm, double firstLevelHeightMm,
+      DcmOutputStream* outStream);
 
   // Wrapper for startConversion without additional parameters.
   static OFCondition startConversion(
-      OFString outputFileName, int64_t imageHeight, int64_t imageWidth,
-      uint32_t rowSize, std::string studyId, std::string seriesId,
-      std::string imageName, std::unique_ptr<DcmPixelData> pixelData,
+      int64_t imageHeight, int64_t imageWidth, uint32_t rowSize,
+      const std::string& studyId, const std::string& seriesId,
+      const std::string& imageName, std::unique_ptr<DcmPixelData> pixelData,
       const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
       uint32_t column, int level, int batchNumber, uint32_t offset,
-      uint32_t totalNumberOfFrames, bool tiled);
+      uint32_t totalNumberOfFrames, bool tiled, DcmOutputStream* outStream);
 
   // Generates DICOM file object.
   static OFCondition populateDataSet(

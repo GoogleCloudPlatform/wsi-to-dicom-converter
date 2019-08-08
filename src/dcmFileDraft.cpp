@@ -16,6 +16,7 @@
 #include <dcmtk/dcmdata/dcdeftag.h>
 #include <dcmtk/dcmdata/dcdict.h>
 #include <dcmtk/dcmdata/dcfilefo.h>
+#include <dcmtk/dcmdata/dcostrmf.h>
 #include <dcmtk/dcmdata/dcpixseq.h>
 #include <dcmtk/dcmdata/dcpxitem.h>
 #include <dcmtk/dcmdata/dcuid.h>
@@ -68,7 +69,7 @@ DcmFileDraft::DcmFileDraft(std::vector<std::unique_ptr<Frame> > framesData,
 }
 DcmFileDraft::~DcmFileDraft() {}
 
-void DcmFileDraft::saveFile() {
+void DcmFileDraft::write(DcmOutputStream* outStream) {
   std::unique_ptr<DcmPixelData> pixelData =
       std::make_unique<DcmPixelData>(DCM_PixelData);
   DcmOffsetList offsetList;
@@ -122,18 +123,23 @@ void DcmFileDraft::saveFile() {
   imgInfo.bitsStored = 8;
   imgInfo.highBit = 7;
   imgInfo.pixelRepr = 0;
+  uint32_t rowSize = 1 + ((imageWidth_ - 1) / frameWidth_);
+  uint32_t totalNumberOfFrames =
+      rowSize * (1 + ((imageHeight_ - 1) / frameHeight_));
+  DcmtkUtils::startConversion(
+      imageHeight_, imageWidth_, rowSize, studyId_, seriesId_, imageName_,
+      std::move(pixelData), imgInfo, batchSize_, row_, column_, level_,
+      batchNumber_, numberOfFrames_ - batchSize_, totalNumberOfFrames, tiled_,
+      additionalTags_, firstLevelWidthMm_, firstLevelHeightMm_, outStream);
+}
+void DcmFileDraft::saveFile() {
   OFString fileName =
       OFString((outputFileMask_ + "/level-" + std::to_string(level_) +
                 "-frames-" + std::to_string(numberOfFrames_ - batchSize_) +
                 "-" + std::to_string(numberOfFrames_) + ".dcm")
                    .c_str());
-  uint32_t rowSize = 1 + ((imageWidth_ - 1) / frameWidth_);
-  uint32_t totalNumberOfFrames =
-      rowSize * (1 + ((imageHeight_ - 1) / frameHeight_));
-  DcmtkUtils::startConversion(
-      fileName, imageHeight_, imageWidth_, rowSize, studyId_, seriesId_,
-      imageName_, std::move(pixelData), imgInfo, batchSize_, row_, column_,
-      level_, batchNumber_, numberOfFrames_ - batchSize_, totalNumberOfFrames,
-      tiled_, additionalTags_, firstLevelWidthMm_, firstLevelHeightMm_);
+  std::unique_ptr<DcmOutputFileStream> fileStream =
+      std::make_unique<DcmOutputFileStream>(fileName);
+  write(fileStream.get());
 }
 }  // namespace wsiToDicomConverter
