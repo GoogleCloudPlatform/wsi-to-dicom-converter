@@ -30,7 +30,7 @@ bash ./cloud_build/ubuntuBuild.sh
 #installing dcmtk tools
 apt-get install wget dcmtk -y
 
-fileName=CMU-1-Small-Region.svs
+fileName=./tests/CMU-1-Small-Region.svs
 
 #test - generate jpeg2000 DICOM, read by dcmtk and check with expected tags
 ./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test1 --levels 9 --startOn 8 --compression jpeg2000

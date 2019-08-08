@@ -1,6 +1,4 @@
 steps:
-- name: 'gcr.io/cloud-builders/gsutil'
-  args: ['cp', 'gs://gcp-healthcare-oss-test-testdata/OpenSlide/CMU-1-Small-Region.svs', 'CMU-1-Small-Region.svs']
 - name: 'ubuntu'
   args: ['bash', './endToEnd/endToEndTest.sh']
 timeout: 1800s
