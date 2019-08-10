@@ -23,8 +23,11 @@
 class DcmTags {
  public:
   DcmTags();
+  // Reads json data from file
   void readJsonFile(std::string fileName);
-  void readInputStream(std::istream& inputStream);
+  // Reads json data inputstream
+  void readInputStream(std::istream* inputStream);
+  // Populates dataset with elements parsed from json
   void populateDataset(DcmDataset* dataset);
 
  private:

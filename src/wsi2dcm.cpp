@@ -15,21 +15,23 @@
 #include "src/wsi2dcm.h"
 #include "wsiToDcm.h"
 
-int wsi2dcm(char *inputFile, char *outputFileMask, int64_t frameSizeX,
-            int64_t frameSizeY, char *compression, int quality,
-            int startOnLevel, int stopOnLevel, char *imageName, char *studyId,
-            char *seriesId, int retileLevels, double *downsamples, bool tiled,
-            int batchLimit, int threads, bool debug) {
+int wsi2dcm(const char *inputFile, const char *outputFileMask,
+            int64_t frameSizeX, int64_t frameSizeY, const char *compression,
+            int quality, int startOnLevel, int stopOnLevel,
+            const char *imageName, const char *studyId, const char *seriesId,
+            int retileLevels, double *downsamples, bool tiled, int batchLimit,
+            int threads, bool debug) {
   return wsiToDicomConverter::WsiToDcm::wsi2dcm(
       inputFile, outputFileMask, frameSizeX, frameSizeY, compression, quality,
       startOnLevel, stopOnLevel, imageName, studyId, seriesId, retileLevels,
       downsamples, tiled, batchLimit, threads, debug);
 }
 
-int wsi2dcmJson(char *inputFile, char *outputFileMask, int64_t frameSizeX,
-                int64_t frameSizeY, char *compression, int quality,
-                int startOnLevel, int stopOnLevel, char *imageName,
-                char *studyId, char *seriesId, char *jsonFile, int retileLevels,
+int wsi2dcmJson(const char *inputFile, const char *outputFileMask,
+                int64_t frameSizeX, int64_t frameSizeY, const char *compression,
+                int quality, int startOnLevel, int stopOnLevel,
+                const char *imageName, const char *studyId,
+                const char *seriesId, const char *jsonFile, int retileLevels,
                 double *downsamples, bool tiled, int batchLimit, int threads,
                 bool debug) {
   return wsiToDicomConverter::WsiToDcm::wsi2dcm(

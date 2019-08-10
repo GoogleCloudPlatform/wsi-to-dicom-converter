@@ -27,7 +27,7 @@ TEST(readJson, singleTag) {
   jsonStream << "{\"00020002\":{\"vr\":\"UI\",\"Value\":[\"" + mediaStorage +
                     "\"]}}";
 
-  tags.readInputStream(jsonStream);
+  tags.readInputStream(&jsonStream);
   DcmDataset dataset;
   tags.populateDataset(&dataset);
   char* stringValue;
@@ -44,7 +44,7 @@ TEST(readJson, sequnceTag) {
                 "\"UI\",\"Value\":[\"" +
                     dimension + "\"]}}]}}";
 
-  tags.readInputStream(jsonStream);
+  tags.readInputStream(&jsonStream);
   DcmDataset dataset;
   tags.populateDataset(&dataset);
   DcmSequenceOfItems* dimensionOrganization =
@@ -62,7 +62,7 @@ TEST(readJson, attributeTag) {
   DcmTags tags;
   std::stringstream jsonStream;
   jsonStream << "{\"00209165\":{\"vr\":\"AT\",\"Value\":[\"0048021E\"]}}";
-  tags.readInputStream(jsonStream);
+  tags.readInputStream(&jsonStream);
   DcmDataset dataset;
   tags.populateDataset(&dataset);
   DcmAttributeTag* dimensionOrganization = reinterpret_cast<DcmAttributeTag*>(
@@ -77,7 +77,7 @@ TEST(readJson, incorrectJson) {
   DcmTags tags;
   std::stringstream jsonStream;
   jsonStream << "}";
-  tags.readInputStream(jsonStream);
+  tags.readInputStream(&jsonStream);
   DcmDataset dataset;
   tags.populateDataset(&dataset);
   ASSERT_EQ(nullptr, dataset.getElement(0));
