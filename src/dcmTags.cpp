@@ -130,14 +130,14 @@ DcmItem* parseJsonTag(Json::Value jsonNode, DcmItem* dcmItem) {
 
 void DcmTags::readJsonFile(std::string fileName) {
   std::ifstream fileStream(fileName);
-  readInputStream(fileStream);
+  readInputStream(&fileStream);
 }
 
-void DcmTags::readInputStream(std::istream& inputStream) {
+void DcmTags::readInputStream(std::istream* inputStream) {
   Json::CharReaderBuilder charReader;
   Json::Value jsonRoot;
   std::string errors;
-  if (parseFromStream(charReader, inputStream, &jsonRoot, &errors)) {
+  if (parseFromStream(charReader, *inputStream, &jsonRoot, &errors)) {
     try {
       parseJsonTag(jsonRoot, &dataset_);
     } catch (const std::exception& e) {

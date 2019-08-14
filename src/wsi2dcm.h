@@ -18,15 +18,36 @@
 extern "C" {
 #endif
 
-int wsi2dcm(char* inputFile, char* outputFileMask, int64_t frameSizeX,
-            int64_t frameSizeY, char* compression, int quality,
-            int startOnLevel, int stopOnLevel, char* imageName, char* studyId,
-            char* seriesId, int retileLevels, double* downsamples, bool tiled,
-            int batchLimit, int threads, bool debug);
-int wsi2dcmJson(char* inputFile, char* outputFileMask, int64_t frameSizeX,
-                int64_t frameSizeY, char* compression, int quality,
-                int startOnLevel, int stopOnLevel, char* imageName,
-                char* studyId, char* seriesId, char* jsonFile, int retileLevels,
+// Performs file checks and generation of tasks
+// for generation of frames and DICOM files
+// inputFile - wsi input
+// outputFileMask - path to save generated files
+// compression - jpeg, jpeg2000, raw
+// startOnLevel, stopOnLevel - limitation which levels to generate
+// retileLevels - number of levels, levels == 0 means number of
+//          levels will be readed from wsi file
+// imageName, studyId, seriesId - required DICOM metadata
+// downsamples - for each level, downsample is size
+//              factor for each level
+// tiled - frame organizationtype
+//           true:TILED_FULL
+//           false:TILED_SPARSE
+// batchLimit - maximum frames in one file
+int wsi2dcm(const char* inputFile, const char* outputFileMask,
+            int64_t frameSizeX, int64_t frameSizeY, const char* compression,
+            int quality, int startOnLevel, int stopOnLevel,
+            const char* imageName, const char* studyId, const char* seriesId,
+            int retileLevels, double* downsamples, bool tiled, int batchLimit,
+            int threads, bool debug);
+
+// Performs file checks and generation of tasks
+// for generation of frames and DICOM files
+// jsonFile - json file with additional DICOM metadata
+int wsi2dcmJson(const char* inputFile, const char* outputFileMask,
+                int64_t frameSizeX, int64_t frameSizeY, const char* compression,
+                int quality, int startOnLevel, int stopOnLevel,
+                const char* imageName, const char* studyId,
+                const char* seriesId, const char* jsonFile, int retileLevels,
                 double* downsamples, bool tiled, int batchLimit, int threads,
                 bool debug);
 #ifdef __cplusplus

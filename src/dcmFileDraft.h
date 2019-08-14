@@ -29,6 +29,7 @@
 #include "src/frame.h"
 
 namespace wsiToDicomConverter {
+
 // Represents single DICOM file with metadata
 class DcmFileDraft {
  public:
@@ -56,13 +57,14 @@ class DcmFileDraft {
   // of first level
 
   DcmFileDraft(std::vector<std::unique_ptr<Frame> > framesData,
-               std::string outputFileMask, uint32_t numberOfFrames,
+               const std::string& outputFileMask, uint32_t numberOfFrames,
                int64_t imageWidth, int64_t imageHeight, int32_t level,
                int32_t batchNumber, uint32_t batch, uint32_t row,
                uint32_t column, int64_t frameWidth, int64_t frameHeight,
-               std::string studyId, std::string seriesId, std::string imageName,
-               DCM_Compression compression, bool tiled, DcmTags* additionalTags,
-               double firstLevelWidthMm, double firstLevelHeightMm);
+               const std::string& studyId, const std::string& seriesId,
+               const std::string& imageName, DCM_Compression compression,
+               bool tiled, DcmTags* additionalTags, double firstLevelWidthMm,
+               double firstLevelHeightMm);
 
   ~DcmFileDraft();
 

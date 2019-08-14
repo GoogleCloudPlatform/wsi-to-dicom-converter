@@ -18,10 +18,13 @@
 #include <memory>
 #include "src/compressor.h"
 
+// Implementation of Compressor for jpeg
 class JpegCompression : public Compressor {
  public:
   explicit JpegCompression(const int quality);
   ~JpegCompression();
+
+  // Gets Raw data from rgb view and performs compression on it
   std::unique_ptr<uint8_t[]> compress(const boost::gil::rgb8_view_t& view,
                                       size_t* size);
 
