@@ -1,34 +1,43 @@
 # WSI to DICOM Converter
 
-This repository contains a tool that provides conversion of whole slide images (WSIs) to DICOM. This tool relies on [OpenSlide](https://openslide.org) to read the underlying whole slide images, which supports a variety of different file formats.
+This repository contains a tool that converts whole slide images (WSIs) to DICOM. To read the underlying whole slide images (WSIs), this tool relies on [OpenSlide](https://openslide.org), which supports a variety of file formats.
 
 ## Quickstart
 
-The easiest way to get started is to check out the [Releases](/releases) tab to download the latest release. There you can download an installer for your operating system. For example, if you're running on a Debian based system, download the `wsi_x.y.z.deb` file and run:
+To download the latest release, on the [Releases](/releases) tab, download the installer for your operating system and then run it. For example, if you're running on a Debian-based system, download the `wsi_x.y.z.deb` file and then run:
 
 ```
 sudo apt install ./wsi_x.y.z.deb
 ```
 
-Note: if you get an error about missing shared libraries run `sudo ldconfig` or make sure `/usr/local/lib` is in your `LD_LIBRARY_PATH`.
+Note: if you get an error about missing shared libraries, run `sudo ldconfig` or make sure that `/usr/local/lib` is in your `LD_LIBRARY_PATH`.
 
-If an installer isn't availble for you operating system, please see the instructions for compiling from source.
+If an installer isn't available for you operating system, see [Compiling from source](#compiling_from_source).
 
-Then to convert a file you can run:
+After you have installed the WSI to DICOM converter, to convert a file, run the following command:
 
 ```
 wsi2dcm --input <wsiFile> --outFolder <folder for generated files> --seriesDescription <text description>
 ```
 
-Some test data is freely available from [OpenSlide](http://openslide.cs.cmu.edu/download/openslide-testdata/).
+Test data is freely available from [OpenSlide](http://openslide.cs.cmu.edu/download/openslide-testdata/).
 
-To see all available options run: `wsi2dcm --help`.
+To see all available options, run: `wsi2dcm --help`.
 
 ## Compiling from source
 
-To get the source either download from the [Releases](/releases) tab or checkout the repo directly.
+If you're using Ubuntu, run the following command to download the dependencies and build the tool:
 
-Dependencies:
+
+```shell
+sudo ./cloud_build/ubuntuBuild.sh
+```
+
+Otherwise, follow these steps:
+
+1. Download the source from the [Releases](/releases) tab or check out the repo.
+2. Make sure that you have the following dependencies installed:
+
   - g++ >=8
   - cmake >=3
   - boost >=1.69: https://www.boost.org/users/history/version_1_69_0.html
@@ -38,14 +47,7 @@ Dependencies:
   - openjpeg >= 2.3.0
   - jsoncpp >= 1.8.0
 
-
-If you're using Ubuntu then there is a script to help download dependencies and build the tool:
-
-```shell
-sudo ./cloud_build/ubuntuBuild.sh
-```
-
-Otherwise, make sure you've downloaded and installed the required dependencies and then run:
+3. Run the following commands:
 
 ```shell
 mkdir build
