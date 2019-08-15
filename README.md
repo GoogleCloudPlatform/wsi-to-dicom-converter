@@ -12,7 +12,7 @@ sudo apt install ./wsi_x.y.z.deb
 
 Note: if you get an error about missing shared libraries, run `sudo ldconfig` or make sure that `/usr/local/lib` is in your `LD_LIBRARY_PATH`.
 
-If an installer isn't available for you operating system, see [Compiling from source](#compiling_from_source).
+If an installer isn't available for your operating system, see [Compiling from source](#compiling-from-source).
 
 After you have installed the WSI to DICOM converter, to convert a file, run the following command:
 
