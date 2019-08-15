@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/wsi2dcm.h"
+#include "src/cWrapper.h"
 #include "wsiToDcm.h"
 
 int wsi2dcm(const char *inputFile, const char *outputFileMask,

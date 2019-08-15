@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include <cstdint>
-#ifndef SRC_WSI2DCM_H_
-#define SRC_WSI2DCM_H_
+#ifndef SRC_CWRAPPER_H_
+#define SRC_CWRAPPER_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -54,4 +54,4 @@ int wsi2dcmJson(const char* inputFile, const char* outputFileMask,
 }
 #endif
 
-#endif  // SRC_WSI2DCM_H_
+#endif  // SRC_CWRAPPER_H_
