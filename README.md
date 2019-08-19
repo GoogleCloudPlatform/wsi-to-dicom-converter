@@ -4,7 +4,7 @@ This repository contains a tool that converts whole slide images (WSIs) to DICOM
 
 ## Quickstart
 
-To download the latest release, on the [Releases](/releases) tab, download the installer for your operating system and then run it. For example, if you're running on a Debian-based system, download the `wsi_x.y.z.deb` file and then run:
+To download the latest release, on the Releases tab, download the installer for your operating system and then run it. For example, if you're running on a Debian-based system, download the `wsi_x.y.z.deb` file and then run:
 
 ```
 sudo apt install ./wsi_x.y.z.deb
@@ -35,7 +35,7 @@ sudo ./cloud_build/ubuntuBuild.sh
 
 Otherwise, follow these steps:
 
-1. Download the source from the [Releases](/releases) tab or check out the repo.
+1. Download the source from the Releases tab or check out the repo.
 2. Make sure that you have the following dependencies installed:
 
   - g++ >=8
