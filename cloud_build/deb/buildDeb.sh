@@ -13,10 +13,10 @@
 # limitations under the License.
 version=${1:1}
 #create deb package folder stucture
-mkdir -p cloud_build/deb/wsi2dcm/usr/local/bin
-mkdir -p cloud_build/deb/wsi2dcm/usr/local/lib
-cp build/wsi2dcm  cloud_build/deb/wsi2dcm/usr/local/bin
-cp build/libwsi2dcm.so cloud_build/deb/wsi2dcm/usr/local/lib
+mkdir -p cloud_build/deb/wsi2dcm/usr/bin
+mkdir -p cloud_build/deb/wsi2dcm/usr/lib
+cp build/wsi2dcm  cloud_build/deb/wsi2dcm/usr/bin
+cp build/libwsi2dcm.so cloud_build/deb/wsi2dcm/usr/lib
 #set version
 sed -i "s/Version:/Version: $version/g" cloud_build/deb/wsi2dcm/DEBIAN/control
 mv cloud_build/deb/wsi2dcm "cloud_build/deb/wsi2dcm_$version"
