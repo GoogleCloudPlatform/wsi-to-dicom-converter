@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if (STATIC_BUILD)
+if (STATIC_BUILD OR APPLE)
   set(JSONCPP_SOURCES_DIR ${CMAKE_BINARY_DIR}/jsoncpp-0.10.7/src/lib_json)
 
   include(CheckIncludeFileCXX)

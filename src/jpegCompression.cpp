@@ -39,7 +39,7 @@ std::unique_ptr<uint8_t[]> JpegCompression::compress(
       channel_t, typename boost::gil::color_space_type<
                      boost::gil::rgb8_view_t>::type>::_color_space;
 
-  uint64_t outlen = 0;
+  size_t outlen = 0;
   unsigned char *imgd = 0;
   jpeg_mem_dest(&_cinfo, &imgd, &outlen);
   jpeg_set_defaults(&_cinfo);

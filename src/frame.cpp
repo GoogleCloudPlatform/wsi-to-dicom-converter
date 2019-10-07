@@ -19,6 +19,7 @@
 #include <boost/gil/extension/numeric/sampler.hpp>
 #include <boost/gil/typedefs.hpp>
 #include <boost/log/trivial.hpp>
+#include <stdio.h>
 #include "src/jpeg2000Compression.h"
 #include "src/jpegCompression.h"
 #include "src/rawCompression.h"
@@ -80,7 +81,7 @@ void Frame::sliceFrame() {
     BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
   }
   boost::gil::rgba8c_view_t gil = boost::gil::interleaved_view(
-      (uint64_t)frameWidhtDownsampled_, (uint64_t)frameHeightDownsampled_,
+      (size_t)frameWidhtDownsampled_, (size_t)frameHeightDownsampled_,
       (const boost::gil::rgba8c_pixel_t *)buf, frameWidhtDownsampled_ * 4);
 
   boost::gil::rgba8_image_t newFrame(frameWidht_, frameHeight_);

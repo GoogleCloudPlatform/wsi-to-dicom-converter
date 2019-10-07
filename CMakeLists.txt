@@ -45,6 +45,12 @@ add_library(wsi2dcm SHARED
     ${DICOMIZER_SOURCES}
     ${JSONCPP_SOURCES}
  )
+if(APPLE)
+    set(CMAKE_MACOSX_RPATH 1)
+endif()
+if(STATIC_BUILD)
+    list(APPEND STATIC_LIBS glib-2.0 png jpeg gthread-2.0 gio-2.0 gobject-2.0 tiff z m lzma xml2 cairo sqlite3 gdk_pixbuf-2.0 -static-libgcc -static-libstdc++)
+endif()
 set_target_properties(wsi2dcm PROPERTIES
                         C_STANDARD 11
                         PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/src/wsi2dcm.h"
@@ -53,7 +59,7 @@ set_target_properties(wsi2dcmCli PROPERTIES
                         OUTPUT_NAME wsi2dcm
                       )
 
-target_link_libraries(wsi2dcm pthread glib-2.0 png jpeg gthread-2.0 gio-2.0 gobject-2.0 tiff rt z m lzma xml2 cairo sqlite3 gdk_pixbuf-2.0 -static-libgcc -static-libstdc++)
+target_link_libraries(wsi2dcm pthread ${STATIC_LIBS} z m lzma xml2)
 target_link_libraries(wsi2dcmCli wsi2dcm)
 
 if (TESTS_BUILD)

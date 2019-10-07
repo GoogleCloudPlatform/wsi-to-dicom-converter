@@ -78,7 +78,7 @@ std::unique_ptr<uint8_t[]> Jpeg2000Compression::writeToMemory(
   cio = opj_stream_default_create(0);
   opj_stream_set_user_data(cio, this, {});
   opj_stream_set_write_function(
-      cio, [](void* buffer, uint64_t size, void* userData) {
+      cio, [](void* buffer, OPJ_SIZE_T size, void* userData) {
         Jpeg2000Compression* jpeg2000Compression =
             reinterpret_cast<Jpeg2000Compression*>(userData);
         jpeg2000Compression->buffer_ = reinterpret_cast<uint8_t*>(buffer);

@@ -151,7 +151,7 @@ void DcmTags::readInputStream(std::istream* inputStream) {
 }
 
 void DcmTags::populateDataset(DcmDataset* dataset) {
-  uint64_t elementIndex = 0;
+  size_t elementIndex = 0;
   DcmElement* element;
   element = dataset_.getElement(elementIndex);
   while (element != nullptr) {
