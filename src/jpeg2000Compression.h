@@ -38,7 +38,7 @@ class Jpeg2000Compression : public RawCompression {
 
  private:
   uint8_t* buffer_;
-  uint64_t size_;
+  size_t size_;
 };
 
 #endif  // SRC_JPEG2000COMPRESSION_H_
