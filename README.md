@@ -4,13 +4,20 @@ This repository contains a tool that converts whole slide images (WSIs) to DICOM
 
 ## Quickstart
 
+### Debian-based Linux
 To download the latest release, on the Releases tab, download the installer for your operating system and then run it. For example, if you're running on a Debian-based system, download the `wsi_x.y.z.deb` file and then run:
 
 ```
 sudo apt install ./wsi_x.y.z.deb
 ```
-
 Note: if you get an error about missing shared libraries, run `sudo ldconfig` or make sure that `/usr/local/lib` is in your `LD_LIBRARY_PATH`.
+
+### MacOS
+
+```
+brew install wsi2dcm.rb
+```
+
 
 If an installer isn't available for your operating system, see [Compiling from source](#compiling-from-source).
 
