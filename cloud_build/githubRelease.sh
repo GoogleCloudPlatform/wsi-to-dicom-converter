@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+apt-get install wget -y
 accessToken=$ACCESS_TOKEN
 repositoryString=$1
 tagName=$2
@@ -24,6 +25,8 @@ then
     githubUser="GoogleCloudPlatform"
     githubRepo=$1
 fi
+zipName="$tagName.zip"
+zipUrl="https://github.com/$githubUser/$githubRepo/archive/$zipName"
 
 #method to upload files to github release page
 upload () {
@@ -40,6 +43,7 @@ upload () {
 echo "release: $tagName"
 echo "user: $githubUser"
 echo "repo: $githubRepo"
+echo "zipUrl: $zipUrl"
 
 # request to create release
 echo {\"tag_name\": \"$tagName\",\"name\": \"$tagName\",\"body\": \"$tagName\"} > /workspace/request.json
@@ -50,6 +54,16 @@ if [ $responseCode -ne 201   ]; then
     exit 1;
 fi
 
+wget $zipUrl
+zipSha=$(sha256sum $zipName)
+homebrewFile="wsi2dcm.rb"
+homebrewPath="/workspace/cloud_build"
+homebrewFullPath="$homebrewPath/$homebrewFile"
+zipUrl=$(echo "$zipUrl" | sed 's/\//\\\//g')
+sed -i "s/version \"\"/version \"$version\"/g" $homebrewFullPath
+sed -i "s/url \"\"/url \"$zipUrl\"/g" $homebrewFullPath
+sed -i "s/sha256 \"\"/sha256 \"${zipSha:0:64}\"/g" $homebrewFullPath
+
 #get id of new release
 releaseId=$(grep -wm 1 "id" /workspace/response.json | grep -Eo "[[:digit:]]+")
 
@@ -58,3 +72,4 @@ upload /workspace/build wsi2dcm
 upload /workspace/build libwsi2dcm.so 
 upload /workspace/cloud_build/deb wsi2dcm_"$version".deb
 upload /workspace/cloud_build/rpm/RPMS/x86_64 wsi2dcm-"$version"-1.x86_64.rpm 
+upload $homebrewPath $homebrewFile
