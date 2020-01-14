@@ -21,9 +21,9 @@ int wsi2dcm(const char *inputFile, const char *outputFileMask,
             const char *imageName, const char *studyId, const char *seriesId,
             int retileLevels, double *downsamples, bool tiled, int batchLimit,
             int threads, bool debug) {
-  return wsiToDicomConverter::WsiToDcm::wsi2dcm(
+  return wsi2dcmJson(
       inputFile, outputFileMask, frameSizeX, frameSizeY, compression, quality,
-      startOnLevel, stopOnLevel, imageName, studyId, seriesId, retileLevels,
+      startOnLevel, stopOnLevel, imageName, studyId, seriesId, "", retileLevels,
       downsamples, tiled, batchLimit, threads, debug);
 }
 
@@ -34,8 +34,24 @@ int wsi2dcmJson(const char *inputFile, const char *outputFileMask,
                 const char *seriesId, const char *jsonFile, int retileLevels,
                 double *downsamples, bool tiled, int batchLimit, int threads,
                 bool debug) {
-  return wsiToDicomConverter::WsiToDcm::wsi2dcm(
-      inputFile, outputFileMask, frameSizeX, frameSizeY, compression, quality,
-      startOnLevel, stopOnLevel, imageName, studyId, seriesId, jsonFile,
-      retileLevels, downsamples, tiled, batchLimit, threads, debug);
+  wsiToDicomConverter::WsiRequest request;
+  request.inputFile = inputFile;
+  request.outputFileMask = outputFileMask;
+  request.frameSizeX = frameSizeX;
+  request.frameSizeY = frameSizeY;
+  request.compression = dcmCompressionFromString(compression);
+  request.quality = quality;
+  request.startOnLevel = startOnLevel;
+  request.stopOnLevel = stopOnLevel;
+  request.imageName = imageName;
+  request.studyId = studyId;
+  request.seriesId = seriesId;
+  request.jsonFile = jsonFile;
+  request.retileLevels = retileLevels;
+  request.downsamples = &downsamples[0];
+  request.tiled = tiled;
+  request.batchLimit = batchLimit;
+  request.threads = threads;
+  request.debug = debug;
+  return wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
 }

@@ -28,11 +28,23 @@
 #include "tests/testUtils.h"
 
 TEST(readTiff, simple) {
-    double downsample = 1.;
+  double downsample = 1.;
   std::string dcmFile = std::string(testPath) + "level-0-frames-0-30.dcm";
-  wsiToDicomConverter::WsiToDcm::wsi2dcm(
-      tiffFileName, testPath, 500, 500, "jpeg", 0, 0, -1, "image", "study",
-      "series", "", true, &downsample, false, 100, -1, false);
+  wsiToDicomConverter::WsiRequest request;
+  request.inputFile = tiffFileName;
+  request.outputFileMask = testPath;
+  request.frameSizeX = 500;
+  request.frameSizeY = 500;
+  request.startOnLevel = 0;
+  request.compression = dcmCompressionFromString("jpeg");
+  request.quality = 80;
+  request.imageName = "image";
+  request.studyId = "study";
+  request.seriesId = "series";
+  request.batchLimit = 100;
+  request.downsamples = &downsample;
+  request.debug = true;
+  wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
   ASSERT_TRUE(boost::filesystem::exists(dcmFile));
   DcmFileFormat dcmFileFormat;
   dcmFileFormat.loadFile(dcmFile.c_str());
@@ -46,9 +58,21 @@ TEST(readTiff, withJson) {
   std::string dcmFile = std::string(testPath) + "level-0-frames-0-1.dcm";
   std::string jsonFile = std::string(testPath) + "testDateTags.json";
   double downsample = 1.;
-  wsiToDicomConverter::WsiToDcm::wsi2dcm(
-      tiffFileName, testPath, 2220, 2967, "raw", 0, 0, -1, "image", "study",
-      "series", jsonFile, true, &downsample, false, 100, -1, false);
+  wsiToDicomConverter::WsiRequest request;
+  request.inputFile = tiffFileName;
+  request.outputFileMask = testPath;
+  request.frameSizeX = 2220;
+  request.frameSizeY = 2967;
+  request.compression = dcmCompressionFromString("raw");
+  request.quality = 80;
+  request.imageName = "image";
+  request.jsonFile = jsonFile;
+  request.studyId = "study";
+  request.seriesId = "series";
+  request.batchLimit = 100;
+  request.downsamples = &downsample;
+  request.debug = true;
+  wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
   ASSERT_TRUE(boost::filesystem::exists(dcmFile));
   DcmFileFormat dcmFileFormat;
   dcmFileFormat.loadFile(dcmFile.c_str());
@@ -65,11 +89,45 @@ TEST(readTiff, withJson) {
 TEST(readTiff, multiFile) {
   std::string dcmFile = std::string(testPath) + "level-0-frames-";
   double downsample = 1.;
-  wsiToDicomConverter::WsiToDcm::wsi2dcm(
-      tiffFileName, testPath, 500, 500, "jpeg2000", 0, 0, -1, "image", "study",
-      "series", "", true, &downsample, false, 10, -1, false);
+  wsiToDicomConverter::WsiRequest request;
+  request.inputFile = tiffFileName;
+  request.outputFileMask = testPath;
+  request.frameSizeX = 500;
+  request.frameSizeY = 500;
+  request.compression = dcmCompressionFromString("jpeg2000");
+  request.quality = 0;
+  request.imageName = "image";
+  request.studyId = "study";
+  request.seriesId = "series";
+  request.batchLimit = 10;
+  request.downsamples = &downsample;
+  request.debug = true;
+  wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
 
   ASSERT_TRUE(boost::filesystem::exists(dcmFile + "0-10.dcm"));
   ASSERT_TRUE(boost::filesystem::exists(dcmFile + "10-20.dcm"));
   ASSERT_TRUE(boost::filesystem::exists(dcmFile + "20-30.dcm"));
 }
+
+TEST(compressionString, jpeg) {
+    ASSERT_EQ(dcmCompressionFromString("jpeg"), JPEG);
+    ASSERT_EQ(dcmCompressionFromString("JPEG"), JPEG);
+}
+
+TEST(compressionString, jpeg2000) {
+    ASSERT_EQ(dcmCompressionFromString("jpeg2000"), JPEG2000);
+    ASSERT_EQ(dcmCompressionFromString("JPEG2000"), JPEG2000);
+}
+
+TEST(compressionString, none) {
+    ASSERT_EQ(dcmCompressionFromString("none"), RAW);
+    ASSERT_EQ(dcmCompressionFromString("raw"), RAW);
+}
+
+TEST(compressionString, unknown) {
+    ASSERT_EQ(dcmCompressionFromString("unknown"), UNKNOWN);
+    ASSERT_EQ(dcmCompressionFromString("random"), UNKNOWN);
+    ASSERT_EQ(dcmCompressionFromString("jpeg/"), UNKNOWN);
+    ASSERT_EQ(dcmCompressionFromString("jpeg2000."), UNKNOWN);
+}
+

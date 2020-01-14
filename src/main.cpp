@@ -39,6 +39,7 @@ int main(int argc, char *argv[]) {
   int batch;
   int threads;
   bool debug;
+  bool dropFirstRowAndColumn;
   std::vector<double> downsamples;
   downsamples.resize(1);
   bool sparse;
@@ -92,7 +93,12 @@ int main(int argc, char *argv[]) {
         programOptions::value<int>(&threads)->required()->default_value(-1),
         "number of threads")(
         "debug", programOptions::bool_switch(&debug)->default_value(false),
-        "debug messages");
+        "debug messages")(
+        "dropFirstRowAndColumn",
+        programOptions::bool_switch(
+        &dropFirstRowAndColumn)->default_value(false),
+        "start slicing from point (1,1) instead of (0,0) to avoid bug "
+        "\nhttps://github.com/openslide/openslide/issues/268");
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
     positionalOptions.add("outFolder", 1);
@@ -119,10 +125,27 @@ int main(int argc, char *argv[]) {
               << exception.what() << ", application will now exit" << std::endl;
     return ERROR_UNHANDLED_EXCEPTION;
   }
-  wsiToDicomConverter::WsiToDcm::wsi2dcm(
-      inputFile, outputFolder, tileHeight, tileWidth, compression, 80, start,
-      stop, seriesDescription, studyId, seriesId, jsonFile, levels,
-      &downsamples[0], !sparse, batch, threads, debug);
+  wsiToDicomConverter::WsiRequest request;
+  request.inputFile = inputFile;
+  request.outputFileMask = outputFolder;
+  request.frameSizeX = tileWidth;
+  request.frameSizeY = tileHeight;
+  request.compression = dcmCompressionFromString(compression);
+  request.quality = 80;
+  request.startOnLevel = start;
+  request.stopOnLevel = stop;
+  request.imageName = seriesDescription;
+  request.studyId = studyId;
+  request.seriesId = seriesId;
+  request.jsonFile = jsonFile;
+  request.retileLevels = levels;
+  request.downsamples = &downsamples[0];
+  request.tiled = !sparse;
+  request.batchLimit = batch;
+  request.threads = threads;
+  request.dropFirstRowAndColumn = dropFirstRowAndColumn;
+  request.debug = debug;
+  wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
 
   return SUCCESS;
 }
