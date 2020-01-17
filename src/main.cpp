@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
   bool sparse;
   try {
     namespace programOptions = boost::program_options;
-    programOptions::options_description desc("Options");
+    programOptions::options_description desc("Options", 90, 20);
     desc.add_options()("help", "Print help messages")(
         "input", programOptions::value<std::string>(&inputFile)->required(),
         "input file")("outFolder",
@@ -86,7 +86,8 @@ int main(int argc, char *argv[]) {
                        ->default_value(""),
                    "SeriesID")("jsonFile",
                                programOptions::value<std::string>(&jsonFile),
-                               "json file with additional tags")(
+                               "dicom json file with additional tags "
+        "\nhttps://www.dicomstandard.org/dicomweb/dicom-json-format/")(
         "batch", programOptions::value<int>(&batch)->default_value(0),
         "maximum frames in one file")(
         "threads",
