@@ -15,6 +15,26 @@
 #ifndef SRC_ENUMS_H_
 #define SRC_ENUMS_H_
 
+#include <algorithm>
+#include <string>
+
 typedef enum { UNKNOWN = -1, JPEG2000 = 0, JPEG = 1, RAW = 2 } DCM_Compression;
+
+inline DCM_Compression dcmCompressionFromString(std::string compressionStr) {
+  DCM_Compression compression = UNKNOWN;
+  std::transform(compressionStr.begin(), compressionStr.end(),
+                 compressionStr.begin(), ::tolower);
+  if (compressionStr.compare("jpeg") == 0) {
+    compression = JPEG;
+  }
+  if (compressionStr.compare("jpeg2000") == 0) {
+    compression = JPEG2000;
+  }
+  if (compressionStr.compare("none") == 0 ||
+      compressionStr.compare("raw") == 0) {
+    compression = RAW;
+  }
+  return compression;
+}
 
 #endif  // SRC_ENUMS_H_
