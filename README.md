@@ -75,7 +75,7 @@ Threads to consume during execution.
 ##### debug
 Print debug messages: dimensions of levels, size of frames.
 ##### dropFirstRowAndColumn
-Start slicing from point (1,1) instead of (0,0) to avoid bug https://github.com/openslide/openslide/issues/268
+Drop first row and column of the source image in order to workaround bug https://github.com/openslide/openslide/issues/268
 
 ## Compiling from source
 

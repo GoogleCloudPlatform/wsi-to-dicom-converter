@@ -98,8 +98,8 @@ int main(int argc, char *argv[]) {
         "dropFirstRowAndColumn",
         programOptions::bool_switch(
         &dropFirstRowAndColumn)->default_value(false),
-        "start slicing from point (1,1) instead of (0,0) to avoid bug "
-        "\nhttps://github.com/openslide/openslide/issues/268");
+        "drop first row and column of the source image in order to "
+        "workaround bug\nhttps://github.com/openslide/openslide/issues/268");
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
     positionalOptions.add("outFolder", 1);
