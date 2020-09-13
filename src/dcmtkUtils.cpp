@@ -40,7 +40,10 @@ namespace wsiToDicomConverter {
 inline OFCondition generateFramePositionMetadata(DcmDataset* resultObject,
                                                  uint32_t numberOfFrames,
                                                  uint32_t rowSize, uint32_t row,
-                                                 uint32_t column, uint32_t x,
+                                                 uint32_t column,
+                                                 double mmPerPixelWidth,
+                                                 double mmPerPixelHeight,
+                                                 uint32_t x,
                                                  uint32_t y) {
   std::unique_ptr<DcmSequenceOfItems> PerFrameFunctionalGroupsSequence =
       std::make_unique<DcmSequenceOfItems>(
@@ -59,10 +62,22 @@ inline OFCondition generateFramePositionMetadata(DcmDataset* resultObject,
     sequenceDimension->insert(dimension.release());
 
     std::unique_ptr<DcmItem> pixelPosition = std::make_unique<DcmItem>();
+    uint32_t pixelPositionColumn = (column - 1) * x + 1;
+    uint32_t pixelPositionRow = (row - 1) * y + 1;
+    if (mmPerPixelWidth > 0. &&  mmPerPixelHeight > 0.) {
+        std::string mmPositionColumn =
+                std::to_string(pixelPositionColumn*mmPerPixelWidth);
+        std::string mmPositionRow =
+                std::to_string(pixelPositionRow*mmPerPixelHeight);
+        pixelPosition->putAndInsertString(DCM_XOffsetInSlideCoordinateSystem,
+                                                  mmPositionColumn.c_str());
+        pixelPosition->putAndInsertString(DCM_YOffsetInSlideCoordinateSystem,
+                                                  mmPositionRow.c_str());
+    }
     pixelPosition->putAndInsertSint32(DCM_ColumnPositionInTotalImagePixelMatrix,
-                                      (column - 1) * x + 1);
+                                      pixelPositionColumn);
     pixelPosition->putAndInsertSint32(DCM_RowPositionInTotalImagePixelMatrix,
-                                      (row - 1) * y + 1);
+                                      pixelPositionRow);
 
     std::unique_ptr<DcmSequenceOfItems> sequencePosition =
         std::make_unique<DcmSequenceOfItems>(DCM_PlanePositionSlideSequence);
@@ -267,8 +282,10 @@ OFCondition DcmtkUtils::populateDataSet(
 
   if (cond.bad()) return cond;
 
-  insertMultiFrameTags(imgInfo, numberOfFrames, rowSize, row, column, level,
-                       batchNumber, offset, totalNumberOfFrames, tiled,
+  insertMultiFrameTags(imgInfo, numberOfFrames, rowSize, row, column,
+                       firstLevelWidthMm/imageWidth,
+                       firstLevelHeightMm/imageHeight, level, batchNumber,
+                       offset, totalNumberOfFrames, tiled,
                        seriesId, dataSet);
   if (cond.bad()) return cond;
 
@@ -358,6 +375,7 @@ OFCondition DcmtkUtils::insertBaseImageTags(const std::string& imageName,
 OFCondition DcmtkUtils::insertMultiFrameTags(
     const DcmtkImgDataInfo& imgInfo, const uint32_t numberOfFrames,
     const uint32_t rowSize, const uint32_t row, const uint32_t column,
+    const double mmPerPixelWidth, const double mmPerPixelHeight,
     const int level, const int batchNumber, const uint32_t offset,
     const uint32_t totalNumberOfFrames, const bool tiled,
     const std::string& seriesId, DcmDataset* dataSet) {
@@ -400,7 +418,9 @@ OFCondition DcmtkUtils::insertMultiFrameTags(
                                               "TILED_SPARSE");
     if (cond.bad()) return cond;
     cond = generateFramePositionMetadata(dataSet, numberOfFrames, rowSize, row,
-                                         column, imgInfo.rows, imgInfo.cols);
+                                         column, mmPerPixelWidth,
+                                         mmPerPixelHeight, imgInfo.rows,
+                                         imgInfo.cols);
   }
   return cond;
 }

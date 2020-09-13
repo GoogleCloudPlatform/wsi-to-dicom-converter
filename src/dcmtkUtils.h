@@ -101,6 +101,7 @@ class DcmtkUtils {
   static OFCondition insertMultiFrameTags(
       const DcmtkImgDataInfo& imgInfo, const uint32_t numberOfFrames,
       const uint32_t rowSize, const uint32_t row, const uint32_t column,
+      const double pixelsPerMmRow, const double pixelsPerMmColumn,
       const int level, const int batchNumber, const uint32_t offset,
       const uint32_t totalNumberOfFrames, const bool tiled,
       const std::string& seriesId, DcmDataset* dataSet);

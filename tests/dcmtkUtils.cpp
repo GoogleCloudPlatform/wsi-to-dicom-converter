@@ -97,7 +97,8 @@ TEST(insertMultiFrameTagsTest, correctInsert) {
   imgInfo.rows = 10;
   imgInfo.cols = 10;
   wsiToDicomConverter::DcmtkUtils::insertMultiFrameTags(
-      imgInfo, 5, 10, 0, 0, 0, 0, 0, 10, true, "series", dataSet.get());
+      imgInfo, 5, 10, 0, 0, 0, 0.0, 0.0, 0, 0, 10, true,
+      "series", dataSet.get());
 
   char* stringValue;
   findElement(dataSet.get(), DCM_InstanceNumber)->getString(stringValue);
@@ -125,7 +126,8 @@ TEST(insertMultiFrameTagsTest, correctInsert) {
   ASSERT_EQ(2, concatenationTotalNumber);
 
   wsiToDicomConverter::DcmtkUtils::insertMultiFrameTags(
-      imgInfo, 4, 5, 1, 1, 0, 0, 0, 105, false, "series", dataSet.get());
+      imgInfo, 4, 5, 1, 1, 0, 0.0, 0.0, 0, 0, 105,
+      false, "series", dataSet.get());
   findElement(dataSet.get(), DCM_InConcatenationTotalNumber)
       ->getUint16(concatenationTotalNumber);
   ASSERT_EQ(27, concatenationTotalNumber);
@@ -161,7 +163,8 @@ TEST(insertMultiFrameTagsTest, correctInsert) {
   dataSet = std::make_unique<DcmDataset>();
 
   wsiToDicomConverter::DcmtkUtils::insertMultiFrameTags(
-      imgInfo, 4, 5, 1, 5, 1, 1, 4, 105, false, "series", dataSet.get());
+      imgInfo, 4, 5, 1, 5, 1, 0.0, 0.0, 1, 4, 105,
+      false, "series", dataSet.get());
   element = reinterpret_cast<DcmSequenceOfItems*>(
       findElement(dataSet.get(), DCM_PerFrameFunctionalGroupsSequence));
 
