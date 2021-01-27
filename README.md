@@ -12,6 +12,12 @@ sudo apt install ./wsi2dcm_x.y.z.deb
 ```
 Note: if you get an error about missing shared libraries, run `sudo ldconfig` or make sure that `/usr/local/lib` is in your `LD_LIBRARY_PATH`.
 
+You may also need to install the following packages and their dependencies with `sudo apt-get install`:
+* `libtiff-dev`
+* `libxml2-dev`
+* `libcairo-dev`
+* `gtk2-engines-pixbuf`
+
 ### MacOS
 
 ```
@@ -41,9 +47,9 @@ Folder to store dcm files
 Tile height px.
 ##### tileWidth
 Tile width px.
-##### levels 
+##### levels
 Number of levels to generate, levels == 0 means number of levels will be read from wsi file.
-##### downsamples 
+##### downsamples
 Size factor for each level  for each level, downsample is size factor for each level.
 
 eg: if base level size is 100x100 and downsamples is (1, 2, 10) then
@@ -52,13 +58,13 @@ eg: if base level size is 100x100 and downsamples is (1, 2, 10) then
 - level2 10x10
 ##### startOn
 Level to start generation.
-##### stopOn 
+##### stopOn
 Level to stop generation.
-##### sparse 
+##### sparse
 Use TILED_SPARSE frame organization, by default it's TILED_FULL http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.17.3.html
-##### compression 
+##### compression
 Compression, supported compressions: jpeg, jpeg2000, raw.
-##### seriesDescription 
+##### seriesDescription
 (0008,103E) [LO] SeriesDescription Dicom tag.
 ##### studyId
 (0020,000D) [UI] StudyInstanceUID Dicom tag.
@@ -105,7 +111,7 @@ Otherwise, follow these steps:
 ```shell
 mkdir build
 cd build
-cp -R %dcmtkDir% ./dcmtk-3.6.2 
+cp -R %dcmtkDir% ./dcmtk-3.6.2
 cmake ..
 make -j%threads%
 ```
