@@ -146,7 +146,5 @@ int main(int argc, char *argv[]) {
   request.threads = threads;
   request.dropFirstRowAndColumn = dropFirstRowAndColumn;
   request.debug = debug;
-  wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
-
-  return SUCCESS;
+  return wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
 }
