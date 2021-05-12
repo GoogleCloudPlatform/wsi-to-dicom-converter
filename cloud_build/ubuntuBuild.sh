@@ -29,7 +29,7 @@ mkdir build
 cd build
 wget https://github.com/uclouvain/openjpeg/archive/v2.3.0.zip > /dev/null
 unzip v2.3.0.zip  > /dev/null
-wget https://dl.bintray.com/boostorg/release/1.69.0/source/boost_1_69_0.tar.gz  > /dev/null
+wget https://boostorg.jfrog.io/artifactory/main/release/1.69.0/source/boost_1_69_0.tar.gz  > /dev/null
 tar xvzf boost_1_69_0.tar.gz  > /dev/null
 wget https://dicom.offis.de/download/dcmtk/dcmtk362/dcmtk-3.6.2.zip  > /dev/null
 unzip dcmtk-3.6.2.zip  > /dev/null
