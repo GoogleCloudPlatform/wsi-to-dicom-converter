@@ -169,6 +169,8 @@ int WsiToDcm::dicomizeTiff(std::string inputFile, std::string outputFileMask,
   for (int32_t level = startOnLevel;
        level < levels && (stopOnLevel < startOnLevel || level <= stopOnLevel);
        level++) {
+    BOOST_LOG_TRIVIAL(debug) << " ";
+    BOOST_LOG_TRIVIAL(debug) << "Starting Level " << level;
     uint32_t row = 1;
     uint32_t column = 1;
     int32_t levelToGet = level;
@@ -196,18 +198,33 @@ int WsiToDcm::dicomizeTiff(std::string inputFile, std::string outputFileMask,
     uint32_t batch = 0;
     std::vector<std::unique_ptr<Frame> > framesData;
     double downsampleOfLevel = downsample / multiplicator;
+    int64_t level_frameWidth;
+    int64_t level_frameHeight;
     dimensionDownsampling(
             frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
             downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
-            &levelWidthDownsampled, &levelHeightDownsampled);
+            &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
+            &level_frameHeight);
+
+  BOOST_LOG_TRIVIAL(debug) << "levelToGet: " << levelToGet;
+  BOOST_LOG_TRIVIAL(debug) << "multiplicator: " << multiplicator;
+  BOOST_LOG_TRIVIAL(debug) << "downsample: " << downsample;
+  BOOST_LOG_TRIVIAL(debug) << "downsampleOfLevel: " << downsampleOfLevel;
+
+  BOOST_LOG_TRIVIAL(debug) << "frameDownsampled: " << frameWidthDownsampled << ", "
+                             << frameHeightDownsampled;
+
+  BOOST_LOG_TRIVIAL(debug) << "levelDownsampled: " << levelWidthDownsampled << ", "
+                             << levelHeightDownsampled;
+
     while (y < levelHeight) {
       while (x < levelWidth) {
         assert(osr != nullptr && openslide_get_error(osr) == nullptr);
-        BOOST_LOG_TRIVIAL(debug)
-            << "x: " << x << " y: " << y << " level: " << level;
+        // BOOST_LOG_TRIVIAL(debug)
+        //    << "x: " << x << " y: " << y << " level: " << level;
         std::unique_ptr<Frame> frameData = std::make_unique<Frame>(
             osr, x, y, levelToGet, frameWidthDownsampled,
-            frameHeightDownsampled, multiplicator, frameWidth, frameHeight,
+            frameHeightDownsampled, multiplicator, level_frameWidth, level_frameHeight,
             compression, quality);
         boost::asio::post(
             pool, [frameData = frameData.get()]() { frameData->sliceFrame(); });
@@ -221,7 +238,7 @@ int WsiToDcm::dicomizeTiff(std::string inputFile, std::string outputFileMask,
               std::make_unique<DcmFileDraft>(
                   std::move(framesData), outputFileMask, numberOfFrames,
                   levelWidthDownsampled, levelHeightDownsampled, level,
-                  batchNumber, batch, row, column, frameWidth, frameHeight,
+                  batchNumber, batch, row, column, level_frameWidth, level_frameHeight,
                   studyId, seriesId, imageName, compression, tiled, tags.get(),
                   firstLevelWidthMm, firstLevelHeightMm);
           boost::asio::post(pool, [filedraft = std::move(filedraft)]() {
@@ -242,7 +259,7 @@ int WsiToDcm::dicomizeTiff(std::string inputFile, std::string outputFileMask,
       std::unique_ptr<DcmFileDraft> filedraft = std::make_unique<DcmFileDraft>(
           std::move(framesData), outputFileMask, numberOfFrames,
           levelWidthDownsampled, levelHeightDownsampled, level, batchNumber,
-          batch, row, column, frameWidth, frameHeight, studyId, seriesId,
+          batch, row, column, level_frameWidth, level_frameHeight, studyId, seriesId,
           imageName, compression, tiled, tags.get(), firstLevelWidthMm,
           firstLevelHeightMm);
       boost::asio::post(pool, [filedraft = std::move(filedraft)]() {

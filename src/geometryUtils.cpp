@@ -1,5 +1,4 @@
 // Copyright 2019 Google LLC
-//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -16,41 +15,36 @@
 
 namespace wsiToDicomConverter {
 
-void dimensionDownsampling(int64_t frameWidht, int64_t frameHeight,
-                           int64_t levelWidht, int64_t levelHeight, bool retile,
+void dimensionDownsampling(int64_t frameWidth, int64_t frameHeight,
+                           int64_t levelWidth, int64_t levelHeight, bool retile,
                            int level, double downsampleOfLevel,
-                           int64_t *frameWidhtDownsampled,
+                           int64_t *frameWidthDownsampled,
                            int64_t *frameHeightDownsampled,
-                           int64_t *levelWidhtDownsampled,
-                           int64_t *levelHeightDownsampled) {
-  *frameWidhtDownsampled = frameWidht;
+                           int64_t *levelWidthDownsampled,
+                           int64_t *levelHeightDownsampled,
+			   int64_t *level_frameWidth,
+                           int64_t *level_frameHeight
+                            ) {
+  *frameWidthDownsampled = frameWidth;
   *frameHeightDownsampled = frameHeight;
-  *levelWidhtDownsampled = levelWidht;
+  *levelWidthDownsampled = levelWidth;
   *levelHeightDownsampled = levelHeight;
+  *level_frameWidth = frameWidth;
+  *level_frameHeight = frameHeight;
   if (retile && level > 0) {
-    *frameWidhtDownsampled *= downsampleOfLevel;
+    *frameWidthDownsampled *= downsampleOfLevel;
     *frameHeightDownsampled *= downsampleOfLevel;
-    *levelWidhtDownsampled /= downsampleOfLevel;
+    *levelWidthDownsampled /= downsampleOfLevel;
     *levelHeightDownsampled /= downsampleOfLevel;
   }
-  if (levelWidht <= *frameWidhtDownsampled &&
-      levelHeight <= *frameHeightDownsampled) {
-    if (levelWidht >= levelHeight) {
-      adjustFrameToLevel(frameWidhtDownsampled, frameHeightDownsampled,
-                         levelWidht);
-    } else {
-      adjustFrameToLevel(frameHeightDownsampled, frameWidhtDownsampled,
-                         levelHeight);
-    }
+  if (levelWidth < *frameWidthDownsampled) {
+    *frameWidthDownsampled = levelWidth;
+    *level_frameWidth = *levelWidthDownsampled;
   }
-}
-
-void adjustFrameToLevel(int64_t *frameFirstAxis, int64_t *frameSecondAxis,
-                        int64_t levelFirstAxis) {
-  double smallLevelDownsample = static_cast<double>(levelFirstAxis) /
-                                static_cast<double>(*frameFirstAxis);
-  *frameSecondAxis = *frameSecondAxis * smallLevelDownsample;
-  *frameFirstAxis = levelFirstAxis;
+  if (levelHeight < *frameHeightDownsampled) {
+     *frameHeightDownsampled = levelHeight;
+     *level_frameHeight = *levelHeightDownsampled;
+  }
 }
 
 }  // namespace wsiToDicomConverter
