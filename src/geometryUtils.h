@@ -15,6 +15,7 @@
 #ifndef SRC_GEOMETRYUTILS_H_
 #define SRC_GEOMETRYUTILS_H_
 #include <cstdint>
+
 #include "src/enums.h"
 
 namespace wsiToDicomConverter {
@@ -27,15 +28,12 @@ namespace wsiToDicomConverter {
 //                                                 get from source level
 // levelWidthDownsampled, levelHeightDownsampled - size of level
 //                                                 according to downsampling
-void dimensionDownsampling(int64_t frameWidth, int64_t frameHeight,
-                           int64_t levelWidth, int64_t levelHeight, bool retile,
-                           int level, double downsampleOfLevel,
-                           int64_t *frameWidthDownsampled,
-                           int64_t *frameHeightDownsampled,
-                           int64_t *levelWidthDownsampled,
-                           int64_t *levelHeightDownsampled,
-			   int64_t *level_frameWidth,
-                           int64_t *level_frameHeight);
+void dimensionDownsampling(
+    int64_t frameWidth, int64_t frameHeight, int64_t levelWidth,
+    int64_t levelHeight, bool retile, int level, double downsampleOfLevel,
+    int64_t *frameWidthDownsampled, int64_t *frameHeightDownsampled,
+    int64_t *levelWidthDownsampled, int64_t *levelHeightDownsampled,
+    int64_t *level_frameWidth, int64_t *level_frameHeight);
 
 }  // namespace wsiToDicomConverter
 #endif  // SRC_GEOMETRYUTILS_H_
