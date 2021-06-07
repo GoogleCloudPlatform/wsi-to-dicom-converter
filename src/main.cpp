@@ -11,11 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <boost/program_options.hpp>
+
 #include <iostream>
 #include <string>
 #include <vector>
-
-#include <boost/program_options.hpp>
 
 #include "src/wsiToDcm.h"
 namespace {

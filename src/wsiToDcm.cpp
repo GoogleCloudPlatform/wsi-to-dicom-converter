@@ -14,6 +14,13 @@
 
 #include "src/wsiToDcm.h"
 
+#include <boost/asio/post.hpp>
+#include <boost/asio/thread_pool.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/log/core.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/thread/thread.hpp>
 #include <dcmtk/dcmdata/dcuid.h>
 
 #include <algorithm>
@@ -22,14 +29,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <boost/asio/post.hpp>
-#include <boost/asio/thread_pool.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/log/core.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/thread/thread.hpp>
 
 #include "src/dcmFileDraft.h"
 #include "src/dcmTags.h"
