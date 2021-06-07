@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/geometryUtils.h"
 #include <gtest/gtest.h>
 
+#include "src/geometryUtils.h"
 
 TEST(geometryTest, frameSizeWithoutRetile) {
   int64_t levelWidth = 100;
@@ -27,15 +27,16 @@ TEST(geometryTest, frameSizeWithoutRetile) {
   int64_t frameWidthDownsampled;
   int64_t frameHeightDownsampled;
   int64_t levelWidthDownsampled;
-  int64_t levelHeightDownsampled;  
+  int64_t levelHeightDownsampled;
   int64_t level_frameWidth;
   int64_t level_frameHeight;
+  DCM_Compression level_compression = JPEG;
 
   wsiToDicomConverter::dimensionDownsampling(
       frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight);
+      &level_frameHeight, level_compression);
   ASSERT_EQ(100, frameWidthDownsampled);
   ASSERT_EQ(100, frameHeightDownsampled);
   ASSERT_EQ(100, level_frameWidth);
@@ -48,7 +49,7 @@ TEST(geometryTest, frameSizeWithoutRetile) {
       frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight);
+      &level_frameHeight, level_compression);
   ASSERT_EQ(50, frameWidthDownsampled);
   ASSERT_EQ(50, frameHeightDownsampled);
   ASSERT_EQ(50, level_frameWidth);
@@ -69,17 +70,18 @@ TEST(geometryTest, frameSizeWithRetile) {
   int64_t levelHeightDownsampled;
   int64_t level_frameWidth;
   int64_t level_frameHeight;
+  DCM_Compression level_compression = JPEG;
   wsiToDicomConverter::dimensionDownsampling(
       frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight);
+      &level_frameHeight, level_compression);
   ASSERT_EQ(84, frameWidthDownsampled);
   ASSERT_EQ(84, frameHeightDownsampled);
   ASSERT_EQ(50, levelWidthDownsampled);
   ASSERT_EQ(50, levelHeightDownsampled);
   ASSERT_EQ(42, level_frameWidth);
-  ASSERT_EQ(42, level_frameHeight);  
+  ASSERT_EQ(42, level_frameHeight);
 
   frameWidth = 55;
   frameHeight = 55;
@@ -88,7 +90,7 @@ TEST(geometryTest, frameSizeWithRetile) {
       frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight);
+      &level_frameHeight, level_compression);
   ASSERT_EQ(50, levelWidthDownsampled);
   ASSERT_EQ(50, levelHeightDownsampled);
   ASSERT_EQ(levelWidth, frameWidthDownsampled);
@@ -102,7 +104,7 @@ TEST(geometryTest, frameSizeWithRetile) {
       frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight);
+      &level_frameHeight, level_compression);
   ASSERT_EQ(50, levelWidthDownsampled);
   ASSERT_EQ(50, levelHeightDownsampled);
   ASSERT_EQ(100, frameWidthDownsampled);

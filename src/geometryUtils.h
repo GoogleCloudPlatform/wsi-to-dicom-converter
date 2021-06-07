@@ -28,12 +28,19 @@ namespace wsiToDicomConverter {
 //                                                 get from source level
 // levelWidthDownsampled, levelHeightDownsampled - size of level
 //                                                 according to downsampling
+// level_frameWidth, level_frame: Frame Width and Height to use generate image
+//  typically = frameWidth & frameHeight.  = levelWidthDownsampled, levelHeightDownsampled
+//  when frame Width & Frame Height is larger than output level dim.
+//  compression - compression to use to encode layer. Work around for issue 
+//  in current jpeg2000 codec.  Changes from jpeg2000 to RAW for very small 
+//  framesizes.
 void dimensionDownsampling(
     int64_t frameWidth, int64_t frameHeight, int64_t levelWidth,
     int64_t levelHeight, bool retile, int level, double downsampleOfLevel,
     int64_t *frameWidthDownsampled, int64_t *frameHeightDownsampled,
     int64_t *levelWidthDownsampled, int64_t *levelHeightDownsampled,
-    int64_t *level_frameWidth, int64_t *level_frameHeight);
+    int64_t *level_frameWidth, int64_t *level_frameHeight,
+    DCM_Compression &compression);
 
 }  // namespace wsiToDicomConverter
 #endif  // SRC_GEOMETRYUTILS_H_

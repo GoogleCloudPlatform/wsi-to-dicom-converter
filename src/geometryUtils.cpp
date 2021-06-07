@@ -21,7 +21,8 @@ void dimensionDownsampling(
     int64_t levelHeight, bool retile, int level, double downsampleOfLevel,
     int64_t *frameWidthDownsampled, int64_t *frameHeightDownsampled,
     int64_t *levelWidthDownsampled, int64_t *levelHeightDownsampled,
-    int64_t *level_frameWidth, int64_t *level_frameHeight) {
+    int64_t *level_frameWidth, int64_t *level_frameHeight,
+    DCM_Compression &compression) {
   *frameWidthDownsampled = frameWidth;
   *frameHeightDownsampled = frameHeight;
   *levelWidthDownsampled = levelWidth;
@@ -34,21 +35,46 @@ void dimensionDownsampling(
     *levelWidthDownsampled /= downsampleOfLevel;
     *levelHeightDownsampled /= downsampleOfLevel;
   }
+  
+  /*
+    Frames (frameWidthDownsampled, frameHeightDownsampled) are sampled from 
+    source Layers (levelWidth, levelHeight) and downsampled to represent 
+    target layer (levelWidthDownsampled, levelHeightDownsampled).  To do this
+    frames are downsampled to dim (level_frameWidth, level_frameHeight). 
+    This logic resides in frame.c[[]]
+    
+    Normally frame dim < output layer dim. However if frame dim > than layer dim
+    then frame dim = layer dim.
+  */
   if (levelWidth < *frameWidthDownsampled) {
-    /*
-        level_frameWidth could optimally be set to *levelWidthDownsampled
-        However, a bug in JPEG2000 Codec segfaults if the size of the allocated
-       frame being compressed is too small.  JPEG Codec is fine.  The max is a
-       bandaid fix for the isseue. JPEG2000 codec should be fixed and the max
-       can be removed here and in levelHeight < To reproduce bug: remove max,
-       run JPEG2000 test case in end-to-end tests.
-    */
     *frameWidthDownsampled = levelWidth;
-    *level_frameWidth = std::max<int64_t>(*levelWidthDownsampled, 50);
+    *level_frameWidth = *levelWidthDownsampled;
+    if (compression == JPEG2000 && *level_frameWidth < 40) {
+      /*
+        A bug in JPEG2000 Codec segfaults if the size of the allocated
+        frame being compressed is too small. JPEG Codec is fine. As a
+        workaround. Changing the codec to raw for very small frame sizes. This
+        fix should be removed and fixed corrected in the JPEG2000 code base.
+        This code path is hit if the whole slide image is being downsampled to
+        size < 40 pixels x 40 pixels
+      */
+      compression = RAW;
+    }
   }
   if (levelHeight < *frameHeightDownsampled) {
     *frameHeightDownsampled = levelHeight;
-    *level_frameHeight = std::max<int64_t>(*levelHeightDownsampled, 50);
+    *level_frameHeight = *levelHeightDownsampled;
+    if (compression == JPEG2000 && *level_frameWidth < 40) {
+      /*
+        A bug in JPEG2000 Codec segfaults if the size of the allocated
+        frame being compressed is too small. JPEG Codec is fine. As a
+        workaround. Changing the codec to raw for very small frame sizes. This
+        fix should be removed and fixed corrected in the JPEG2000 code base.
+        This code path is hit if the whole slide image is being downsampled to
+        size < 40 pixels x 40 pixels
+      */
+      compression = RAW;
+    }
   }
 }
 
