@@ -12,9 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "src/wsiToDcm.h"
+
 #include <dcmtk/dcmdata/dcuid.h>
 
 #include <algorithm>
+#include <fstream>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/filesystem.hpp>
@@ -22,17 +30,11 @@
 #include <boost/log/expressions.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/thread/thread.hpp>
-#include <fstream>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
 
 #include "src/dcmFileDraft.h"
 #include "src/dcmTags.h"
 #include "src/frame.h"
 #include "src/geometryUtils.h"
-#include "src/wsiToDcm.h"
 
 namespace wsiToDicomConverter {
 
@@ -208,7 +210,7 @@ int WsiToDcm::dicomizeTiff(
         frameWidth, frameHeight, levelWidth - x, levelHeight - y, retile, level,
         downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
         &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-        &level_frameHeight, level_compression);
+        &level_frameHeight, &level_compression);
 
     BOOST_LOG_TRIVIAL(debug) << "levelToGet: " << levelToGet;
     BOOST_LOG_TRIVIAL(debug) << "multiplicator: " << multiplicator;

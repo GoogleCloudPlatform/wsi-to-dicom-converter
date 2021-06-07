@@ -14,10 +14,12 @@
 
 #ifndef SRC_WSITODCM_H_
 #define SRC_WSITODCM_H_
-#include <boost/cstdint.hpp>
 #include <iostream>
 #include <string>
 #include <vector>
+
+#include <boost/cstdint.hpp>
+
 #include "src/enums.h"
 
 namespace wsiToDicomConverter {

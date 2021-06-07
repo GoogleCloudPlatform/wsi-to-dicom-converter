@@ -36,7 +36,7 @@ TEST(geometryTest, frameSizeWithoutRetile) {
       frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight, level_compression);
+      &level_frameHeight, &level_compression);
   ASSERT_EQ(100, frameWidthDownsampled);
   ASSERT_EQ(100, frameHeightDownsampled);
   ASSERT_EQ(100, level_frameWidth);
@@ -49,7 +49,7 @@ TEST(geometryTest, frameSizeWithoutRetile) {
       frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight, level_compression);
+      &level_frameHeight, &level_compression);
   ASSERT_EQ(50, frameWidthDownsampled);
   ASSERT_EQ(50, frameHeightDownsampled);
   ASSERT_EQ(50, level_frameWidth);
@@ -75,7 +75,7 @@ TEST(geometryTest, frameSizeWithRetile) {
       frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight, level_compression);
+      &level_frameHeight, &level_compression);
   ASSERT_EQ(84, frameWidthDownsampled);
   ASSERT_EQ(84, frameHeightDownsampled);
   ASSERT_EQ(50, levelWidthDownsampled);
@@ -90,7 +90,7 @@ TEST(geometryTest, frameSizeWithRetile) {
       frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight, level_compression);
+      &level_frameHeight, &level_compression);
   ASSERT_EQ(50, levelWidthDownsampled);
   ASSERT_EQ(50, levelHeightDownsampled);
   ASSERT_EQ(levelWidth, frameWidthDownsampled);
@@ -104,7 +104,7 @@ TEST(geometryTest, frameSizeWithRetile) {
       frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight, level_compression);
+      &level_frameHeight, &level_compression);
   ASSERT_EQ(50, levelWidthDownsampled);
   ASSERT_EQ(50, levelHeightDownsampled);
   ASSERT_EQ(100, frameWidthDownsampled);
