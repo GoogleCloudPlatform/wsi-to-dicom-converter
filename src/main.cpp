@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
   int threads;
   bool debug;
   bool dropFirstRowAndColumn;
+  bool stopDownSampelingAtSingleFrame;
   std::vector<double> downsamples;
   downsamples.resize(1);
   bool sparse;
@@ -100,7 +101,12 @@ int main(int argc, char *argv[]) {
         programOptions::bool_switch(
         &dropFirstRowAndColumn)->default_value(false),
         "drop first row and column of the source image in order to "
-        "workaround bug\nhttps://github.com/openslide/openslide/issues/268");
+        "workaround bug\nhttps://github.com/openslide/openslide/issues/268")
+        ("StopDownSampelingAtSingleFrame",
+        programOptions::bool_switch(
+        &stopDownSampelingAtSingleFrame)->default_value(false),
+        "Stop generating image downsampels if image dimensions < "
+        "frame dimensions.");
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
     positionalOptions.add("outFolder", 1);
@@ -146,6 +152,7 @@ int main(int argc, char *argv[]) {
   request.batchLimit = batch;
   request.threads = threads;
   request.dropFirstRowAndColumn = dropFirstRowAndColumn;
+  request.stopDownSampelingAtSingleFrame = stopDownSampelingAtSingleFrame;
   request.debug = debug;
   return wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
 }

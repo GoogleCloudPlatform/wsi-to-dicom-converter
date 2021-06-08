@@ -100,7 +100,8 @@ int WsiToDcm::dicomizeTiff(
     int32_t startOnLevel, int32_t stopOnLevel, std::string imageName,
     std::string studyId, std::string seriesId, std::string jsonFile,
     int32_t retileLevels, std::vector<double> downsamples, bool tiled,
-    int batchLimit, int8_t threads, bool dropFirstRowAndColumn) {
+    int batchLimit, int8_t threads, bool dropFirstRowAndColumn,
+    bool stop_down_sampleing_at_singleframe) {
   bool retile = retileLevels > 0;
 
   if (studyId.size() < 1) {
@@ -165,8 +166,10 @@ int WsiToDcm::dicomizeTiff(
     initialX = 1;
     initialY = 1;
   }
+  bool adapative_stop_downsampeling = false;
   for (int32_t level = startOnLevel;
-       level < levels && (stopOnLevel < startOnLevel || level <= stopOnLevel);
+       level < levels && (stopOnLevel < startOnLevel || level <= stopOnLevel) &&
+       !adapative_stop_downsampeling;
        level++) {
     BOOST_LOG_TRIVIAL(debug) << " ";
     BOOST_LOG_TRIVIAL(debug) << "Starting Level " << level;
@@ -228,6 +231,17 @@ int WsiToDcm::dicomizeTiff(
                                   "dcm generation for layer.";
       continue;
     }
+
+    /*
+      Walk through all frames in selected best layer.  Extract frames from layer
+      FrameDim = (frameWidthDownsampled, frameHeightDownsampled) which are dim
+      of frame scaled up to the dimension of the layer being sampled from
+
+      Frame objects are processed via a thread pool.
+      Method in Frame::sliceFrame () downsamples the imaging.
+
+      DcmFileDraft Joins threads and combines results and writes dcm file.
+    */
     while (y < levelHeight) {
       while (x < levelWidth) {
         assert(osr != nullptr && openslide_get_error(osr) == nullptr);
@@ -276,6 +290,9 @@ int WsiToDcm::dicomizeTiff(
         filedraft->saveFile();
       });
     }
+    if (stop_down_sampleing_at_singleframe && numberOfFrames <= 1) {
+      adapative_stop_downsampeling = true;
+    }
   }
   pool.join();
   openslide_close(osr);
@@ -297,7 +314,8 @@ int WsiToDcm::wsi2dcm(WsiRequest wsiRequest) {
             wsiRequest.downsamples,
             wsiRequest.downsamples + wsiRequest.retileLevels + 1),
         wsiRequest.tiled, wsiRequest.batchLimit, wsiRequest.threads,
-        wsiRequest.dropFirstRowAndColumn);
+        wsiRequest.dropFirstRowAndColumn,
+        wsiRequest.stopDownSampelingAtSingleFrame);
   } catch (int exception) {
     return 1;
   }

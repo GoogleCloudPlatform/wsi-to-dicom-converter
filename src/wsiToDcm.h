@@ -88,6 +88,9 @@ struct WsiRequest {
 
   // print debug messages: dimensions of levels, size of frames
   bool debug = false;
+
+  // stop downsampeling if total layer dimensions < 1 frame
+  bool stopDownSampelingAtSingleFrame = false;
 };
 
 // Contains static methods for generation DICOM files
@@ -109,7 +112,8 @@ class WsiToDcm {
                           std::string seriesId, std::string jsonFile,
                           int32_t retileLevels, std::vector<double> downsamples,
                           bool tiled, int32_t batchLimit, int8_t threads,
-                          bool dropFirstRowAndColumn);
+                          bool dropFirstRowAndColumn,
+                          bool stopDownSampelingAtSingleFrame);
 
   static void checkArguments(WsiRequest wsiRequest);
 };
