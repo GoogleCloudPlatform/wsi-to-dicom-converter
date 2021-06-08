@@ -43,11 +43,11 @@ dcm2json ./endToEnd/level-0-frames-0-30.dcm ./endToEnd/test2GeneratedTags.json
 compare ./endToEnd/test2GeneratedTags.json ./endToEnd/test2ExpectedTags.json
 
 #test - generate DICOM without compression and compare image with expected one
-./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test3  --levels 15 --startOn 14 --tileHeight 100  --tileWidth 100 --compression raw
-dcm2pnm ./endToEnd/level-14-frames-0-1.dcm ./endToEnd/test3GeneratedImage.ppm
+./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test3  --levels 6 --startOn 5 --tileHeight 100  --tileWidth 100 --compression raw
+dcm2pnm ./endToEnd/level-5-frames-0-1.dcm ./endToEnd/test3GeneratedImage.ppm
 diff ./endToEnd/test3GeneratedImage.ppm ./endToEnd/test3ExpectedImage.ppm
 
 #test - generate DICOM with dropped first row and column and compare image with expected one
-./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test4  --levels 15 --startOn 14 --tileHeight 100  --tileWidth 100 --compression raw --dropFirstRowAndColumn
-dcm2pnm ./endToEnd/level-14-frames-0-1.dcm ./endToEnd/test4GeneratedImage.ppm
+./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test4  --levels 6 --startOn 5 --tileHeight 100  --tileWidth 100 --compression raw --dropFirstRowAndColumn
+dcm2pnm ./endToEnd/level-5-frames-0-1.dcm ./endToEnd/test4GeneratedImage.ppm
 diff ./endToEnd/test4GeneratedImage.ppm ./endToEnd/test4ExpectedImage.ppm

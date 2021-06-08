@@ -15,29 +15,33 @@
 #ifndef SRC_GEOMETRYUTILS_H_
 #define SRC_GEOMETRYUTILS_H_
 #include <cstdint>
+
 #include "src/enums.h"
 
 namespace wsiToDicomConverter {
 
 // Calculates sizes of frame and level to get from openslide
 // based on base level, expected downsample and frame size
-// frameWidht, frameHeight - expected size of frame
-// levelWidht, levelHeight - size of level with source data
-// frameWidhtDownsampled, frameHeightDownsampled - size of frame to
+// frameWidth, frameHeight - expected size of frame
+// levelWidth, levelHeight - size of level with source data
+// frameWidthDownsampled, frameHeightDownsampled - size of frame to
 //                                                 get from source level
-// levelWidhtDownsampled, levelHeightDownsampled - size of level
+// levelWidthDownsampled, levelHeightDownsampled - size of level
 //                                                 according to downsampling
-void dimensionDownsampling(int64_t frameWidht, int64_t frameHeight,
-                           int64_t levelWidht, int64_t levelHeight, bool retile,
-                           int level, double downsampleOfLevel,
-                           int64_t *frameWidhtDownsampled,
-                           int64_t *frameHeightDownsampled,
-                           int64_t *levelWidhtDownsampled,
-                           int64_t *levelHeightDownsampled);
-
-// Calculates size of level to fit into frame
-void adjustFrameToLevel(int64_t *frameFirstAxis, int64_t *frameSecondAxis,
-                        int64_t levelFirstAxis);
+// level_frameWidth, level_frame: Frame Width and Height to use generate image
+// typically = frameWidth & frameHeight.
+// level_frameWidth, level_frame = levelWidthDownsampled, levelHeightDownsampled
+//  when frame Width & Frame Height is larger than output level dim.
+//  compression - compression to use to encode layer. Work around for issue
+//  in current jpeg2000 codec.  Changes from jpeg2000 to RAW for very small
+//  framesizes.
+void dimensionDownsampling(
+    int64_t frameWidth, int64_t frameHeight, int64_t levelWidth,
+    int64_t levelHeight, bool retile, int level, double downsampleOfLevel,
+    int64_t *frameWidthDownsampled, int64_t *frameHeightDownsampled,
+    int64_t *levelWidthDownsampled, int64_t *levelHeightDownsampled,
+    int64_t *level_frameWidth, int64_t *level_frameHeight,
+    DCM_Compression *compression);
 
 }  // namespace wsiToDicomConverter
 #endif  // SRC_GEOMETRYUTILS_H_

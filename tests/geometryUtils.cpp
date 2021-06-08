@@ -12,80 +12,103 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/geometryUtils.h"
 #include <gtest/gtest.h>
 
+#include "src/geometryUtils.h"
+
 TEST(geometryTest, frameSizeWithoutRetile) {
-  int64_t levelWidht = 100;
+  int64_t levelWidth = 100;
   int64_t levelHeight = 100;
-  int64_t frameWidht = 150;
+  int64_t frameWidth = 150;
   int64_t frameHeight = 150;
   bool retile = true;
   int level = 0;
   double downsampleOfLevel = 1;
-  int64_t frameWidhtDownsampled;
+  int64_t frameWidthDownsampled;
   int64_t frameHeightDownsampled;
-  int64_t levelWidhtDownsampled;
+  int64_t levelWidthDownsampled;
   int64_t levelHeightDownsampled;
-  wsiToDicomConverter::dimensionDownsampling(
-      frameWidht, frameHeight, levelWidht, levelHeight, retile, level,
-      downsampleOfLevel, &frameWidhtDownsampled, &frameHeightDownsampled,
-      &levelWidhtDownsampled, &levelHeightDownsampled);
-  ASSERT_EQ(100, frameWidhtDownsampled);
-  ASSERT_EQ(100, frameHeightDownsampled);
+  int64_t level_frameWidth;
+  int64_t level_frameHeight;
+  DCM_Compression level_compression = JPEG;
 
-  frameWidht = 50;
+  wsiToDicomConverter::dimensionDownsampling(
+      frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
+      downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
+      &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
+      &level_frameHeight, &level_compression);
+  ASSERT_EQ(100, frameWidthDownsampled);
+  ASSERT_EQ(100, frameHeightDownsampled);
+  ASSERT_EQ(100, level_frameWidth);
+  ASSERT_EQ(100, level_frameHeight);
+
+  frameWidth = 50;
   frameHeight = 50;
 
   wsiToDicomConverter::dimensionDownsampling(
-      frameWidht, frameHeight, levelWidht, levelHeight, retile, level,
-      downsampleOfLevel, &frameWidhtDownsampled, &frameHeightDownsampled,
-      &levelWidhtDownsampled, &levelHeightDownsampled);
-  ASSERT_EQ(50, frameWidhtDownsampled);
+      frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
+      downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
+      &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
+      &level_frameHeight, &level_compression);
+  ASSERT_EQ(50, frameWidthDownsampled);
   ASSERT_EQ(50, frameHeightDownsampled);
+  ASSERT_EQ(50, level_frameWidth);
+  ASSERT_EQ(50, level_frameHeight);
 }
 
 TEST(geometryTest, frameSizeWithRetile) {
-  int64_t levelWidht = 100;
+  int64_t levelWidth = 100;
   int64_t levelHeight = 100;
-  int64_t frameWidht = 42;
+  int64_t frameWidth = 42;
   int64_t frameHeight = 42;
   bool retile = true;
   int level = 2;
   double downsampleOfLevel = 2;
-  int64_t frameWidhtDownsampled;
+  int64_t frameWidthDownsampled;
   int64_t frameHeightDownsampled;
-  int64_t levelWidhtDownsampled;
+  int64_t levelWidthDownsampled;
   int64_t levelHeightDownsampled;
+  int64_t level_frameWidth;
+  int64_t level_frameHeight;
+  DCM_Compression level_compression = JPEG;
   wsiToDicomConverter::dimensionDownsampling(
-      frameWidht, frameHeight, levelWidht, levelHeight, retile, level,
-      downsampleOfLevel, &frameWidhtDownsampled, &frameHeightDownsampled,
-      &levelWidhtDownsampled, &levelHeightDownsampled);
-  ASSERT_EQ(84, frameWidhtDownsampled);
+      frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
+      downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
+      &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
+      &level_frameHeight, &level_compression);
+  ASSERT_EQ(84, frameWidthDownsampled);
   ASSERT_EQ(84, frameHeightDownsampled);
-  ASSERT_EQ(50, levelWidhtDownsampled);
+  ASSERT_EQ(50, levelWidthDownsampled);
   ASSERT_EQ(50, levelHeightDownsampled);
+  ASSERT_EQ(42, level_frameWidth);
+  ASSERT_EQ(42, level_frameHeight);
 
-  frameWidht = 55;
+  frameWidth = 55;
   frameHeight = 55;
 
   wsiToDicomConverter::dimensionDownsampling(
-      frameWidht, frameHeight, levelWidht, levelHeight, retile, level,
-      downsampleOfLevel, &frameWidhtDownsampled, &frameHeightDownsampled,
-      &levelWidhtDownsampled, &levelHeightDownsampled);
-  ASSERT_EQ(50, levelWidhtDownsampled);
+      frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
+      downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
+      &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
+      &level_frameHeight, &level_compression);
+  ASSERT_EQ(50, levelWidthDownsampled);
   ASSERT_EQ(50, levelHeightDownsampled);
-  ASSERT_EQ(levelWidht, frameWidhtDownsampled);
+  ASSERT_EQ(levelWidth, frameWidthDownsampled);
   ASSERT_EQ(levelHeight, frameHeightDownsampled);
+  ASSERT_EQ(50, level_frameWidth);
+  ASSERT_EQ(50, level_frameHeight);
 
   frameHeight = 42;
 
   wsiToDicomConverter::dimensionDownsampling(
-      frameWidht, frameHeight, levelWidht, levelHeight, retile, level,
-      downsampleOfLevel, &frameWidhtDownsampled, &frameHeightDownsampled,
-      &levelWidhtDownsampled, &levelHeightDownsampled);
-  ASSERT_EQ(50, levelWidhtDownsampled);
+      frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
+      downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
+      &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
+      &level_frameHeight, &level_compression);
+  ASSERT_EQ(50, levelWidthDownsampled);
   ASSERT_EQ(50, levelHeightDownsampled);
-  ASSERT_EQ(110, frameWidhtDownsampled);
+  ASSERT_EQ(100, frameWidthDownsampled);
   ASSERT_EQ(84, frameHeightDownsampled);
+  ASSERT_EQ(50, level_frameWidth);
+  ASSERT_EQ(42, level_frameHeight);
 }

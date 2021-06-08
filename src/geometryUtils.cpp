@@ -1,5 +1,4 @@
 // Copyright 2019 Google LLC
-//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -11,46 +10,71 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <stdlib.h>
 
 #include "src/geometryUtils.h"
 
 namespace wsiToDicomConverter {
 
-void dimensionDownsampling(int64_t frameWidht, int64_t frameHeight,
-                           int64_t levelWidht, int64_t levelHeight, bool retile,
-                           int level, double downsampleOfLevel,
-                           int64_t *frameWidhtDownsampled,
-                           int64_t *frameHeightDownsampled,
-                           int64_t *levelWidhtDownsampled,
-                           int64_t *levelHeightDownsampled) {
-  *frameWidhtDownsampled = frameWidht;
+void dimensionDownsampling(
+    int64_t frameWidth, int64_t frameHeight, int64_t levelWidth,
+    int64_t levelHeight, bool retile, int level, double downsampleOfLevel,
+    int64_t *frameWidthDownsampled, int64_t *frameHeightDownsampled,
+    int64_t *levelWidthDownsampled, int64_t *levelHeightDownsampled,
+    int64_t *level_frameWidth, int64_t *level_frameHeight,
+    DCM_Compression *compression) {
+  *frameWidthDownsampled = frameWidth;
   *frameHeightDownsampled = frameHeight;
-  *levelWidhtDownsampled = levelWidht;
+  *levelWidthDownsampled = levelWidth;
   *levelHeightDownsampled = levelHeight;
+  *level_frameWidth = frameWidth;
+  *level_frameHeight = frameHeight;
   if (retile && level > 0) {
-    *frameWidhtDownsampled *= downsampleOfLevel;
+    *frameWidthDownsampled *= downsampleOfLevel;
     *frameHeightDownsampled *= downsampleOfLevel;
-    *levelWidhtDownsampled /= downsampleOfLevel;
+    *levelWidthDownsampled /= downsampleOfLevel;
     *levelHeightDownsampled /= downsampleOfLevel;
   }
-  if (levelWidht <= *frameWidhtDownsampled &&
-      levelHeight <= *frameHeightDownsampled) {
-    if (levelWidht >= levelHeight) {
-      adjustFrameToLevel(frameWidhtDownsampled, frameHeightDownsampled,
-                         levelWidht);
-    } else {
-      adjustFrameToLevel(frameHeightDownsampled, frameWidhtDownsampled,
-                         levelHeight);
+  /*
+    Frames (frameWidthDownsampled, frameHeightDownsampled) are sampled from 
+    source Layers (levelWidth, levelHeight) and downsampled to represent 
+    target layer (levelWidthDownsampled, levelHeightDownsampled).  To do this
+    frames are downsampled to dim (level_frameWidth, level_frameHeight). 
+    This logic resides in frame.c[[]]
+    
+    Normally frame dim < output layer dim. However if frame dim > than layer dim
+    then frame dim = layer dim.
+  */
+  if (levelWidth < *frameWidthDownsampled) {
+    *frameWidthDownsampled = levelWidth;
+    *level_frameWidth = *levelWidthDownsampled;
+    if (*compression == JPEG2000 && *level_frameWidth < 40) {
+      /*
+        A bug in JPEG2000 Codec segfaults if the size of the allocated
+        frame being compressed is too small. JPEG Codec is fine. As a
+        workaround. Changing the codec to raw for very small frame sizes. This
+        fix should be removed and fixed corrected in the JPEG2000 code base.
+        This code path is hit if the whole slide image is being downsampled to
+        size < 40 pixels x 40 pixels
+      */
+      *compression = RAW;
     }
   }
-}
-
-void adjustFrameToLevel(int64_t *frameFirstAxis, int64_t *frameSecondAxis,
-                        int64_t levelFirstAxis) {
-  double smallLevelDownsample = static_cast<double>(levelFirstAxis) /
-                                static_cast<double>(*frameFirstAxis);
-  *frameSecondAxis = *frameSecondAxis * smallLevelDownsample;
-  *frameFirstAxis = levelFirstAxis;
+  if (levelHeight < *frameHeightDownsampled) {
+    *frameHeightDownsampled = levelHeight;
+    *level_frameHeight = *levelHeightDownsampled;
+    if (*compression == JPEG2000 && *level_frameWidth < 40) {
+      /*
+        A bug in JPEG2000 Codec segfaults if the size of the allocated
+        frame being compressed is too small. JPEG Codec is fine. As a
+        workaround. Changing the codec to raw for very small frame sizes. This
+        fix should be removed and fixed corrected in the JPEG2000 code base.
+        This code path is hit if the whole slide image is being downsampled to
+        size < 40 pixels x 40 pixels
+      */
+      *compression = RAW;
+    }
+  }
 }
 
 }  // namespace wsiToDicomConverter
