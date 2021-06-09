@@ -12,17 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_FRAME_H_
-#define SRC_FRAME_H_
+#ifndef SRC_NEARESTNEIGHBORFRAME_H_
+#define SRC_NEARESTNEIGHBORFRAME_H_
 #include <openslide.h>
 #include <stdlib.h>
+
 #include <memory>
 #include <vector>
+
 #include "src/compressor.h"
 #include "src/enums.h"
+#include "src/frame.h"
 
 // Frame represents a single image frame from the OpenSlide library
-class Frame {
+class NearestNeighborFrame : public Frame {
  public:
   // osr - openslide
   // locationX, locationY - top-left corner of frame in level coordinates
@@ -30,16 +33,18 @@ class Frame {
   // multiplicator - size difference between 0 level and current one
   // frameWidht, frameHeight_ - size frame needs to be scaled to
   // compression - type of compression
-  Frame(openslide_t *osr, int64_t locationX, int64_t locationY, int32_t level,
-        int64_t frameWidhtDownsampled, int64_t frameHeightDownsampled,
-        double multiplicator, int64_t frameWidht, int64_t frameHeight_,
-        DCM_Compression compression, int quality);
-  ~Frame();
+  NearestNeighborFrame(openslide_t *osr, int64_t locationX, int64_t locationY,
+                       int32_t level, int64_t frameWidhtDownsampled,
+                       int64_t frameHeightDownsampled, double multiplicator,
+                       int64_t frameWidht, int64_t frameHeight,
+                       DCM_Compression compression, int quality);
+
+  virtual ~NearestNeighborFrame();
   // Gets frame by openslide library, performs scaling it and compressing
-  void sliceFrame();
-  bool isDone();
-  uint8_t *getData();
-  size_t getSize();
+  virtual void sliceFrame();
+  virtual bool isDone();
+  virtual uint8_t *getData();
+  virtual size_t getSize();
 
  private:
   std::unique_ptr<uint8_t[]> data_;
@@ -57,4 +62,4 @@ class Frame {
   std::unique_ptr<Compressor> compressor_;
 };
 
-#endif  // SRC_FRAME_H_
+#endif  // SRC_NEARESTNEIGHBORFRAME_H_

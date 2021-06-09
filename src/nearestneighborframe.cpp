@@ -11,24 +11,25 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-#include "src/frame.h"
 #include <dcmtk/dcmdata/libi2d/i2dimgs.h>
+#include <stdio.h>
+
 #include <boost/gil/extension/numeric/affine.hpp>
 #include <boost/gil/extension/numeric/resample.hpp>
 #include <boost/gil/extension/numeric/sampler.hpp>
 #include <boost/gil/typedefs.hpp>
 #include <boost/log/trivial.hpp>
-#include <stdio.h>
+
 #include "src/jpeg2000Compression.h"
 #include "src/jpegCompression.h"
+#include "src/nearestneighborframe.h"
 #include "src/rawCompression.h"
 
-Frame::Frame(openslide_t *osr, int64_t locationX, int64_t locationY,
-             int32_t level, int64_t frameWidhtDownsampled,
-             int64_t frameHeightDownsampled, double multiplicator,
-             int64_t frameWidht, int64_t frameHeight,
-             DCM_Compression compression, int quality) {
+NearestNeighborFrame::NearestNeighborFrame(
+    openslide_t *osr, int64_t locationX, int64_t locationY, int32_t level,
+    int64_t frameWidhtDownsampled, int64_t frameHeightDownsampled,
+    double multiplicator, int64_t frameWidht, int64_t frameHeight,
+    DCM_Compression compression, int quality) {
   done_ = false;
   osr_ = osr;
   locationX_ = locationX;
@@ -51,13 +52,13 @@ Frame::Frame(openslide_t *osr, int64_t locationX, int64_t locationY,
   }
 }
 
-Frame::~Frame() {
-}
+NearestNeighborFrame::~NearestNeighborFrame() {}
 
 class convert_rgba_to_rgb {
  public:
-  void operator()(const boost::gil::rgba8c_pixel_t &src,
-                  boost::gil::rgb8_pixel_t &dst) const {  // NOLINT, boost template
+  void operator()(
+      const boost::gil::rgba8c_pixel_t &src,
+      boost::gil::rgb8_pixel_t &dst) const {  // NOLINT, boost template
     boost::gil::get_color(dst, boost::gil::blue_t()) =
         boost::gil::channel_multiply(get_color(src, boost::gil::red_t()),
                                      get_color(src, boost::gil::alpha_t()));
@@ -70,10 +71,10 @@ class convert_rgba_to_rgb {
   }
 };
 
-void Frame::sliceFrame() {
-  uint32_t *buf =
-      reinterpret_cast<uint32_t *>(malloc((size_t)frameWidhtDownsampled_ *
-                         (size_t)frameHeightDownsampled_ * (size_t)4));
+void NearestNeighborFrame::sliceFrame() {
+  uint32_t *buf = reinterpret_cast<uint32_t *>(
+      malloc((size_t)frameWidhtDownsampled_ * (size_t)frameHeightDownsampled_ *
+             (size_t)4));
   openslide_read_region(osr_, buf, (int64_t)(locationX_ * multiplicator_),
                         (int64_t)(locationY_ * multiplicator_), level_,
                         frameWidhtDownsampled_, frameHeightDownsampled_);
@@ -101,8 +102,8 @@ void Frame::sliceFrame() {
   done_ = true;
 }
 
-bool Frame::isDone() { return done_; }
+bool NearestNeighborFrame::isDone() { return done_; }
 
-uint8_t *Frame::getData() { return data_.get(); }
+uint8_t *NearestNeighborFrame::getData() { return data_.get(); }
 
-size_t Frame::getSize() { return size_; }
+size_t NearestNeighborFrame::getSize() { return size_; }
