@@ -32,8 +32,8 @@
 
 #include "src/dcmFileDraft.h"
 #include "src/dcmTags.h"
-#include "src/frame.h"
 #include "src/geometryUtils.h"
+#include "src/nearestneighborframe.h"
 
 namespace wsiToDicomConverter {
 
@@ -245,10 +245,11 @@ int WsiToDcm::dicomizeTiff(
     while (y < levelHeight) {
       while (x < levelWidth) {
         assert(osr != nullptr && openslide_get_error(osr) == nullptr);
-        std::unique_ptr<Frame> frameData = std::make_unique<Frame>(
-            osr, x, y, levelToGet, frameWidthDownsampled,
-            frameHeightDownsampled, multiplicator, level_frameWidth,
-            level_frameHeight, level_compression, quality);
+        std::unique_ptr<Frame> frameData;
+        frameData = std::make_unique<NearestNeighborFrame>(
+              osr, x, y, levelToGet, frameWidthDownsampled,
+              frameHeightDownsampled, multiplicator, level_frameWidth,
+              level_frameHeight, level_compression, quality);
         boost::asio::post(
             pool, [frameData = frameData.get()]() { frameData->sliceFrame(); });
         framesData.push_back(std::move(frameData));

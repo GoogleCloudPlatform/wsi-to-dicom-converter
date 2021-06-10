@@ -14,47 +14,17 @@
 
 #ifndef SRC_FRAME_H_
 #define SRC_FRAME_H_
-#include <openslide.h>
-#include <stdlib.h>
-#include <memory>
-#include <vector>
-#include "src/compressor.h"
-#include "src/enums.h"
 
 // Frame represents a single image frame from the OpenSlide library
 class Frame {
  public:
-  // osr - openslide
-  // locationX, locationY - top-left corner of frame in level coordinates
-  // frameWidhtDownsampled, frameHeightDownsampled - size of frame to get
-  // multiplicator - size difference between 0 level and current one
-  // frameWidht, frameHeight_ - size frame needs to be scaled to
-  // compression - type of compression
-  Frame(openslide_t *osr, int64_t locationX, int64_t locationY, int32_t level,
-        int64_t frameWidhtDownsampled, int64_t frameHeightDownsampled,
-        double multiplicator, int64_t frameWidht, int64_t frameHeight_,
-        DCM_Compression compression, int quality);
-  ~Frame();
-  // Gets frame by openslide library, performs scaling it and compressing
-  void sliceFrame();
-  bool isDone();
-  uint8_t *getData();
-  size_t getSize();
+  virtual ~Frame() {}
 
- private:
-  std::unique_ptr<uint8_t[]> data_;
-  size_t size_;
-  bool done_;
-  openslide_t *osr_;
-  int64_t locationX_;
-  int64_t locationY_;
-  int level_;
-  int64_t frameWidhtDownsampled_;
-  int64_t frameHeightDownsampled_;
-  int64_t frameWidht_;
-  int64_t frameHeight_;
-  double multiplicator_;
-  std::unique_ptr<Compressor> compressor_;
+  // Gets frame by openslide library, performs scaling it and compressing
+  virtual void sliceFrame() = 0;
+  virtual bool isDone() = 0;
+  virtual uint8_t *getData() = 0;
+  virtual size_t getSize() = 0;
 };
 
 #endif  // SRC_FRAME_H_
