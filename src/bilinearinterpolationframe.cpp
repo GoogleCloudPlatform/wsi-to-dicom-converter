@@ -65,15 +65,15 @@ BilinearInterpolationFrame::~BilinearInterpolationFrame() {}
 
 void set_pixel(double *rgb_mem, const int width, const int height, int cx,
                int cy, const double red, const double green, const double blue,
-               const double precent) {
+               const double percent) {
   if (cx < 0 || cy < 0 || cx >= width || cy >= height) {
     return;
   }
   const int pix = 4 * (cx + (cy * width));
-  rgb_mem[pix] += precent * red;
-  rgb_mem[pix + 1] += precent * green;
-  rgb_mem[pix + 2] += precent * blue;
-  rgb_mem[pix + 3] += precent;
+  rgb_mem[pix] += percent * red;
+  rgb_mem[pix + 1] += percent * green;
+  rgb_mem[pix + 2] += percent * blue;
+  rgb_mem[pix + 3] += percent;
 }
 
 void BilinearInterpolationFrame::sliceFrame() {
@@ -133,6 +133,7 @@ void BilinearInterpolationFrame::sliceFrame() {
 
   if (openslide_get_error(osr_)) {
     BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
+    throw 1;
   }
 
   // Allocate memory (size (width/height) of frame being downsampled into) to
@@ -150,8 +151,7 @@ void BilinearInterpolationFrame::sliceFrame() {
   const double TargetFrame_YStart =
       static_cast<double>(targetLevelHeight_ * locationY_ / levelHeight_);
 
-  // Cache X coordinate position trannsformation to transform from layer being
-  // downsampled to frame coordinates. Performance
+  // Cache X layer coordinate position trannsformation.
   double *frameX_Cache;
   if (targetLevelWidth_ == levelWidth_) {
     frameX_Cache = NULL;

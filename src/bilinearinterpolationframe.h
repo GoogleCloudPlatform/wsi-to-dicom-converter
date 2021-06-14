@@ -28,16 +28,20 @@
 class BilinearInterpolationFrame : public Frame {
  public:
   // osr - openslide
-  // locationX, locationY - top-left corner of frame in level coordinates
-  // frameWidhtDownsampled, frameHeightDownsampled - size of frame to get
-  // multiplicator - size difference between 0 level and current one
-  // frameWidht, frameHeight_ - size frame needs to be scaled to
+  // locationX, locationY - top-left corner of frame in source level coords.
+  // frameWidhtDownsampled, frameHeightDownsampled - size of frame to get  
+  // frameWidht, frameHeight - size frame is scaled to
   // compression - type of compression
+  // quality - compression quality
+  // levelWidthDownsampled, levelHeightDownsampled - dimensions of dest
+  //                                                level being generated.
+  // levelWidth, levelHeight - dimensions of source level being downsampled.
+  // level0Width, level0Height - dimensions of base level (highest mag)
   BilinearInterpolationFrame(openslide_t *osr, int64_t locationX,
                              int64_t locationY, int32_t level,
                              int64_t frameWidthDownsampled,
                              int64_t frameHeightDownsampled, int64_t frameWidth,
-                             int64_t frameHeight_, DCM_Compression compression,
+                             int64_t frameHeight, DCM_Compression compression,
                              int quality, int64_t levelWidthDownsampled,
                              int64_t levelHeightDownsampled, int64_t levelWidth,
                              int64_t levelHeight, int64_t level0Width,
