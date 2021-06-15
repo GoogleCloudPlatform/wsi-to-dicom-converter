@@ -29,7 +29,7 @@ class BilinearInterpolationFrame : public Frame {
  public:
   // osr - openslide
   // locationX, locationY - top-left corner of frame in source level coords.
-  // frameWidhtDownsampled, frameHeightDownsampled - size of frame to get  
+  // frameWidhtDownsampled, frameHeightDownsampled - size of frame to get
   // frameWidht, frameHeight - size frame is scaled to
   // compression - type of compression
   // quality - compression quality

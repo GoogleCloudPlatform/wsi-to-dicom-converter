@@ -121,6 +121,8 @@ int WsiToDcm::dicomizeTiff(
   if (jsonFile.size() > 0) {
     tags->readJsonFile(jsonFile);
   }
+  int64_t levelWidth;
+  int64_t levelHeight;
 
   const char *slideFile = inputFile.c_str();
   if (!openslide_detect_vendor(slideFile)) {
@@ -133,7 +135,6 @@ int WsiToDcm::dicomizeTiff(
     throw 1;
   }
   int32_t levels = openslide_get_level_count(osr);
-  const int32_t svs_level_count = levels;
   if (retile) {
     levels = retileLevels;
   }
@@ -141,16 +142,15 @@ int WsiToDcm::dicomizeTiff(
   int64_t firstLevelHeight;
   openslide_get_level_dimensions(osr, 0, &firstLevelWidth, &firstLevelHeight);
 
-  double firstLevelMppX = 0.0;
-  double firstLevelMppY = 0.0;
-  const char *open_slide_firstLevelMppX =
+  double firstLevelWidthMm = 0;
+  double firstLevelHeightMm = 0;
+  const char *firstLevelMppX =
       openslide_get_property_value(osr, "openslide.mpp-x");
-  const char *open_slide_firstLevelMppY =
+  const char *firstLevelMppY =
       openslide_get_property_value(osr, "openslide.mpp-y");
-  if (open_slide_firstLevelMppX != nullptr &&
-      open_slide_firstLevelMppY != nullptr) {
-    firstLevelMppX = std::stod(open_slide_firstLevelMppX);
-    firstLevelMppY = std::stod(open_slide_firstLevelMppY);
+  if (firstLevelMppX != nullptr && firstLevelMppY != nullptr) {
+    firstLevelWidthMm = firstLevelWidth * std::stod(firstLevelMppX) / 1000;
+    firstLevelHeightMm = firstLevelHeight * std::stod(firstLevelMppY) / 1000;
   }
 
   int8_t threadsForPool = boost::thread::hardware_concurrency();
@@ -167,8 +167,6 @@ int WsiToDcm::dicomizeTiff(
     initialX = 1;
     initialY = 1;
   }
-  BOOST_LOG_TRIVIAL(debug) << " ";
-  BOOST_LOG_TRIVIAL(debug) << "Level Count: " << svs_level_count;
   bool adapative_stop_downsampeling = false;
   for (int32_t level = startOnLevel;
        level < levels && (stopOnLevel < startOnLevel || level <= stopOnLevel) &&
@@ -179,63 +177,18 @@ int WsiToDcm::dicomizeTiff(
     uint32_t row = 1;
     uint32_t column = 1;
     int32_t levelToGet = level;
-    int64_t downsample = 1;
+    double downsample = 1.;
     if (retile) {
       if (downsamples.size() > level && downsamples[level] >= 1) {
-        downsample = static_cast<int64_t>(downsamples[level]);
+        downsample = downsamples[level];
       } else {
-        downsample = static_cast<int64_t>(pow(2, level));
+        downsample = ((int64_t)pow(2, level));
       }
-      /*
-        Openslide API  identifies image closest to the downsampled image in size
-        with the API call: openslide_get_best_level_for_downsample(osr,
-        downsample); optimal level selection selects the level with
-        magnification above required level. Downsample acquistions can result in
-        image dimensions which are non-interger multiples of the highest
-        magnification which can result in the openslide_get_level_downsample
-        reporting level downsampeling of a non-fixed multiple:
-
-        Example: Aperio svs imaging,  E.g. (40x -> 10x reports the 10x image has
-        having a downsampeling factor of 4.00018818010427.)
-
-        The code below, computes the desired frame dimensions and then selects
-        the frame which is the best match.
-      */
-      const int64_t tw = firstLevelWidth / downsample;
-      const int64_t th = firstLevelHeight / downsample;
-      for (levelToGet = 1; levelToGet < svs_level_count; ++levelToGet) {
-        int64_t lw, lh;
-        openslide_get_level_dimensions(osr, levelToGet, &lw, &lh);
-        if (lw < tw || lh < th) {
-          break;
-        }
-      }
-      levelToGet -= 1;
+      levelToGet = openslide_get_best_level_for_downsample(osr, downsample);
     }
-    /*
-        DICOM requires uniform pixel spacing across downsampled image
-        for pixel spacing based metrics to produce images with compatiable
-        coordinate systems across zoom levels.
-
-        Downsampled acquistions can have in image dimensions which are
-       non-interger multiples of the highest magnification. Example: Aperio svs
-       imaging, E.g. (40x -> 10x reports the 10x image has having a
-       downsampeling  factor of 4.00018818010427. This results in non-uniform
-       scaling of the pixels and can result in small, but signifcant
-       mis-alignment in the downsampled imageing. Flooring, the multiplier
-       returned by openslide_get_level_downsample corrects this by restoring
-       consistent downsamping and pixel spacing across the image.
-    */
-    const double multiplicator =
-        floor(openslide_get_level_downsample(osr, levelToGet));
-    // Downsampling factor required to go from selected downsampled level to the
-    // desired level of downsampeling
-    const double downsampleOfLevel =
-        static_cast<double>(downsample) / multiplicator;
-
-    int64_t levelWidth;
-    int64_t levelHeight;
     openslide_get_level_dimensions(osr, levelToGet, &levelWidth, &levelHeight);
+
+    double multiplicator = openslide_get_level_downsample(osr, levelToGet);
     BOOST_LOG_TRIVIAL(debug) << "level size: " << levelWidth << ' '
                              << levelHeight << ' ' << multiplicator;
     int batchNumber = 0;
@@ -248,6 +201,7 @@ int WsiToDcm::dicomizeTiff(
     uint32_t numberOfFrames = 0;
     uint32_t batch = 0;
     std::vector<std::unique_ptr<Frame> > framesData;
+    double downsampleOfLevel = downsample / multiplicator;
     int64_t level_frameWidth;
     int64_t level_frameHeight;
     DCM_Compression level_compression = compression;
@@ -255,36 +209,17 @@ int WsiToDcm::dicomizeTiff(
     // Adjust level size by starting position if skipping row and column.
     // levelHeightDownsampled and levelWidthDownsampled will reflect
     // new starting position.
-    dimensionDownsampling(frameWidth, frameHeight, levelWidth - initialX,
-                          levelHeight - initialY, retile, level,
-                          downsampleOfLevel, &frameWidthDownsampled,
-                          &frameHeightDownsampled, &levelWidthDownsampled,
-                          &levelHeightDownsampled, &level_frameWidth,
-                          &level_frameHeight, &level_compression);
+    dimensionDownsampling(
+        frameWidth, frameHeight, levelWidth - x, levelHeight - y, retile, level,
+        downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
+        &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
+        &level_frameHeight, &level_compression);
 
-    const int64_t width_adjustment = ((levelWidthDownsampled * downsample) -
-                                      (firstLevelWidth-initialX));
-    const int64_t height_adjustment = ((levelHeightDownsampled * downsample) -
-                                       (firstLevelHeight-initialY));
-    const double level_width_adjustment = static_cast<double>(
-                                            std::max<int64_t>(
-                                              (firstLevelWidth - initialX) +
-                                               width_adjustment, 0.0));
-    const double level_height_adjustment = static_cast<double>(
-                                            std::max<int64_t>(
-                                              (firstLevelHeight - initialY) +
-                                               height_adjustment, 0.0));
-    const double level_width_Mm = level_width_adjustment * firstLevelMppX /
-                                  1000;
-    const double level_height_Mm = level_height_adjustment * firstLevelMppY /
-                                   1000;
-    BOOST_LOG_TRIVIAL(debug) << "level width & height adjustment (pixels): " <<
-                                 width_adjustment << ", " << height_adjustment;
-
-    BOOST_LOG_TRIVIAL(debug) << "multiplicator: " << multiplicator;
     BOOST_LOG_TRIVIAL(debug) << "levelToGet: " << levelToGet;
+    BOOST_LOG_TRIVIAL(debug) << "multiplicator: " << multiplicator;
     BOOST_LOG_TRIVIAL(debug) << "downsample: " << downsample;
     BOOST_LOG_TRIVIAL(debug) << "downsampleOfLevel: " << downsampleOfLevel;
+
     BOOST_LOG_TRIVIAL(debug) << "frameDownsampled: " << frameWidthDownsampled
                              << ", " << frameHeightDownsampled;
 
@@ -340,8 +275,8 @@ int WsiToDcm::dicomizeTiff(
                   levelWidthDownsampled, levelHeightDownsampled, level,
                   batchNumber, batch, row, column, level_frameWidth,
                   level_frameHeight, studyId, seriesId, imageName,
-                  level_compression, tiled, tags.get(), level_width_Mm,
-                  level_height_Mm);
+                  level_compression, tiled, tags.get(), firstLevelWidthMm,
+                  firstLevelHeightMm);
           boost::asio::post(pool, [filedraft = std::move(filedraft)]() {
             filedraft->saveFile();
           });
@@ -362,7 +297,7 @@ int WsiToDcm::dicomizeTiff(
           levelWidthDownsampled, levelHeightDownsampled, level, batchNumber,
           batch, row, column, level_frameWidth, level_frameHeight, studyId,
           seriesId, imageName, level_compression, tiled, tags.get(),
-          level_width_Mm, level_height_Mm);
+          firstLevelWidthMm, firstLevelHeightMm);
       boost::asio::post(pool, [filedraft = std::move(filedraft)]() {
         filedraft->saveFile();
       });
