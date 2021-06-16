@@ -51,3 +51,13 @@ diff ./endToEnd/test3GeneratedImage.ppm ./endToEnd/test3ExpectedImage.ppm
 ./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test4  --levels 6 --startOn 5 --tileHeight 100  --tileWidth 100 --compression raw --dropFirstRowAndColumn
 dcm2pnm ./endToEnd/level-5-frames-0-1.dcm ./endToEnd/test4GeneratedImage.ppm
 diff ./endToEnd/test4GeneratedImage.ppm ./endToEnd/test4ExpectedImage.ppm
+
+#test - generate bilinear Downsamped DICOM and compare with expected image
+./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test5  --levels 6 --startOn 5 --tileHeight 100  --tileWidth 100 --compression raw --BilinearDownsampeling
+dcm2pnm ./endToEnd/level-5-frames-0-1.dcm ./endToEnd/test5GeneratedImage.ppm
+diff ./endToEnd/test5GeneratedImage.ppm ./endToEnd/test5ExpectedImage.ppm
+
+#test - generate bilinear Downsamped DICOM with dropped first row and column and compare image with expected one
+./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test6  --levels 6 --startOn 5 --tileHeight 100  --tileWidth 100 --compression raw --dropFirstRowAndColumn --BilinearDownsampeling
+dcm2pnm ./endToEnd/level-5-frames-0-1.dcm ./endToEnd/test6GeneratedImage.ppm
+diff ./endToEnd/test6GeneratedImage.ppm ./endToEnd/test6ExpectedImage.ppm

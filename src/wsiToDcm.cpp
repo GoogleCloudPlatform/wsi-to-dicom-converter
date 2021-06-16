@@ -30,6 +30,7 @@
 #include <utility>
 #include <vector>
 
+#include "src/bilinearinterpolationframe.h"
 #include "src/dcmFileDraft.h"
 #include "src/dcmTags.h"
 #include "src/geometryUtils.h"
@@ -101,7 +102,7 @@ int WsiToDcm::dicomizeTiff(
     std::string studyId, std::string seriesId, std::string jsonFile,
     int32_t retileLevels, std::vector<double> downsamples, bool tiled,
     int batchLimit, int8_t threads, bool dropFirstRowAndColumn,
-    bool stop_down_sampleing_at_singleframe) {
+    bool stop_down_sampleing_at_singleframe, bool useBilinearDownsampeling) {
   bool retile = retileLevels > 0;
 
   if (studyId.size() < 1) {
@@ -246,10 +247,20 @@ int WsiToDcm::dicomizeTiff(
       while (x < levelWidth) {
         assert(osr != nullptr && openslide_get_error(osr) == nullptr);
         std::unique_ptr<Frame> frameData;
-        frameData = std::make_unique<NearestNeighborFrame>(
+        if (useBilinearDownsampeling) {
+          frameData = std::make_unique<BilinearInterpolationFrame>(
+              osr, x, y, levelToGet, frameWidthDownsampled,
+              frameHeightDownsampled, level_frameWidth, level_frameHeight,
+              level_compression, quality, levelWidthDownsampled,
+              levelHeightDownsampled, levelWidth, levelHeight, firstLevelWidth,
+              firstLevelHeight);
+        } else {
+          frameData = std::make_unique<NearestNeighborFrame>(
               osr, x, y, levelToGet, frameWidthDownsampled,
               frameHeightDownsampled, multiplicator, level_frameWidth,
               level_frameHeight, level_compression, quality);
+        }
+
         boost::asio::post(
             pool, [frameData = frameData.get()]() { frameData->sliceFrame(); });
         framesData.push_back(std::move(frameData));
@@ -316,7 +327,8 @@ int WsiToDcm::wsi2dcm(WsiRequest wsiRequest) {
             wsiRequest.downsamples + wsiRequest.retileLevels + 1),
         wsiRequest.tiled, wsiRequest.batchLimit, wsiRequest.threads,
         wsiRequest.dropFirstRowAndColumn,
-        wsiRequest.stopDownSampelingAtSingleFrame);
+        wsiRequest.stopDownSampelingAtSingleFrame,
+        wsiRequest.useBilinearDownsampeling);
   } catch (int exception) {
     return 1;
   }

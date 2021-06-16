@@ -13,7 +13,7 @@ steps:
   - '$REPO_NAME'
   - '$TAG_NAME'
   secretEnv: ['ACCESS_TOKEN']
-timeout: 1800s
+timeout: 3600s
 
 secrets:
 - kmsKeyName: projects/gcp-healthcare-oss-test/locations/global/keyRings/default/cryptoKeys/github-robot-access-token

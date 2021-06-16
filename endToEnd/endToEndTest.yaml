@@ -1,4 +1,4 @@
 steps:
 - name: 'ubuntu'
   args: ['bash', './endToEnd/endToEndTest.sh']
-timeout: 1800s
+timeout: 3600s

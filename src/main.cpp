@@ -42,6 +42,7 @@ int main(int argc, char *argv[]) {
   bool debug;
   bool dropFirstRowAndColumn;
   bool stopDownSampelingAtSingleFrame;
+  bool useBilinearDownsampeling;
   std::vector<double> downsamples;
   downsamples.resize(1);
   bool sparse;
@@ -106,7 +107,12 @@ int main(int argc, char *argv[]) {
         programOptions::bool_switch(
         &stopDownSampelingAtSingleFrame)->default_value(false),
         "Stop generating image downsampels if image dimensions < "
-        "frame dimensions.");
+        "frame dimensions.")
+        ("BilinearDownsampeling",
+        programOptions::bool_switch(
+        &useBilinearDownsampeling)->default_value(false),
+        "Use bilinear interpolation to downsample images instead of  "
+        " nearest neighbor interpolation.");
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
     positionalOptions.add("outFolder", 1);
@@ -153,6 +159,7 @@ int main(int argc, char *argv[]) {
   request.threads = threads;
   request.dropFirstRowAndColumn = dropFirstRowAndColumn;
   request.stopDownSampelingAtSingleFrame = stopDownSampelingAtSingleFrame;
+  request.useBilinearDownsampeling = useBilinearDownsampeling;
   request.debug = debug;
   return wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
 }

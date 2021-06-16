@@ -91,6 +91,10 @@ struct WsiRequest {
 
   // stop downsampeling if total layer dimensions < 1 frame
   bool stopDownSampelingAtSingleFrame = false;
+
+  // use bilinear interpolation instead of nearest neighbor
+  // interpolation
+  bool useBilinearDownsampeling = false;
 };
 
 // Contains static methods for generation DICOM files
@@ -113,7 +117,8 @@ class WsiToDcm {
                           int32_t retileLevels, std::vector<double> downsamples,
                           bool tiled, int32_t batchLimit, int8_t threads,
                           bool dropFirstRowAndColumn,
-                          bool stopDownSampelingAtSingleFrame);
+                          bool stopDownSampelingAtSingleFrame,
+                          bool useBilinearDownsampeling);
 
   static void checkArguments(WsiRequest wsiRequest);
 };
