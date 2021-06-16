@@ -1,6 +1,6 @@
 steps:
 - name: 'ubuntu'
   args: ['bash', './cloud_build/ubuntuBuild.sh']
-timeout: 1800s
+timeout: 3600s
 
 
