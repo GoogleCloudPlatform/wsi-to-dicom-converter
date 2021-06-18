@@ -267,13 +267,11 @@ int WsiToDcm::dicomizeTiff(
     const int64_t height_adjustment = ((levelHeightDownsampled * downsample) -
                                        (firstLevelHeight-initialY));
     const double level_width_adjustment = static_cast<double>(
-                                            std::max<int64_t>(
                                               (firstLevelWidth - initialX) +
-                                               width_adjustment, 0.0));
+                                               width_adjustment);
     const double level_height_adjustment = static_cast<double>(
-                                            std::max<int64_t>(
                                               (firstLevelHeight - initialY) +
-                                               height_adjustment, 0.0));
+                                               height_adjustment);
     const double level_width_Mm = level_width_adjustment * firstLevelMppX /
                                   1000;
     const double level_height_Mm = level_height_adjustment * firstLevelMppY /
