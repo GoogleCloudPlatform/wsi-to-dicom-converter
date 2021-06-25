@@ -102,7 +102,8 @@ int WsiToDcm::dicomizeTiff(
     std::string studyId, std::string seriesId, std::string jsonFile,
     int32_t retileLevels, std::vector<double> downsamples, bool tiled,
     int batchLimit, int8_t threads, bool dropFirstRowAndColumn,
-    bool stop_down_sampleing_at_singleframe, bool useBilinearDownsampeling) {
+    bool stop_down_sampleing_at_singleframe, bool useBilinearDownsampeling,
+    bool floorCorrectDownsampling) {
   bool retile = retileLevels > 0;
 
   if (studyId.size() < 1) {
@@ -212,12 +213,13 @@ int WsiToDcm::dicomizeTiff(
       }
       levelToGet -= 1;
     }
+    double multiplicator = openslide_get_level_downsample(osr, levelToGet);
     /*
-        DICOM requires uniform pixel spacing across downsampled image
-        for pixel spacing based metrics to produce images with compatiable
-        coordinate systems across zoom levels.
+       DICOM requires uniform pixel spacing across downsampled image
+       for pixel spacing based metrics to produce images with compatiable
+       coordinate systems across zoom levels.
 
-        Downsampled acquistions can have in image dimensions which are
+       Downsampled acquistions can have in image dimensions which are
        non-interger multiples of the highest magnification. Example: Aperio svs
        imaging, E.g. (40x -> 10x reports the 10x image has having a
        downsampeling  factor of 4.00018818010427. This results in non-uniform
@@ -225,9 +227,10 @@ int WsiToDcm::dicomizeTiff(
        mis-alignment in the downsampled imageing. Flooring, the multiplier
        returned by openslide_get_level_downsample corrects this by restoring
        consistent downsamping and pixel spacing across the image.
-    */
-    const double multiplicator =
-        floor(openslide_get_level_downsample(osr, levelToGet));
+    */    
+    if (floorCorrectDownsampling) {
+      multiplicator = floor(multiplicator);
+    }
     // Downsampling factor required to go from selected downsampled level to the
     // desired level of downsampeling
     const double downsampleOfLevel =
@@ -391,7 +394,8 @@ int WsiToDcm::wsi2dcm(WsiRequest wsiRequest) {
         wsiRequest.tiled, wsiRequest.batchLimit, wsiRequest.threads,
         wsiRequest.dropFirstRowAndColumn,
         wsiRequest.stopDownSampelingAtSingleFrame,
-        wsiRequest.useBilinearDownsampeling);
+        wsiRequest.useBilinearDownsampeling,
+        wsiRequest.floorCorrectDownsampling);
   } catch (int exception) {
     return 1;
   }
