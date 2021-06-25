@@ -43,6 +43,7 @@ int main(int argc, char *argv[]) {
   bool dropFirstRowAndColumn;
   bool stopDownSampelingAtSingleFrame;
   bool useBilinearDownsampeling;
+  bool floorCorrectDownsampling;
   std::vector<double> downsamples;
   downsamples.resize(1);
   bool sparse;
@@ -111,8 +112,16 @@ int main(int argc, char *argv[]) {
         ("BilinearDownsampeling",
         programOptions::bool_switch(
         &useBilinearDownsampeling)->default_value(false),
-        "Use bilinear interpolation to downsample images instead of  "
-        " nearest neighbor interpolation.");
+        "Use bilinear interpolation to downsample images instead of"
+        " nearest neighbor interpolation.")
+        ("FloorCorrectOpenslideLevelDownsamples",
+        programOptions::bool_switch(
+        &floorCorrectDownsampling)->default_value(false),
+        "Floor openslide level downsampling to improve pixel-to-pixel "
+        "correspondance for level images which are dimensionally not perfect "
+        "multiples. Example (40x 45,771x35,037) downsampled (16x) -> "
+        "(2.5x 2,860 x 2,189)  openslide reported downsampling: 16.004892."
+        " Floor correction = 16");
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
     positionalOptions.add("outFolder", 1);
@@ -160,6 +169,7 @@ int main(int argc, char *argv[]) {
   request.dropFirstRowAndColumn = dropFirstRowAndColumn;
   request.stopDownSampelingAtSingleFrame = stopDownSampelingAtSingleFrame;
   request.useBilinearDownsampeling = useBilinearDownsampeling;
+  request.floorCorrectDownsampling = floorCorrectDownsampling;
   request.debug = debug;
   return wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
 }

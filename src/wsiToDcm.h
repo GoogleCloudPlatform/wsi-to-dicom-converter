@@ -95,6 +95,9 @@ struct WsiRequest {
   // use bilinear interpolation instead of nearest neighbor
   // interpolation
   bool useBilinearDownsampeling = false;
+
+  // floor correct reported openslide downsampling.
+  bool floorCorrectDownsampling = false;
 };
 
 // Contains static methods for generation DICOM files
@@ -118,7 +121,8 @@ class WsiToDcm {
                           bool tiled, int32_t batchLimit, int8_t threads,
                           bool dropFirstRowAndColumn,
                           bool stopDownSampelingAtSingleFrame,
-                          bool useBilinearDownsampeling);
+                          bool useBilinearDownsampeling,
+                          bool floorCorrectDownsampling);
 
   static void checkArguments(WsiRequest wsiRequest);
 };
