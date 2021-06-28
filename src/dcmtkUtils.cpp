@@ -272,7 +272,7 @@ OFCondition DcmtkUtils::populateDataSet(
                        seriesId, dataSet);
   if (cond.bad()) return cond;
 
-  cond = insertStaticTags(dataSet);
+  cond = insertStaticTags(dataSet, level);
 
   if (cond.bad()) return cond;
 
@@ -300,14 +300,19 @@ OFCondition DcmtkUtils::generateDateTags(DcmDataset* dataSet) {
   return cond;
 }
 
-OFCondition DcmtkUtils::insertStaticTags(DcmDataset* dataSet) {
+OFCondition DcmtkUtils::insertStaticTags(DcmDataset* dataSet, int level) {
   OFCondition cond = dataSet->putAndInsertOFStringArray(
       DCM_SOPClassUID, UID_VLWholeSlideMicroscopyImageStorage);
   if (cond.bad()) return cond;
   cond = dataSet->putAndInsertOFStringArray(DCM_Modality, "SM");
   if (cond.bad()) return cond;
-  cond = dataSet->putAndInsertOFStringArray(DCM_ImageType,
-                                            "DERIVED\\PRIMARY\\VOLUME\\NONE");
+  if (level == 0) {
+    cond = dataSet->putAndInsertOFStringArray(DCM_ImageType,
+                                          "DERIVED\\PRIMARY\\VOLUME\\NONE");
+  } else {
+    cond = dataSet->putAndInsertOFStringArray(DCM_ImageType,
+                                     "DERIVED\\PRIMARY\\VOLUME\\RESAMPLED");
+  }
   if (cond.bad()) return cond;
   cond = dataSet->putAndInsertOFStringArray(DCM_ImageOrientationSlide,
                                             "0\\-1\\0\\-1\\0\\0");

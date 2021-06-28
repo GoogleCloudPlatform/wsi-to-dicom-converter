@@ -85,7 +85,7 @@ class DcmtkUtils {
   static OFCondition generateDateTags(DcmDataset* dataSet);
 
   // Inserts which is same for pathology DICOMs.
-  static OFCondition insertStaticTags(DcmDataset* dataSet);
+  static OFCondition insertStaticTags(DcmDataset* dataSet, int level);
   // Inserts studyId and seriesId by params and generated instanceId.
   static OFCondition insertIds(const std::string& studyId,
                                const std::string& seriesId,

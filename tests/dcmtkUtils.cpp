@@ -52,10 +52,10 @@ TEST(insertBaseImageTagsTest, correctInsert) {
   ASSERT_EQ(20, height);
 }
 
-TEST(insertStaticTagsTest, correctInsert) {
+TEST(insertStaticTagsTest, correctInsert_Level0) {
   std::unique_ptr<DcmDataset> dataSet = std::make_unique<DcmDataset>();
 
-  wsiToDicomConverter::DcmtkUtils::insertStaticTags(dataSet.get());
+  wsiToDicomConverter::DcmtkUtils::insertStaticTags(dataSet.get(), 0);
 
   char* stringValue;
   findElement(dataSet.get(), DCM_SOPClassUID)->getString(stringValue);
@@ -66,6 +66,30 @@ TEST(insertStaticTagsTest, correctInsert) {
 
   findElement(dataSet.get(), DCM_ImageType)->getString(stringValue);
   ASSERT_EQ("DERIVED\\PRIMARY\\VOLUME\\NONE", std::string(stringValue));
+
+  findElement(dataSet.get(), DCM_ImageOrientationSlide)->getString(stringValue);
+  ASSERT_EQ("0\\-1\\0\\-1\\0\\0", std::string(stringValue));
+
+  Uint16 frameNumber;
+  findElement(dataSet.get(), DCM_RepresentativeFrameNumber)
+      ->getUint16(frameNumber);
+  ASSERT_EQ(1, frameNumber);
+}
+
+TEST(insertStaticTagsTest, correctInsert_Level1) {
+  std::unique_ptr<DcmDataset> dataSet = std::make_unique<DcmDataset>();
+
+  wsiToDicomConverter::DcmtkUtils::insertStaticTags(dataSet.get(), 1);
+
+  char* stringValue;
+  findElement(dataSet.get(), DCM_SOPClassUID)->getString(stringValue);
+  ASSERT_EQ(UID_VLWholeSlideMicroscopyImageStorage, std::string(stringValue));
+
+  findElement(dataSet.get(), DCM_Modality)->getString(stringValue);
+  ASSERT_EQ("SM", std::string(stringValue));
+
+  findElement(dataSet.get(), DCM_ImageType)->getString(stringValue);
+  ASSERT_EQ("DERIVED\\PRIMARY\\VOLUME\\RESAMPLED", std::string(stringValue));
 
   findElement(dataSet.get(), DCM_ImageOrientationSlide)->getString(stringValue);
   ASSERT_EQ("0\\-1\\0\\-1\\0\\0", std::string(stringValue));
