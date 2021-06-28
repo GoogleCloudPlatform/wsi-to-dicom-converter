@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
   bool stopDownSampelingAtSingleFrame;
   bool useBilinearDownsampeling;
   bool floorCorrectDownsampling;
-  std::vector<double> downsamples;
+  std::vector<int> downsamples;
   downsamples.resize(1);
   bool sparse;
   try {
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
                          "number of levels, levels == 0 means number of levels "
                          "will be readed from wsi file")(
         "downsamples",
-        programOptions::value<std::vector<double> >(&downsamples)->multitoken(),
+        programOptions::value<std::vector<int> >(&downsamples)->multitoken(),
         "downsample for each level, downsample is size factor for each level")(
         "startOn", programOptions::value<int>(&start)->default_value(0),
         "level to start")("stopOn",
@@ -104,17 +104,17 @@ int main(int argc, char *argv[]) {
         &dropFirstRowAndColumn)->default_value(false),
         "drop first row and column of the source image in order to "
         "workaround bug\nhttps://github.com/openslide/openslide/issues/268")
-        ("StopDownSampelingAtSingleFrame",
+        ("stopDownSampelingAtSingleFrame",
         programOptions::bool_switch(
         &stopDownSampelingAtSingleFrame)->default_value(false),
         "Stop generating image downsampels if image dimensions < "
         "frame dimensions.")
-        ("BilinearDownsampeling",
+        ("bilinearDownsampeling",
         programOptions::bool_switch(
         &useBilinearDownsampeling)->default_value(false),
         "Use bilinear interpolation to downsample images instead of"
         " nearest neighbor interpolation.")
-        ("FloorCorrectOpenslideLevelDownsamples",
+        ("floorCorrectOpenslideLevelDownsamples",
         programOptions::bool_switch(
         &floorCorrectDownsampling)->default_value(false),
         "Floor openslide level downsampling to improve pixel-to-pixel "
