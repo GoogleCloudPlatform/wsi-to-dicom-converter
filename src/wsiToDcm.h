@@ -67,7 +67,7 @@ struct WsiRequest {
   // level0 100x100
   // level1 50x50
   // level2 10x10
-  double* downsamples;
+  int* downsamples;
 
   // frame organization type
   // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.17.3.html
@@ -117,7 +117,7 @@ class WsiToDcm {
                           int32_t startOnLevel, int32_t stopOnLevel,
                           std::string imageName, std::string studyId,
                           std::string seriesId, std::string jsonFile,
-                          int32_t retileLevels, std::vector<double> downsamples,
+                          int32_t retileLevels, std::vector<int> downsamples,
                           bool tiled, int32_t batchLimit, int8_t threads,
                           bool dropFirstRowAndColumn,
                           bool stopDownSampelingAtSingleFrame,

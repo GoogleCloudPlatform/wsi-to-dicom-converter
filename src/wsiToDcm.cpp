@@ -100,7 +100,7 @@ int WsiToDcm::dicomizeTiff(
     int64_t frameHeight, DCM_Compression compression, int quality,
     int32_t startOnLevel, int32_t stopOnLevel, std::string imageName,
     std::string studyId, std::string seriesId, std::string jsonFile,
-    int32_t retileLevels, std::vector<double> downsamples, bool tiled,
+    int32_t retileLevels, std::vector<int> downsamples, bool tiled,
     int batchLimit, int8_t threads, bool dropFirstRowAndColumn,
     bool stop_down_sampleing_at_singleframe, bool useBilinearDownsampeling,
     bool floorCorrectDownsampling) {
@@ -183,7 +183,7 @@ int WsiToDcm::dicomizeTiff(
     int64_t downsample = 1;
     if (retile) {
       if (downsamples.size() > level && downsamples[level] >= 1) {
-        downsample = static_cast<int64_t>(downsamples[level]);
+        downsample = downsamples[level];
       } else {
         downsample = static_cast<int64_t>(pow(2, level));
       }
@@ -388,7 +388,7 @@ int WsiToDcm::wsi2dcm(WsiRequest wsiRequest) {
         wsiRequest.startOnLevel, wsiRequest.stopOnLevel, wsiRequest.imageName,
         wsiRequest.studyId, wsiRequest.seriesId, wsiRequest.jsonFile,
         wsiRequest.retileLevels,
-        std::vector<double>(
+        std::vector<int>(
             wsiRequest.downsamples,
             wsiRequest.downsamples + wsiRequest.retileLevels + 1),
         wsiRequest.tiled, wsiRequest.batchLimit, wsiRequest.threads,
