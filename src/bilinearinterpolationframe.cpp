@@ -80,7 +80,7 @@ void BilinearInterpolationFrame::sliceFrame() {
   // Downsamples a rectangular region a layer of a SVS and compresses frame
   // output.
 
-  // Slightly over estimate X and Y down sampeling necessary to scale down from
+  // Slightly over estimate X and Y downsampling necessary to scale down from
   // levelheight to target height downsamping factor used to expand sampleing
   // region to incorporate pixels on the edge of the sampling region which
   // effect the edge pixel values.
@@ -94,7 +94,7 @@ void BilinearInterpolationFrame::sliceFrame() {
                            1);
 
   // Extend samping with to include boundry voxels.  Sample sampleWidth &
-  // sampleHeight = target sampeling region for level to downsample
+  // sampleHeight = target sampling region for level to downsample
   int64_t sampleWidth = 2 * down_sample_x + frameWidthDownsampled_;
   int64_t sampleHeight = 2 * down_sample_y + frameHeightDownsampled_;
 
@@ -213,7 +213,7 @@ void BilinearInterpolationFrame::sliceFrame() {
       const double green_d = static_cast<double>(green);
       const double blue_d = static_cast<double>(blue);
 
-      // If layer does not require downsampeling.. Just copy values across
+      // If layer does not require downsampling.. Just copy values across
       if (targetLevelWidth_ == levelWidth_) {
         const int cx = px + Level_x - locationX_;
         set_pixel(rgb_mem, frameWidth_, frameHeight_, cx, cy, red_d, green_d,

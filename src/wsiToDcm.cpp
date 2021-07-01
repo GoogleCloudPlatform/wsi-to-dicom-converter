@@ -194,10 +194,10 @@ int WsiToDcm::dicomizeTiff(
         magnification above required level. Downsample acquistions can result in
         image dimensions which are non-interger multiples of the highest
         magnification which can result in the openslide_get_level_downsample
-        reporting level downsampeling of a non-fixed multiple:
+        reporting level downsampling of a non-fixed multiple:
 
         Example: Aperio svs imaging,  E.g. (40x -> 10x reports the 10x image has
-        having a downsampeling factor of 4.00018818010427.)
+        having a downsampling factor of 4.00018818010427.)
 
         The code below, computes the desired frame dimensions and then selects
         the frame which is the best match.
@@ -222,7 +222,7 @@ int WsiToDcm::dicomizeTiff(
        Downsampled acquistions can have in image dimensions which are
        non-interger multiples of the highest magnification. Example: Aperio svs
        imaging, E.g. (40x -> 10x reports the 10x image has having a
-       downsampeling  factor of 4.00018818010427. This results in non-uniform
+       downsampling  factor of 4.00018818010427. This results in non-uniform
        scaling of the pixels and can result in small, but signifcant
        mis-alignment in the downsampled imageing. Flooring, the multiplier
        returned by openslide_get_level_downsample corrects this by restoring
@@ -232,7 +232,7 @@ int WsiToDcm::dicomizeTiff(
       multiplicator = floor(multiplicator);
     }
     // Downsampling factor required to go from selected downsampled level to the
-    // desired level of downsampeling
+    // desired level of downsampling
     const double downsampleOfLevel =
         static_cast<double>(downsample) / multiplicator;
 

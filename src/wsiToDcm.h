@@ -89,7 +89,7 @@ struct WsiRequest {
   // print debug messages: dimensions of levels, size of frames
   bool debug = false;
 
-  // stop downsampeling if total layer dimensions < 1 frame
+  // stop downsampling if total layer dimensions < 1 frame
   bool stopDownsamplingAtSingleFrame = false;
 
   // use bilinear interpolation instead of nearest neighbor
