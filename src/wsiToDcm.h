@@ -90,11 +90,11 @@ struct WsiRequest {
   bool debug = false;
 
   // stop downsampeling if total layer dimensions < 1 frame
-  bool stopDownSampelingAtSingleFrame = false;
+  bool stopDownsamplingAtSingleFrame = false;
 
   // use bilinear interpolation instead of nearest neighbor
   // interpolation
-  bool useBilinearDownsampeling = false;
+  bool useBilinearDownsampling = false;
 
   // floor correct reported openslide downsampling.
   bool floorCorrectDownsampling = false;
@@ -120,8 +120,8 @@ class WsiToDcm {
                           int32_t retileLevels, std::vector<int> downsamples,
                           bool tiled, int32_t batchLimit, int8_t threads,
                           bool dropFirstRowAndColumn,
-                          bool stopDownSampelingAtSingleFrame,
-                          bool useBilinearDownsampeling,
+                          bool stopDownSamplingAtSingleFrame,
+                          bool useBilinearDownsampling,
                           bool floorCorrectDownsampling);
 
   static void checkArguments(WsiRequest wsiRequest);
