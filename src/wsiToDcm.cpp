@@ -102,7 +102,7 @@ int WsiToDcm::dicomizeTiff(
     std::string studyId, std::string seriesId, std::string jsonFile,
     int32_t retileLevels, std::vector<int> downsamples, bool tiled,
     int batchLimit, int8_t threads, bool dropFirstRowAndColumn,
-    bool stop_down_sampleing_at_singleframe, bool useBilinearDownsampeling,
+    bool stop_downsampling_at_singleframe, bool useBilinearDownsampling,
     bool floorCorrectDownsampling) {
   bool retile = retileLevels > 0;
 
@@ -170,10 +170,10 @@ int WsiToDcm::dicomizeTiff(
   }
   BOOST_LOG_TRIVIAL(debug) << " ";
   BOOST_LOG_TRIVIAL(debug) << "Level Count: " << svs_level_count;
-  bool adapative_stop_downsampeling = false;
+  bool adapative_stop_downsampling = false;
   for (int32_t level = startOnLevel;
        level < levels && (stopOnLevel < startOnLevel || level <= stopOnLevel) &&
-       !adapative_stop_downsampeling;
+       !adapative_stop_downsampling;
        level++) {
     BOOST_LOG_TRIVIAL(debug) << " ";
     BOOST_LOG_TRIVIAL(debug) << "Starting Level " << level;
@@ -313,7 +313,7 @@ int WsiToDcm::dicomizeTiff(
       while (x < levelWidth) {
         assert(osr != nullptr && openslide_get_error(osr) == nullptr);
         std::unique_ptr<Frame> frameData;
-        if (useBilinearDownsampeling) {
+        if (useBilinearDownsampling) {
           frameData = std::make_unique<BilinearInterpolationFrame>(
               osr, x, y, levelToGet, frameWidthDownsampled,
               frameHeightDownsampled, level_frameWidth, level_frameHeight,
@@ -368,8 +368,8 @@ int WsiToDcm::dicomizeTiff(
         filedraft->saveFile();
       });
     }
-    if (stop_down_sampleing_at_singleframe && numberOfFrames <= 1) {
-      adapative_stop_downsampeling = true;
+    if (stop_downsampling_at_singleframe && numberOfFrames <= 1) {
+      adapative_stop_downsampling = true;
     }
   }
   pool.join();
@@ -393,8 +393,8 @@ int WsiToDcm::wsi2dcm(WsiRequest wsiRequest) {
             wsiRequest.downsamples + wsiRequest.retileLevels + 1),
         wsiRequest.tiled, wsiRequest.batchLimit, wsiRequest.threads,
         wsiRequest.dropFirstRowAndColumn,
-        wsiRequest.stopDownSampelingAtSingleFrame,
-        wsiRequest.useBilinearDownsampeling,
+        wsiRequest.stopDownsamplingAtSingleFrame,
+        wsiRequest.useBilinearDownsampling,
         wsiRequest.floorCorrectDownsampling);
   } catch (int exception) {
     return 1;
