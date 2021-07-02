@@ -41,11 +41,11 @@ int main(int argc, char *argv[]) {
   int threads;
   bool debug;
   bool dropFirstRowAndColumn;
-  bool stopDownSampelingAtSingleFrame;
-  bool useBilinearDownsampeling;
+  bool stopDownsamplingAtSingleFrame;
+  bool useBilinearDownsampling;
   bool floorCorrectDownsampling;
-  std::vector<double> downsamples;
-  downsamples.resize(1);
+  std::vector<int> downsamples;
+  downsamples.resize(1, 0);
   bool sparse;
   try {
     namespace programOptions = boost::program_options;
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
                          "number of levels, levels == 0 means number of levels "
                          "will be readed from wsi file")(
         "downsamples",
-        programOptions::value<std::vector<double> >(&downsamples)->multitoken(),
+        programOptions::value<std::vector<int> >(&downsamples)->multitoken(),
         "downsample for each level, downsample is size factor for each level")(
         "startOn", programOptions::value<int>(&start)->default_value(0),
         "level to start")("stopOn",
@@ -104,17 +104,17 @@ int main(int argc, char *argv[]) {
         &dropFirstRowAndColumn)->default_value(false),
         "drop first row and column of the source image in order to "
         "workaround bug\nhttps://github.com/openslide/openslide/issues/268")
-        ("StopDownSampelingAtSingleFrame",
+        ("stopDownsamplingAtSingleFrame",
         programOptions::bool_switch(
-        &stopDownSampelingAtSingleFrame)->default_value(false),
+        &stopDownsamplingAtSingleFrame)->default_value(false),
         "Stop generating image downsampels if image dimensions < "
         "frame dimensions.")
-        ("BilinearDownsampeling",
+        ("bilinearDownsampling",
         programOptions::bool_switch(
-        &useBilinearDownsampeling)->default_value(false),
+        &useBilinearDownsampling)->default_value(false),
         "Use bilinear interpolation to downsample images instead of"
         " nearest neighbor interpolation.")
-        ("FloorCorrectOpenslideLevelDownsamples",
+        ("floorCorrectOpenslideLevelDownsamples",
         programOptions::bool_switch(
         &floorCorrectDownsampling)->default_value(false),
         "Floor openslide level downsampling to improve pixel-to-pixel "
@@ -162,13 +162,18 @@ int main(int argc, char *argv[]) {
   request.seriesId = seriesId;
   request.jsonFile = jsonFile;
   request.retileLevels = levels;
+  if (levels > 0 && levels+1 > downsamples.size()) {
+    // fix buffer overun bug.  accessing meory outside of
+    // downsample buffer when retileing.
+    downsamples.resize(levels+1, 0);
+  }
   request.downsamples = &downsamples[0];
   request.tiled = !sparse;
   request.batchLimit = batch;
   request.threads = threads;
   request.dropFirstRowAndColumn = dropFirstRowAndColumn;
-  request.stopDownSampelingAtSingleFrame = stopDownSampelingAtSingleFrame;
-  request.useBilinearDownsampeling = useBilinearDownsampeling;
+  request.stopDownsamplingAtSingleFrame = stopDownsamplingAtSingleFrame;
+  request.useBilinearDownsampling = useBilinearDownsampling;
   request.floorCorrectDownsampling = floorCorrectDownsampling;
   request.debug = debug;
   return wsiToDicomConverter::WsiToDcm::wsi2dcm(request);

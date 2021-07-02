@@ -100,9 +100,9 @@ int WsiToDcm::dicomizeTiff(
     int64_t frameHeight, DCM_Compression compression, int quality,
     int32_t startOnLevel, int32_t stopOnLevel, std::string imageName,
     std::string studyId, std::string seriesId, std::string jsonFile,
-    int32_t retileLevels, std::vector<double> downsamples, bool tiled,
+    int32_t retileLevels, std::vector<int> downsamples, bool tiled,
     int batchLimit, int8_t threads, bool dropFirstRowAndColumn,
-    bool stop_down_sampleing_at_singleframe, bool useBilinearDownsampeling,
+    bool stop_downsampling_at_singleframe, bool useBilinearDownsampling,
     bool floorCorrectDownsampling) {
   bool retile = retileLevels > 0;
 
@@ -170,10 +170,10 @@ int WsiToDcm::dicomizeTiff(
   }
   BOOST_LOG_TRIVIAL(debug) << " ";
   BOOST_LOG_TRIVIAL(debug) << "Level Count: " << svs_level_count;
-  bool adapative_stop_downsampeling = false;
+  bool adapative_stop_downsampling = false;
   for (int32_t level = startOnLevel;
        level < levels && (stopOnLevel < startOnLevel || level <= stopOnLevel) &&
-       !adapative_stop_downsampeling;
+       !adapative_stop_downsampling;
        level++) {
     BOOST_LOG_TRIVIAL(debug) << " ";
     BOOST_LOG_TRIVIAL(debug) << "Starting Level " << level;
@@ -183,7 +183,7 @@ int WsiToDcm::dicomizeTiff(
     int64_t downsample = 1;
     if (retile) {
       if (downsamples.size() > level && downsamples[level] >= 1) {
-        downsample = static_cast<int64_t>(downsamples[level]);
+        downsample = downsamples[level];
       } else {
         downsample = static_cast<int64_t>(pow(2, level));
       }
@@ -194,10 +194,10 @@ int WsiToDcm::dicomizeTiff(
         magnification above required level. Downsample acquistions can result in
         image dimensions which are non-interger multiples of the highest
         magnification which can result in the openslide_get_level_downsample
-        reporting level downsampeling of a non-fixed multiple:
+        reporting level downsampling of a non-fixed multiple:
 
         Example: Aperio svs imaging,  E.g. (40x -> 10x reports the 10x image has
-        having a downsampeling factor of 4.00018818010427.)
+        having a downsampling factor of 4.00018818010427.)
 
         The code below, computes the desired frame dimensions and then selects
         the frame which is the best match.
@@ -222,7 +222,7 @@ int WsiToDcm::dicomizeTiff(
        Downsampled acquistions can have in image dimensions which are
        non-interger multiples of the highest magnification. Example: Aperio svs
        imaging, E.g. (40x -> 10x reports the 10x image has having a
-       downsampeling  factor of 4.00018818010427. This results in non-uniform
+       downsampling  factor of 4.00018818010427. This results in non-uniform
        scaling of the pixels and can result in small, but signifcant
        mis-alignment in the downsampled imageing. Flooring, the multiplier
        returned by openslide_get_level_downsample corrects this by restoring
@@ -232,7 +232,7 @@ int WsiToDcm::dicomizeTiff(
       multiplicator = floor(multiplicator);
     }
     // Downsampling factor required to go from selected downsampled level to the
-    // desired level of downsampeling
+    // desired level of downsampling
     const double downsampleOfLevel =
         static_cast<double>(downsample) / multiplicator;
 
@@ -313,7 +313,7 @@ int WsiToDcm::dicomizeTiff(
       while (x < levelWidth) {
         assert(osr != nullptr && openslide_get_error(osr) == nullptr);
         std::unique_ptr<Frame> frameData;
-        if (useBilinearDownsampeling) {
+        if (useBilinearDownsampling) {
           frameData = std::make_unique<BilinearInterpolationFrame>(
               osr, x, y, levelToGet, frameWidthDownsampled,
               frameHeightDownsampled, level_frameWidth, level_frameHeight,
@@ -368,8 +368,8 @@ int WsiToDcm::dicomizeTiff(
         filedraft->saveFile();
       });
     }
-    if (stop_down_sampleing_at_singleframe && numberOfFrames <= 1) {
-      adapative_stop_downsampeling = true;
+    if (stop_downsampling_at_singleframe && numberOfFrames <= 1) {
+      adapative_stop_downsampling = true;
     }
   }
   pool.join();
@@ -388,13 +388,13 @@ int WsiToDcm::wsi2dcm(WsiRequest wsiRequest) {
         wsiRequest.startOnLevel, wsiRequest.stopOnLevel, wsiRequest.imageName,
         wsiRequest.studyId, wsiRequest.seriesId, wsiRequest.jsonFile,
         wsiRequest.retileLevels,
-        std::vector<double>(
+        std::vector<int>(
             wsiRequest.downsamples,
             wsiRequest.downsamples + wsiRequest.retileLevels + 1),
         wsiRequest.tiled, wsiRequest.batchLimit, wsiRequest.threads,
         wsiRequest.dropFirstRowAndColumn,
-        wsiRequest.stopDownSampelingAtSingleFrame,
-        wsiRequest.useBilinearDownsampeling,
+        wsiRequest.stopDownsamplingAtSingleFrame,
+        wsiRequest.useBilinearDownsampling,
         wsiRequest.floorCorrectDownsampling);
   } catch (int exception) {
     return 1;

@@ -67,7 +67,7 @@ struct WsiRequest {
   // level0 100x100
   // level1 50x50
   // level2 10x10
-  double* downsamples;
+  int* downsamples;
 
   // frame organization type
   // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.17.3.html
@@ -89,12 +89,12 @@ struct WsiRequest {
   // print debug messages: dimensions of levels, size of frames
   bool debug = false;
 
-  // stop downsampeling if total layer dimensions < 1 frame
-  bool stopDownSampelingAtSingleFrame = false;
+  // stop downsampling if total layer dimensions < 1 frame
+  bool stopDownsamplingAtSingleFrame = false;
 
   // use bilinear interpolation instead of nearest neighbor
   // interpolation
-  bool useBilinearDownsampeling = false;
+  bool useBilinearDownsampling = false;
 
   // floor correct reported openslide downsampling.
   bool floorCorrectDownsampling = false;
@@ -117,11 +117,11 @@ class WsiToDcm {
                           int32_t startOnLevel, int32_t stopOnLevel,
                           std::string imageName, std::string studyId,
                           std::string seriesId, std::string jsonFile,
-                          int32_t retileLevels, std::vector<double> downsamples,
+                          int32_t retileLevels, std::vector<int> downsamples,
                           bool tiled, int32_t batchLimit, int8_t threads,
                           bool dropFirstRowAndColumn,
-                          bool stopDownSampelingAtSingleFrame,
-                          bool useBilinearDownsampeling,
+                          bool stopDownSamplingAtSingleFrame,
+                          bool useBilinearDownsampling,
                           bool floorCorrectDownsampling);
 
   static void checkArguments(WsiRequest wsiRequest);

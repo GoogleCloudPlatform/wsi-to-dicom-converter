@@ -28,7 +28,7 @@
 #include "tests/testUtils.h"
 
 TEST(readTiff, simple) {
-  double downsample = 1.;
+  int downsample = 1;
   std::string dcmFile = std::string(testPath) + "level-0-frames-0-30.dcm";
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = tiffFileName;
@@ -57,7 +57,7 @@ TEST(readTiff, simple) {
 TEST(readTiff, withJson) {
   std::string dcmFile = std::string(testPath) + "level-0-frames-0-1.dcm";
   std::string jsonFile = std::string(testPath) + "testDateTags.json";
-  double downsample = 1.;
+  int  downsample = 1;
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = tiffFileName;
   request.outputFileMask = testPath;
@@ -88,7 +88,7 @@ TEST(readTiff, withJson) {
 
 TEST(readTiff, multiFile) {
   std::string dcmFile = std::string(testPath) + "level-0-frames-";
-  double downsample = 1.;
+  int downsample = 1;
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = tiffFileName;
   request.outputFileMask = testPath;
