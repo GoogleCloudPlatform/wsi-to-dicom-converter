@@ -25,7 +25,10 @@ static const char VALUE[] = "Value";
 DcmTags::DcmTags() {}
 
 inline Json::Value readJsonTag(Json::Value obj, std::string tag) {
-  if (obj[tag][VALUE]) {
+  // for current stable jsoncpp, swap this line for 
+  // if (obj[tag][VALUE]) {
+  // for older json cpp, use
+  if (obj[tag][VALUE] != nullptr) {
     return obj[tag][VALUE][0];
   } else {
     return Json::Value();
