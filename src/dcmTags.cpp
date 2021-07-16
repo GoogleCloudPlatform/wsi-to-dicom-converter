@@ -28,7 +28,9 @@ inline Json::Value readJsonTag(Json::Value obj, std::string tag) {
   // for current stable jsoncpp, swap this line for 
   // if (obj[tag][VALUE]) {
   // for older json cpp, use
-  if (obj[tag][VALUE] != nullptr) {
+  // if (obj[tag][VALUE] != nullptr) {
+
+  if (obj[tag][VALUE]) {
     return obj[tag][VALUE][0];
   } else {
     return Json::Value();
