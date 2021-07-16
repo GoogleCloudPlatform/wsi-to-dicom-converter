@@ -1,6 +1,25 @@
 # WSI to DICOM Converter
 
-This repository contains a tool that converts whole slide images (WSIs) to DICOM. To read the underlying whole slide images (WSIs), this tool relies on [OpenSlide](https://openslide.org), which supports a variety of file formats.
+# Notes
+
+This branch has a couple of fixes to make building easier.
+
+```
+mkdir build
+cd build
+cp -r ~/packages/dcmtk/dcmtk-3.6.2 .
+cmake -DCMAKE_INSTALL_PREFIX=/home/john/vips ..
+make
+```
+
+It configures and compiles, but then fails with a range of link errors,
+annoyingly.
+
+# Introduction
+
+This repository contains a tool that converts whole slide images (WSIs) to
+DICOM. To read the underlying whole slide images (WSIs), this tool relies on
+[OpenSlide](https://openslide.org), which supports a variety of file formats.
 
 ## Quickstart
 
