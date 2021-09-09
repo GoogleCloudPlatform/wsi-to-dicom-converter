@@ -20,31 +20,43 @@
 #include <memory>
 #include <vector>
 
+#include "src/dicom_file_region_reader.h"
 #include "src/compressor.h"
 #include "src/enums.h"
 #include "src/frame.h"
+
+namespace wsiToDicomConverter {
 
 // Frame represents a single image frame from the OpenSlide library
 class NearestNeighborFrame : public Frame {
  public:
   // osr - openslide
   // locationX, locationY - top-left corner of frame in level coordinates
-  // frameWidhtDownsampled, frameHeightDownsampled - size of frame to get
+  // frameWidthDownsampled, frameHeightDownsampled - size of frame to get
   // multiplicator - size difference between 0 level and current one
-  // frameWidht, frameHeight_ - size frame needs to be scaled to
+  // frameWidth, frameHeight_ - size frame needs to be scaled to
   // compression - type of compression
   NearestNeighborFrame(openslide_t *osr, int64_t locationX, int64_t locationY,
-                       int32_t level, int64_t frameWidhtDownsampled,
+                       int64_t level, int64_t frameWidthDownsampled,
                        int64_t frameHeightDownsampled, double multiplicator,
-                       int64_t frameWidht, int64_t frameHeight,
-                       DCM_Compression compression, int quality);
+                       int64_t frameWidth, int64_t frameHeight,
+                       DCM_Compression compression, int quality,
+                       bool store_raw_bytes,
+                       const DICOMFileFrameRegionReader &frame_region_reader);
 
   virtual ~NearestNeighborFrame();
   // Gets frame by openslide library, performs scaling it and compressing
   virtual void sliceFrame();
-  virtual bool isDone();
-  virtual uint8_t *getData();
-  virtual size_t getSize();
+  virtual bool isDone() const;
+  virtual uint8_t *get_dicom_frame_bytes();
+  virtual size_t getSize() const;
+
+  virtual int64_t get_raw_frame_bytes(uint8_t *raw_memory,
+                                      int64_t memorysize) const;
+  virtual int64_t get_frame_width() const;
+  virtual int64_t get_frame_height() const;
+  virtual void clear_dicom_mem();
+  virtual bool has_compressed_raw_bytes() const;
 
  private:
   std::unique_ptr<uint8_t[]> data_;
@@ -53,13 +65,21 @@ class NearestNeighborFrame : public Frame {
   openslide_t *osr_;
   int64_t locationX_;
   int64_t locationY_;
-  int level_;
-  int64_t frameWidhtDownsampled_;
+  int64_t level_;
+  int64_t frameWidthDownsampled_;
   int64_t frameHeightDownsampled_;
-  int64_t frameWidht_;
+  int64_t frameWidth_;
   int64_t frameHeight_;
   double multiplicator_;
+
+  bool store_raw_bytes_;
+  std::unique_ptr<uint8_t[]> raw_compressed_bytes_;
+  int64_t raw_compressed_bytes_size_;
+
   std::unique_ptr<Compressor> compressor_;
+  const DICOMFileFrameRegionReader &dcm_frame_region_reader;
 };
+
+}  // namespace wsiToDicomConverter
 
 #endif  // SRC_NEARESTNEIGHBORFRAME_H_

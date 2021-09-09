@@ -18,36 +18,50 @@
 #include <string>
 #include <vector>
 
+#include "src/dicom_file_region_reader.h"
 #include "src/nearestneighborframe.h"
 #include "tests/testUtils.h"
 
+namespace wsiToDicomConverter {
+
 TEST(NearestNeighborFrame, jpeg) {
+  DICOMFileFrameRegionReader dicom_frame_reader;
   openslide_t* osr = openslide_open(tiffFileName);
-  NearestNeighborFrame frame(osr, 0, 0, 0, 100, 100, 1, 100, 100, JPEG, 1);
+  NearestNeighborFrame frame(osr, 0, 0, 0, 100, 100, 1, 100, 100, JPEG, 1,
+                             false, dicom_frame_reader);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
+  ASSERT_FALSE(frame.has_compressed_raw_bytes());
   ASSERT_GE(frame.getSize(), 0);
 }
 
 TEST(NearestNeighborFrame, jpeg2000Scaling) {
+  DICOMFileFrameRegionReader dicom_frame_reader;
+  std::vector<std::unique_ptr<DcmFileDraft>> higher_magnifcation_dicom_files;
   openslide_t* osr = openslide_open(tiffFileName);
   NearestNeighborFrame frame(osr, 0, 0, 0, 1000, 1000, 1, 100, 100, JPEG2000,
-                             1);
+                             1, true, dicom_frame_reader);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
+  ASSERT_TRUE(frame.has_compressed_raw_bytes());
   ASSERT_GE(frame.getSize(), 0);
 }
 
 TEST(NearestNeighborFrame, rawData) {
   // all black except first pixel
+  DICOMFileFrameRegionReader dicom_frame_reader;
   openslide_t* osr = openslide_open(tiffFileName);
-  NearestNeighborFrame frame(osr, 2219, 2966, 0, 100, 100, 1, 100, 100, RAW, 1);
+  NearestNeighborFrame frame(osr, 2219, 2966, 0, 100, 100, 1, 100, 100, RAW, 1,
+                             true, dicom_frame_reader);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
+  ASSERT_TRUE(frame.has_compressed_raw_bytes());
   for (size_t i = 0; i < 3; i++) {
-    ASSERT_EQ(248, frame.getData()[i]);
+    ASSERT_EQ(248, frame.get_dicom_frame_bytes()[i]);
   }
   for (size_t i = 3; i < frame.getSize(); i++) {
-    ASSERT_EQ(frame.getData()[i], 0);
+    ASSERT_EQ(frame.get_dicom_frame_bytes()[i], 0);
   }
 }
+
+}  // namespace wsiToDicomConverter

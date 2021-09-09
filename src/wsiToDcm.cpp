@@ -33,6 +33,7 @@
 #include "src/bilinearinterpolationframe.h"
 #include "src/dcmFileDraft.h"
 #include "src/dcmTags.h"
+#include "src/dicom_file_region_reader.h"
 #include "src/geometryUtils.h"
 #include "src/nearestneighborframe.h"
 
@@ -97,13 +98,13 @@ void WsiToDcm::checkArguments(WsiRequest wsiRequest) {
 
 int WsiToDcm::dicomizeTiff(
     std::string inputFile, std::string outputFileMask, int64_t frameWidth,
-    int64_t frameHeight, DCM_Compression compression, int quality,
+    int64_t frameHeight, DCM_Compression compression, int32_t quality,
     int32_t startOnLevel, int32_t stopOnLevel, std::string imageName,
     std::string studyId, std::string seriesId, std::string jsonFile,
     int32_t retileLevels, std::vector<int> downsamples, bool tiled,
-    int batchLimit, int8_t threads, bool dropFirstRowAndColumn,
+    int32_t batchLimit, int8_t threads, bool dropFirstRowAndColumn,
     bool stop_downsampling_at_singleframe, bool useBilinearDownsampling,
-    bool floorCorrectDownsampling) {
+    bool floorCorrectDownsampling, bool preferProgressiveDownsampling) {
   bool retile = retileLevels > 0;
 
   if (studyId.size() < 1) {
@@ -160,8 +161,6 @@ int WsiToDcm::dicomizeTiff(
   }
 
   BOOST_LOG_TRIVIAL(info) << "dicomization is started";
-  std::vector<boost::thread> Pool;
-  boost::asio::thread_pool pool(threadsForPool);
   int initialX = 0;
   int initialY = 0;
   if (dropFirstRowAndColumn) {
@@ -171,10 +170,14 @@ int WsiToDcm::dicomizeTiff(
   BOOST_LOG_TRIVIAL(debug) << " ";
   BOOST_LOG_TRIVIAL(debug) << "Level Count: " << svs_level_count;
   bool adapative_stop_downsampling = false;
+
+  DICOMFileFrameRegionReader higher_magnifcation_dicom_files;
+  std::vector<std::unique_ptr<DcmFileDraft>> generated_dicom_files;
   for (int32_t level = startOnLevel;
        level < levels && (stopOnLevel < startOnLevel || level <= stopOnLevel) &&
        !adapative_stop_downsampling;
        level++) {
+    boost::asio::thread_pool pool(threadsForPool);
     BOOST_LOG_TRIVIAL(debug) << " ";
     BOOST_LOG_TRIVIAL(debug) << "Starting Level " << level;
     uint32_t row = 1;
@@ -213,7 +216,6 @@ int WsiToDcm::dicomizeTiff(
       }
       levelToGet -= 1;
     }
-    double multiplicator = openslide_get_level_downsample(osr, levelToGet);
     /*
        DICOM requires uniform pixel spacing across downsampled image
        for pixel spacing based metrics to produce images with compatiable
@@ -227,21 +229,37 @@ int WsiToDcm::dicomizeTiff(
        mis-alignment in the downsampled imageing. Flooring, the multiplier
        returned by openslide_get_level_downsample corrects this by restoring
        consistent downsamping and pixel spacing across the image.
-    */    
-    if (floorCorrectDownsampling) {
-      multiplicator = floor(multiplicator);
+    */
+    double multiplicator;
+    double downsampleOfLevel;
+    if (higher_magnifcation_dicom_files.dicom_file_count() > 0) {
+      DcmFileDraft* dicom_file =
+                            higher_magnifcation_dicom_files.get_dicom_file(0);
+      if (dicom_file->get_downsample() < downsampleOfLevel) {
+        higher_magnifcation_dicom_files.clear_dicom_files();
+      }
     }
-    // Downsampling factor required to go from selected downsampled level to the
-    // desired level of downsampling
-    const double downsampleOfLevel =
-        static_cast<double>(downsample) / multiplicator;
-
     int64_t levelWidth;
     int64_t levelHeight;
-    openslide_get_level_dimensions(osr, levelToGet, &levelWidth, &levelHeight);
+    if (higher_magnifcation_dicom_files.dicom_file_count() == 0) {
+      multiplicator = floor(openslide_get_level_downsample(osr, levelToGet));
+      // Downsampling factor required to go from selected
+      // downsampled level to the desired level of downsampling
+      downsampleOfLevel = static_cast<double>(downsample) /
+                                              multiplicator;
+      openslide_get_level_dimensions(osr, levelToGet,
+                                     &levelWidth, &levelHeight);
+    } else {
+      multiplicator = -1;
+      DcmFileDraft* dicom_file =
+                             higher_magnifcation_dicom_files.get_dicom_file(0);
+      downsampleOfLevel = static_cast<double>(downsample) /
+                          static_cast<double>(dicom_file->get_downsample());
+      levelWidth = dicom_file->get_image_width();
+      levelHeight = dicom_file->get_image_height();
+    }
     BOOST_LOG_TRIVIAL(debug) << "level size: " << levelWidth << ' '
                              << levelHeight << ' ' << multiplicator;
-    int batchNumber = 0;
     int64_t frameWidthDownsampled;
     int64_t frameHeightDownsampled;
     int64_t levelWidthDownsampled;
@@ -249,7 +267,6 @@ int WsiToDcm::dicomizeTiff(
     int64_t x = initialX;
     int64_t y = initialY;
     uint32_t numberOfFrames = 0;
-    uint32_t batch = 0;
     std::vector<std::unique_ptr<Frame> > framesData;
     int64_t level_frameWidth;
     int64_t level_frameHeight;
@@ -309,6 +326,20 @@ int WsiToDcm::dicomizeTiff(
 
       DcmFileDraft Joins threads and combines results and writes dcm file.
     */
+    BOOST_LOG_TRIVIAL(debug) << "higher_magnifcation_dicom_files " <<
+                          higher_magnifcation_dicom_files.dicom_file_count();
+
+    const int frameX = std::ceil(static_cast<double>(levelWidthDownsampled) /
+                                 static_cast<double>(level_frameWidth));
+    const int frameY = std::ceil(static_cast<double>(levelHeightDownsampled) /
+                                 static_cast<double>(level_frameWidth));
+    if (batchLimit == 0) {
+      framesData.reserve(frameX * frameY);
+    } else {
+      framesData.reserve(std::min(frameX * frameY, batchLimit));
+    }
+    bool save_compressed_raw = preferProgressiveDownsampling && downsample > 1;
+
     while (y < levelHeight) {
       while (x < levelWidth) {
         assert(osr != nullptr && openslide_get_error(osr) == nullptr);
@@ -319,39 +350,38 @@ int WsiToDcm::dicomizeTiff(
               frameHeightDownsampled, level_frameWidth, level_frameHeight,
               level_compression, quality, levelWidthDownsampled,
               levelHeightDownsampled, levelWidth, levelHeight, firstLevelWidth,
-              firstLevelHeight);
+              firstLevelHeight, save_compressed_raw,
+              higher_magnifcation_dicom_files);
         } else {
           frameData = std::make_unique<NearestNeighborFrame>(
               osr, x, y, levelToGet, frameWidthDownsampled,
               frameHeightDownsampled, multiplicator, level_frameWidth,
-              level_frameHeight, level_compression, quality);
+              level_frameHeight, level_compression, quality,
+              save_compressed_raw, higher_magnifcation_dicom_files);
         }
 
         boost::asio::post(
             pool, [frameData = frameData.get()]() { frameData->sliceFrame(); });
         framesData.push_back(std::move(frameData));
         numberOfFrames++;
-        batch++;
         x += frameWidthDownsampled;
 
-        if (batchLimit > 0 && batch >= batchLimit) {
+        if (batchLimit > 0 && framesData.size() >= batchLimit) {
           std::unique_ptr<DcmFileDraft> filedraft =
               std::make_unique<DcmFileDraft>(
-                  std::move(framesData), outputFileMask, numberOfFrames,
-                  levelWidthDownsampled, levelHeightDownsampled, level,
-                  batchNumber, batch, row, column, level_frameWidth,
-                  level_frameHeight, studyId, seriesId, imageName,
-                  level_compression, tiled, tags.get(), level_width_Mm,
-                  level_height_Mm);
-          boost::asio::post(pool, [filedraft = std::move(filedraft)]() {
-            filedraft->saveFile();
+                  std::move(framesData), outputFileMask, levelWidthDownsampled,
+                  levelHeightDownsampled, level, row, column, studyId,
+                  seriesId, imageName, level_compression, tiled, tags.get(),
+                  level_width_Mm, level_height_Mm, downsample,
+                  &generated_dicom_files);
+          boost::asio::post(pool, [th_filedraft = filedraft.get()]() {
+            th_filedraft->saveFile();
           });
-          batchNumber++;
+          generated_dicom_files.push_back(std::move(filedraft));
           row = static_cast<uint32_t>((y + frameHeightDownsampled + 1) /
                          (frameHeightDownsampled - 1));
           column = static_cast<uint32_t>((x + frameWidthDownsampled + 1) /
                             (frameWidthDownsampled - 1));
-          batch = 0;
         }
       }
       y += frameHeightDownsampled;
@@ -359,20 +389,26 @@ int WsiToDcm::dicomizeTiff(
     }
     if (framesData.size() > 0) {
       std::unique_ptr<DcmFileDraft> filedraft = std::make_unique<DcmFileDraft>(
-          std::move(framesData), outputFileMask, numberOfFrames,
-          levelWidthDownsampled, levelHeightDownsampled, level, batchNumber,
-          batch, row, column, level_frameWidth, level_frameHeight, studyId,
-          seriesId, imageName, level_compression, tiled, tags.get(),
-          level_width_Mm, level_height_Mm);
-      boost::asio::post(pool, [filedraft = std::move(filedraft)]() {
-        filedraft->saveFile();
+          std::move(framesData), outputFileMask, levelWidthDownsampled,
+          levelHeightDownsampled, level, row, column, studyId, seriesId,
+          imageName, level_compression, tiled, tags.get(), level_width_Mm,
+          level_height_Mm, downsample, &generated_dicom_files);
+      boost::asio::post(pool, [th_filedraft = filedraft.get()]() {
+        th_filedraft->saveFile();
       });
+      generated_dicom_files.push_back(std::move(filedraft));
     }
     if (stop_downsampling_at_singleframe && numberOfFrames <= 1) {
       adapative_stop_downsampling = true;
     }
+    pool.join();
+    if (preferProgressiveDownsampling) {
+      higher_magnifcation_dicom_files.set_dicom_files(
+                                             std::move(generated_dicom_files));
+    } else {
+      generated_dicom_files.clear();
+    }
   }
-  pool.join();
   openslide_close(osr);
   BOOST_LOG_TRIVIAL(info) << "dicomization is done";
   return 0;
@@ -395,7 +431,8 @@ int WsiToDcm::wsi2dcm(WsiRequest wsiRequest) {
         wsiRequest.dropFirstRowAndColumn,
         wsiRequest.stopDownsamplingAtSingleFrame,
         wsiRequest.useBilinearDownsampling,
-        wsiRequest.floorCorrectDownsampling);
+        wsiRequest.floorCorrectDownsampling,
+        wsiRequest.preferProgressiveDownsampling);
   } catch (int exception) {
     return 1;
   }

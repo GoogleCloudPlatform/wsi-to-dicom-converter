@@ -20,9 +20,12 @@
 #include <memory>
 #include <vector>
 
+#include "src/dicom_file_region_reader.h"
 #include "src/compressor.h"
 #include "src/enums.h"
 #include "src/frame.h"
+
+namespace wsiToDicomConverter {
 
 // Frame represents a single image frame from the OpenSlide library
 class BilinearInterpolationFrame : public Frame {
@@ -45,14 +48,24 @@ class BilinearInterpolationFrame : public Frame {
                              int quality, int64_t levelWidthDownsampled,
                              int64_t levelHeightDownsampled, int64_t levelWidth,
                              int64_t levelHeight, int64_t level0Width,
-                             int64_t level0Height);
+                             int64_t level0Height,
+                             bool store_raw_bytes,
+                             const DICOMFileFrameRegionReader
+                             &frame_region_reader);
 
   virtual ~BilinearInterpolationFrame();
   // Gets frame by openslide library, performs scaling it and compressing
   virtual void sliceFrame();
-  virtual bool isDone();
-  virtual uint8_t *getData();
-  virtual size_t getSize();
+  virtual bool isDone() const;
+  virtual uint8_t *get_dicom_frame_bytes();
+  virtual size_t getSize() const;
+
+  virtual int64_t get_raw_frame_bytes(uint8_t *raw_memory,
+                                      int64_t memorysize) const;
+  virtual int64_t get_frame_width() const;
+  virtual int64_t get_frame_height() const;
+  virtual void clear_dicom_mem();
+  virtual bool has_compressed_raw_bytes() const;
 
  private:
   std::unique_ptr<uint8_t[]> data_;
@@ -76,7 +89,15 @@ class BilinearInterpolationFrame : public Frame {
   int64_t level0Width_;
   int64_t level0Height_;
 
+  bool store_raw_bytes_;
+  std::unique_ptr<uint8_t[]> raw_compressed_bytes_;
+  int64_t raw_compressed_bytes_size_;
+
+  const DICOMFileFrameRegionReader &dcm_frame_region_reader;
+
   std::unique_ptr<Compressor> compressor_;
 };
+
+}  // namespace wsiToDicomConverter
 
 #endif  // SRC_BILINEARINTERPOLATIONFRAME_H_
