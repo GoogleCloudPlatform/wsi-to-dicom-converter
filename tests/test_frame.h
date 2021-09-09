@@ -36,7 +36,7 @@ class TestFrame : public Frame {
 
  private:
   int64_t width_, height_;
-  std::unique_ptr<uint32_t[]> raw_value;
+  std::unique_ptr<uint32_t[]> rawValue_;
 };
 
 }  // namespace wsiToDicomConverter

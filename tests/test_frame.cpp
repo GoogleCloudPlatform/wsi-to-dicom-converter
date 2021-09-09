@@ -20,15 +20,15 @@ namespace wsiToDicomConverter {
 TestFrame::TestFrame(int64_t width, int64_t height) {
   width_ = width;
   height_ = height;
-  raw_value = NULL;
+  rawValue_ = NULL;
 }
 
 TestFrame::TestFrame(int64_t width, int64_t height, uint32_t value) {
   width_ = width;
   height_ = height;
-  raw_value = std::make_unique<uint32_t[]>(width * height);
+  rawValue_ = std::make_unique<uint32_t[]>(width * height);
   for (size_t idx = 0; idx < width * height; ++idx) {
-      raw_value[idx] = value;
+      rawValue_[idx] = value;
   }
 }
 
@@ -52,7 +52,7 @@ int64_t TestFrame::get_raw_frame_bytes(uint8_t *raw_memory,
   if (memorysize != expected_memsize) {
     return 0;
   }
-  uint8_t *ptr_raw_value = reinterpret_cast<uint8_t *>(raw_value.get());
+  uint8_t *ptr_raw_value = reinterpret_cast<uint8_t *>(rawValue_.get());
   for (size_t idx; idx < expected_memsize; ++idx) {
     raw_memory[idx] = ptr_raw_value[idx];
   }

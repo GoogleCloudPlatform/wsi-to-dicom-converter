@@ -108,16 +108,16 @@ class DICOMFileFrameRegionReader {
                                int64_t memory_width, int64_t mx, int64_t my)
                                const;
 
-  std::vector<std::unique_ptr<DcmFileDraft>> dcm_files;
+  std::vector<std::unique_ptr<DcmFileDraft>> dcmFiles_;
 
   // Dimensions of single frame
-  int64_t frameWidth, frameHeight;
+  int64_t frameWidth_, frameHeight_;
 
   // Dimensions of image
-  int64_t imageWidth, imageHeight;
+  int64_t imageWidth_, imageHeight_;
 
   // # frames per image row & column
-  int64_t frames_per_row, frames_per_column;
+  int64_t framesPerRow_, framesPerColumn_;
 };
 
 }  // namespace wsiToDicomConverter
