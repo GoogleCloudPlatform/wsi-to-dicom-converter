@@ -29,7 +29,7 @@ memory from an an array of DICOMFrame objects.
 
 DICOM frame array can be spread across multiple DICOM files.
 Code assumes that frames are ordered using column ordering (tradtional C++)
-memory layout and that if the frames flow across multiple dicom files that
+memory layout and that if the frames flow across multiple DICOM files that
 frames flow as if they were a continous block of memory.
 
 Frame 1, 2, 3
@@ -41,16 +41,16 @@ class DICOMFileFrameRegionReader {
   DICOMFileFrameRegionReader();
   virtual ~DICOMFileFrameRegionReader();
 
-  // Number of dicom files loaded in current instance of
-  // DICOMFrileFrameRegionReader.
+  // Number of DICOM files loaded in current instance of
+  // DICOMFileFrameRegionReader.
   int64_t dicom_file_count() const;
 
-  // Returns pointer to specified dicom file.
+  // Returns pointer to specified DICOM file.
   DcmFileDraft * get_dicom_file(size_t index);
 
-  // Set dicom list of files to be used by frame region reader.
+  // Set DICOM list of files to be used by frame region reader.
   // Should be the complete set for given level.
-  // All dicom files must describe the same overall image, have
+  // All DICOM files must describe the same overall image, have
   // same global image width, height, and have frames which have same
   // dimensions.
   void set_dicom_files(std::vector<std::unique_ptr<DcmFileDraft>> dcm_files_);
@@ -58,7 +58,7 @@ class DICOMFileFrameRegionReader {
   // Clears the list of dicm files.
   void clear_dicom_files();
 
-  // Reads a sub region from the a set of dicom frames spread across file(s).
+  // Reads a sub region from the a set of DICOM frames spread across file(s).
   //
   // If memory extends beyond file space. Writes in for memory pixel data
   // Memory pixels in ARGB format.
@@ -75,7 +75,7 @@ class DICOMFileFrameRegionReader {
                    int64_t mem_height, uint32_t *memory) const;
 
  private:
-  // Reads a frame from as set of loaded dicom files.
+  // Reads a frame from as set of loaded DICOM files.
   //
   // Args:
   //  index : index of frame to read.
