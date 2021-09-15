@@ -24,6 +24,8 @@
 #include "src/enums.h"
 #include "src/frame.h"
 
+namespace wsiToDicomConverter {
+
 // Frame represents a single image frame from the OpenSlide library
 class NearestNeighborFrame : public Frame {
  public:
@@ -42,9 +44,16 @@ class NearestNeighborFrame : public Frame {
   virtual ~NearestNeighborFrame();
   // Gets frame by openslide library, performs scaling it and compressing
   virtual void sliceFrame();
-  virtual bool isDone();
-  virtual uint8_t *getData();
-  virtual size_t getSize();
+  virtual bool isDone() const;
+  virtual uint8_t *get_dicom_frame_bytes();
+  virtual size_t getSize() const;
+
+  virtual int64_t get_raw_frame_bytes(uint8_t *raw_memory,
+                                      int64_t memorysize) const;
+  virtual int64_t get_frame_width() const;
+  virtual int64_t get_frame_height() const;
+  virtual void clear_dicom_mem();
+  virtual bool has_compressed_raw_bytes() const;
 
  private:
   std::unique_ptr<uint8_t[]> data_;
@@ -61,5 +70,7 @@ class NearestNeighborFrame : public Frame {
   double multiplicator_;
   std::unique_ptr<Compressor> compressor_;
 };
+
+}  // namespace wsiToDicomConverter
 
 #endif  // SRC_NEARESTNEIGHBORFRAME_H_

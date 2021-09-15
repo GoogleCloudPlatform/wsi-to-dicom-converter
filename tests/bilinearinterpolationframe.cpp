@@ -21,6 +21,8 @@
 #include "src/bilinearinterpolationframe.h"
 #include "tests/testUtils.h"
 
+namespace wsiToDicomConverter {
+
 TEST(BilinearInterpolationFrame, jpeg) {
   openslide_t* osr = openslide_open(tiffFileName);
   BilinearInterpolationFrame frame(osr, 0, 0, 0, 100, 100, 100, 100, JPEG, 1,
@@ -38,3 +40,5 @@ TEST(BilinearInterpolationFrame, jpeg2000Scaling) {
   ASSERT_TRUE(frame.isDone());
   ASSERT_GE(frame.getSize(), 0);
 }
+
+}  // namespace wsiToDicomConverter

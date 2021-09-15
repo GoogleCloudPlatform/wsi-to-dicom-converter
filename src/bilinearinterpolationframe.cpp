@@ -26,6 +26,8 @@
 #include "src/jpegCompression.h"
 #include "src/rawCompression.h"
 
+namespace wsiToDicomConverter {
+
 BilinearInterpolationFrame::BilinearInterpolationFrame(
     openslide_t *osr, int64_t locationX, int64_t locationY, int32_t level,
     int64_t frameWidthDownsampled, int64_t frameHeightDownsampled,
@@ -74,6 +76,14 @@ void set_pixel(double *rgb_mem, const int width, const int height, int cx,
   rgb_mem[pix + 1] += percent * green;
   rgb_mem[pix + 2] += percent * blue;
   rgb_mem[pix + 3] += percent;
+}
+
+int64_t BilinearInterpolationFrame::get_frame_width() const {
+  return frameWidth_;
+}
+
+int64_t BilinearInterpolationFrame::get_frame_height() const {
+  return frameHeight_;
 }
 
 void BilinearInterpolationFrame::sliceFrame() {
@@ -281,8 +291,25 @@ void BilinearInterpolationFrame::sliceFrame() {
   done_ = true;
 }
 
-bool BilinearInterpolationFrame::isDone() { return done_; }
+void BilinearInterpolationFrame::clear_dicom_mem() {
+  data_ = NULL;
+}
 
-uint8_t *BilinearInterpolationFrame::getData() { return data_.get(); }
+int64_t BilinearInterpolationFrame::get_raw_frame_bytes(uint8_t *raw_memory,
+                                                  int64_t memorysize) const {
+  return 0;
+}
 
-size_t BilinearInterpolationFrame::getSize() { return size_; }
+bool BilinearInterpolationFrame::isDone() const { return done_; }
+
+uint8_t *BilinearInterpolationFrame::get_dicom_frame_bytes() {
+  return data_.get();
+}
+
+size_t BilinearInterpolationFrame::getSize() const { return size_; }
+
+bool BilinearInterpolationFrame::has_compressed_raw_bytes() const {
+  return false;
+}
+
+}  // namespace wsiToDicomConverter
