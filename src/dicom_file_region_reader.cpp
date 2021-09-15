@@ -112,7 +112,7 @@ bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
       //   image_offset_Y : global upper left coordinate in image
       //   frame_bytes: frame pixel memory
       //   fx : upper left coordinate of frame
-      //   fy : upper right coordinate of frame
+      //   fy : upper left coordinate of frame
       //   copy_width : width to copy from frame
       //   copy_height : height to copy frome frame
       //   memory : pixel memory to copy frame data to.
@@ -150,12 +150,12 @@ bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
                                                uint32_t *memory) const {
     // Reads a sub region from the a set of dicom frames spread across file(s).
     //
-    // If memory extends beyond file space. Writes in for memory pixel data
     // Memory pixels in ARGB format.
+    // Memory pixel value = 0x00000000 for positions outside image dim.
     //
     // Args:
     //   layer_X : upper left X coordinate in image coordinates.
-    //   layer_Y : upper right Y coordinate in image coordinates.
+    //   layer_Y : upper left Y coordinate in image coordinates.
     //   mem_width : Width of memory to copy into.
     //   mem_height : Height of memory to copy into.
     //   memory : Memory to copy into .
