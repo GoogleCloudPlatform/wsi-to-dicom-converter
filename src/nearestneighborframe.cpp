@@ -25,6 +25,8 @@
 #include "src/nearestneighborframe.h"
 #include "src/rawCompression.h"
 
+namespace wsiToDicomConverter {
+
 NearestNeighborFrame::NearestNeighborFrame(
     openslide_t *osr, int64_t locationX, int64_t locationY, int32_t level,
     int64_t frameWidhtDownsampled, int64_t frameHeightDownsampled,
@@ -53,6 +55,14 @@ NearestNeighborFrame::NearestNeighborFrame(
 }
 
 NearestNeighborFrame::~NearestNeighborFrame() {}
+
+int64_t NearestNeighborFrame::get_frame_width() const {
+  return frameWidht_;
+}
+
+int64_t NearestNeighborFrame::get_frame_height() const {
+  return frameHeight_;
+}
 
 class convert_rgba_to_rgb {
  public:
@@ -101,9 +111,25 @@ void NearestNeighborFrame::sliceFrame() {
   free(buf);
   done_ = true;
 }
+int64_t NearestNeighborFrame::get_raw_frame_bytes(uint8_t *raw_memory,
+                                                  int64_t memorysize) const {
+  return 0;
+}
 
-bool NearestNeighborFrame::isDone() { return done_; }
+bool NearestNeighborFrame::isDone() const { return done_; }
 
-uint8_t *NearestNeighborFrame::getData() { return data_.get(); }
+void NearestNeighborFrame::clear_dicom_mem() {
+  data_ = NULL;
+}
 
-size_t NearestNeighborFrame::getSize() { return size_; }
+uint8_t *NearestNeighborFrame::get_dicom_frame_bytes() {
+  return data_.get();
+}
+
+size_t NearestNeighborFrame::getSize() const { return size_; }
+
+bool NearestNeighborFrame::has_compressed_raw_bytes() const {
+  return false;
+}
+
+}  // namespace wsiToDicomConverter
