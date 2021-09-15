@@ -37,7 +37,7 @@ TEST(DICOMFileRegionReader, base_test) {
 
   DICOMFileFrameRegionReader region_reader;
   ASSERT_EQ(region_reader.dicom_file_count(), 0);
-    ASSERT_FALSE(region_reader.read_region(0, 0, 1, 1, mem));
+  ASSERT_FALSE(region_reader.read_region(0, 0, 1, 1, mem));
 
   region_reader.set_dicom_files(std::move(dcm_file_vec));
   ASSERT_EQ(region_reader.dicom_file_count(), 1);
