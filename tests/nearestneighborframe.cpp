@@ -21,6 +21,8 @@
 #include "src/nearestneighborframe.h"
 #include "tests/testUtils.h"
 
+namespace wsiToDicomConverter {
+
 TEST(NearestNeighborFrame, jpeg) {
   openslide_t* osr = openslide_open(tiffFileName);
   NearestNeighborFrame frame(osr, 0, 0, 0, 100, 100, 1, 100, 100, JPEG, 1);
@@ -45,9 +47,11 @@ TEST(NearestNeighborFrame, rawData) {
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
   for (size_t i = 0; i < 3; i++) {
-    ASSERT_EQ(248, frame.getData()[i]);
+    ASSERT_EQ(248, frame.get_dicom_frame_bytes()[i]);
   }
   for (size_t i = 3; i < frame.getSize(); i++) {
-    ASSERT_EQ(frame.getData()[i], 0);
+    ASSERT_EQ(frame.get_dicom_frame_bytes()[i], 0);
   }
 }
+
+}  // namespace wsiToDicomConverter

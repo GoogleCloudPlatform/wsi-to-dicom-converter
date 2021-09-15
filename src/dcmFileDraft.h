@@ -57,19 +57,27 @@ class DcmFileDraft {
   // of first level
 
   DcmFileDraft(std::vector<std::unique_ptr<Frame> > framesData,
-               const std::string& outputFileMask, uint32_t numberOfFrames,
-               int64_t imageWidth, int64_t imageHeight, int32_t level,
-               int32_t batchNumber, uint32_t batch, uint32_t row,
-               uint32_t column, int64_t frameWidth, int64_t frameHeight,
+               const std::string& outputFileMask, int64_t imageWidth,
+               int64_t imageHeight, int64_t level, int64_t row, int64_t column,
                const std::string& studyId, const std::string& seriesId,
                const std::string& imageName, DCM_Compression compression,
                bool tiled, DcmTags* additionalTags, double firstLevelWidthMm,
-               double firstLevelHeightMm);
+               double firstLevelHeightMmm, int64_t downsample,
+              const std::vector<std::unique_ptr<DcmFileDraft>>
+              *prior_frame_batches);
 
   ~DcmFileDraft();
 
   void saveFile();
   void write(DcmOutputStream* outStream);
+
+  int64_t get_frame_width() const;
+  int64_t get_frame_height() const;
+  int64_t get_image_width() const;
+  int64_t get_image_height() const;
+  int64_t get_file_frame_count() const;
+  int64_t get_downsample() const;
+  const Frame* const get_frame(int64_t idx) const;
 
  private:
   std::vector<std::unique_ptr<Frame> > framesData_;
@@ -79,19 +87,19 @@ class DcmFileDraft {
   std::string imageName_;
   DcmTags* additionalTags_;
   DCM_Compression compression_;
-  uint32_t numberOfFrames_;
+  int64_t prior_batch_frames_;
+  int64_t frame_count_;
   int64_t imageWidth_;
   int64_t imageHeight_;
-  int32_t level_;
-  int32_t batchNumber_;
-  uint32_t batchSize_;
-  uint32_t row_;
-  uint32_t column_;
+  int64_t level_;
+  int64_t batchNumber_;
+  int64_t row_;
+  int64_t column_;
   int64_t frameWidth_;
   int64_t frameHeight_;
   double firstLevelWidthMm_;
   double firstLevelHeightMm_;
-  double downsample_;
+  int64_t downsample_;
   bool tiled_;
 };
 }  // namespace wsiToDicomConverter
