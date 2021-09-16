@@ -42,7 +42,7 @@ class NearestNeighborFrame : public Frame {
   //                   downsampling.
   // frame_region_reader - frame reader for raw frame data from prior level.
   //                       Used to generate downsamples directly from prior
-  //                       downsampled leve.
+  //                       downsampled level.
   NearestNeighborFrame(openslide_t *osr, int64_t locationX, int64_t locationY,
                        int64_t level, int64_t frameWidthDownsampled,
                        int64_t frameHeightDownsampled, double multiplicator,
