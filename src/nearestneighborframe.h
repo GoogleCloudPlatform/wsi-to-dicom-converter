@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 
+#include "src/dicom_file_region_reader.h"
 #include "src/compressor.h"
 #include "src/enums.h"
 #include "src/frame.h"
@@ -31,15 +32,24 @@ class NearestNeighborFrame : public Frame {
  public:
   // osr - openslide
   // locationX, locationY - top-left corner of frame in level coordinates
-  // frameWidhtDownsampled, frameHeightDownsampled - size of frame to get
+  // frameWidthDownsampled, frameHeightDownsampled - size of frame to get
   // multiplicator - size difference between 0 level and current one
-  // frameWidht, frameHeight_ - size frame needs to be scaled to
+  // frameWidth, frameHeight_ - size frame needs to be scaled to
   // compression - type of compression
+  // quality - compression quality setting
+  // store_raw_bytes - store raw version of frame pixels in frame in addition
+  //                   to compressed pixel bytes. Required for progressive
+  //                   downsampling.
+  // frame_region_reader - frame reader for raw frame data from prior level.
+  //                       Used to generate downsamples directly from prior
+  //                       downsampled leve.
   NearestNeighborFrame(openslide_t *osr, int64_t locationX, int64_t locationY,
-                       int32_t level, int64_t frameWidhtDownsampled,
+                       int64_t level, int64_t frameWidthDownsampled,
                        int64_t frameHeightDownsampled, double multiplicator,
-                       int64_t frameWidht, int64_t frameHeight,
-                       DCM_Compression compression, int quality);
+                       int64_t frameWidth, int64_t frameHeight,
+                       DCM_Compression compression, int quality,
+                       bool store_raw_bytes,
+                       const DICOMFileFrameRegionReader &frame_region_reader);
 
   virtual ~NearestNeighborFrame();
   // Gets frame by openslide library, performs scaling it and compressing
@@ -62,13 +72,19 @@ class NearestNeighborFrame : public Frame {
   openslide_t *osr_;
   int64_t locationX_;
   int64_t locationY_;
-  int level_;
-  int64_t frameWidhtDownsampled_;
+  int64_t level_;
+  int64_t frameWidthDownsampled_;
   int64_t frameHeightDownsampled_;
-  int64_t frameWidht_;
+  int64_t frameWidth_;
   int64_t frameHeight_;
   double multiplicator_;
+
+  bool store_raw_bytes_;
+  std::unique_ptr<uint8_t[]> raw_compressed_bytes_;
+  int64_t raw_compressed_bytes_size_;
+
   std::unique_ptr<Compressor> compressor_;
+  const DICOMFileFrameRegionReader &dcm_frame_region_reader;
 };
 
 }  // namespace wsiToDicomConverter

@@ -33,6 +33,7 @@
 #include "src/bilinearinterpolationframe.h"
 #include "src/dcmFileDraft.h"
 #include "src/dcmTags.h"
+#include "src/dicom_file_region_reader.h"
 #include "src/geometryUtils.h"
 #include "src/nearestneighborframe.h"
 
@@ -169,6 +170,8 @@ int WsiToDcm::dicomizeTiff(
   BOOST_LOG_TRIVIAL(debug) << " ";
   BOOST_LOG_TRIVIAL(debug) << "Level Count: " << svs_level_count;
   bool adapative_stop_downsampling = false;
+
+  DICOMFileFrameRegionReader higher_magnifcation_dicom_files;
   std::vector<std::unique_ptr<DcmFileDraft>> generated_dicom_files;
   for (int32_t level = startOnLevel;
        level < levels && (stopOnLevel < startOnLevel || level <= stopOnLevel) &&
@@ -307,6 +310,11 @@ int WsiToDcm::dicomizeTiff(
 
       DcmFileDraft Joins threads and combines results and writes dcm file.
     */
+
+    // TODO(philbrik): Enable after completion of downsampling change.
+    const bool preferProgressiveDownsampling = false;
+    const bool save_compressed_raw = preferProgressiveDownsampling &&
+                                     downsample > 1;
     while (y < levelHeight) {
       while (x < levelWidth) {
         assert(osr != nullptr && openslide_get_error(osr) == nullptr);
@@ -322,7 +330,8 @@ int WsiToDcm::dicomizeTiff(
           frameData = std::make_unique<NearestNeighborFrame>(
               osr, x, y, levelToGet, frameWidthDownsampled,
               frameHeightDownsampled, multiplicator, level_frameWidth,
-              level_frameHeight, level_compression, quality);
+              level_frameHeight, level_compression, quality,
+              save_compressed_raw, higher_magnifcation_dicom_files);
         }
 
         boost::asio::post(
@@ -367,7 +376,12 @@ int WsiToDcm::dicomizeTiff(
       adapative_stop_downsampling = true;
     }
     pool.join();
-    generated_dicom_files.clear();
+    if (preferProgressiveDownsampling) {
+      higher_magnifcation_dicom_files.set_dicom_files(
+                                             std::move(generated_dicom_files));
+    } else {
+      generated_dicom_files.clear();
+    }
   }
   openslide_close(osr);
   BOOST_LOG_TRIVIAL(info) << "dicomization is done";
