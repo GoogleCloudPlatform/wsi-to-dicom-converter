@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 
+#include "src/dicom_file_region_reader.h"
 #include "src/compressor.h"
 #include "src/enums.h"
 #include "src/frame.h"
@@ -47,7 +48,10 @@ class BilinearInterpolationFrame : public Frame {
                              int quality, int64_t levelWidthDownsampled,
                              int64_t levelHeightDownsampled, int64_t levelWidth,
                              int64_t levelHeight, int64_t level0Width,
-                             int64_t level0Height);
+                             int64_t level0Height,
+                             bool store_raw_bytes,
+                             const DICOMFileFrameRegionReader
+                             &frame_region_reader);
 
   virtual ~BilinearInterpolationFrame();
   // Gets frame by openslide library, performs scaling it and compressing
@@ -84,6 +88,12 @@ class BilinearInterpolationFrame : public Frame {
 
   int64_t level0Width_;
   int64_t level0Height_;
+
+  bool store_raw_bytes_;
+  std::unique_ptr<uint8_t[]> raw_compressed_bytes_;
+  int64_t raw_compressed_bytes_size_;
+
+  const DICOMFileFrameRegionReader &dcm_frame_region_reader;
 
   std::unique_ptr<Compressor> compressor_;
 };
