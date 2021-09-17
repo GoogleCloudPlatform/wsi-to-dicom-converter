@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <dcmtk/dcmdata/libi2d/i2dimgs.h>
-#include <stdio.h>
 
 #include <boost/gil/extension/numeric/affine.hpp>
 #include <boost/gil/extension/numeric/resample.hpp>
@@ -21,20 +20,26 @@
 #include <boost/gil/typedefs.hpp>
 #include <boost/log/trivial.hpp>
 
+#include <utility>
+
 #include "src/bilinearinterpolationframe.h"
 #include "src/jpeg2000Compression.h"
 #include "src/jpegCompression.h"
 #include "src/rawCompression.h"
+#include "src/zlibWrapper.h"
+
 
 namespace wsiToDicomConverter {
 
 BilinearInterpolationFrame::BilinearInterpolationFrame(
     openslide_t *osr, int64_t locationX, int64_t locationY, int32_t level,
     int64_t frameWidthDownsampled, int64_t frameHeightDownsampled,
-    int64_t frameWidht, int64_t frameHeight, DCM_Compression compression,
+    int64_t frameWidth, int64_t frameHeight, DCM_Compression compression,
     int quality, int64_t levelWidthDownsampled, int64_t levelHeightDownsampled,
     int64_t levelWidth, int64_t levelHeight, int64_t level0Width,
-    int64_t level0Height) {
+    int64_t level0Height, bool store_raw_bytes,
+    const DICOMFileFrameRegionReader &frame_region_reader)
+    : dcm_frame_region_reader(frame_region_reader) {
   done_ = false;
   osr_ = osr;
   locationX_ = locationX;
@@ -49,8 +54,11 @@ BilinearInterpolationFrame::BilinearInterpolationFrame(
   levelHeight_ = levelHeight;
   level0Width_ = level0Width;
   level0Height_ = level0Height;
-  frameWidth_ = frameWidht;
+  frameWidth_ = frameWidth;
   frameHeight_ = frameHeight;
+  // flag indicates if raw frame bytes should be retained.
+  // required for to enable progressive downsampling.
+  store_raw_bytes_ = store_raw_bytes;
   switch (compression) {
     case JPEG:
       compressor_ = std::make_unique<JpegCompression>(quality);
@@ -65,13 +73,13 @@ BilinearInterpolationFrame::BilinearInterpolationFrame(
 
 BilinearInterpolationFrame::~BilinearInterpolationFrame() {}
 
-void set_pixel(double *rgb_mem, const int width, const int height, int cx,
-               int cy, const double red, const double green, const double blue,
-               const double percent) {
+void set_pixel(double *rgb_mem, const int64_t width, const int64_t height,
+               int64_t cx, int64_t cy, const double red, const double green,
+               const double blue, const double percent) {
   if (cx < 0 || cy < 0 || cx >= width || cy >= height) {
     return;
   }
-  const int pix = 4 * (cx + (cy * width));
+  const size_t pix = static_cast<size_t>(4 * (cx + (cy * width)));
   rgb_mem[pix] += percent * red;
   rgb_mem[pix + 1] += percent * green;
   rgb_mem[pix + 2] += percent * blue;
@@ -96,12 +104,10 @@ void BilinearInterpolationFrame::sliceFrame() {
   // effect the edge pixel values.
   const int64_t down_sample_y =
       static_cast<int64_t>(ceil(static_cast<double>(levelHeight_) /
-                                static_cast<double>(targetLevelHeight_)) -
-                           1);
+                               static_cast<double>(targetLevelHeight_)) - 1.0);
   const int64_t down_sample_x =
       static_cast<int64_t>(ceil(static_cast<double>(levelWidth_) /
-                                static_cast<double>(targetLevelWidth_)) -
-                           1);
+                               static_cast<double>(targetLevelWidth_)) - 1.0);
 
   // Extend samping with to include boundry voxels.  Sample sampleWidth &
   // sampleHeight = target sampling region for level to downsample
@@ -128,29 +134,35 @@ void BilinearInterpolationFrame::sliceFrame() {
 
   // Allocate memory to retrieve layer data from openslide
   uint32_t *buf_bytes = reinterpret_cast<uint32_t *>(
-      malloc((size_t)sampleWidth * (size_t)sampleHeight * sizeof(uint32_t)));
+      malloc(static_cast<size_t>(sampleWidth * sampleHeight) *
+             sizeof(uint32_t)));
 
   // Open slide API samples using xy coordinages from level 0 image.
   // upsample coordinates to level 0 to compute sampleing site.
-
-  const int64_t Level0_x = (Level_x * level0Width_) / levelWidth_;
-  const int64_t Level0_y = (Level_y * level0Height_) / levelHeight_;
-  // Open slide read region returns ARGB formated pixels
-  // Values are pre-multiplied with alpha
-  // https://github.com/openslide/openslide/wiki/PremultipliedARGB
-  openslide_read_region(osr_, reinterpret_cast<uint32_t *>(buf_bytes), Level0_x,
-                        Level0_y, level_, sampleWidth, sampleHeight);
-
-  if (openslide_get_error(osr_)) {
-    BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
-    throw 1;
+  if (dcm_frame_region_reader.dicom_file_count() == 0) {
+    const int64_t Level0_x = (Level_x * level0Width_) / levelWidth_;
+    const int64_t Level0_y = (Level_y * level0Height_) / levelHeight_;
+    // Open slide read region returns ARGB formated pixels
+    // Values are pre-multiplied with alpha
+    // https://github.com/openslide/openslide/wiki/PremultipliedARGB
+    openslide_read_region(osr_, buf_bytes, Level0_x,
+                          Level0_y, level_, sampleWidth, sampleHeight);
+    if (openslide_get_error(osr_)) {
+       BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
+       throw 1;
+    }
+  } else {
+    dcm_frame_region_reader.read_region(Level_x, Level_y, sampleWidth,
+                                        sampleHeight, buf_bytes);
   }
+
 
   // Allocate memory (size (width/height) of frame being downsampled into) to
   // hold RGB and RGB_Area downsampleing accumulators.
+  const size_t frame_mem_size = static_cast<size_t>(frameWidth_ * frameHeight_);
   double *rgb_mem = reinterpret_cast<double *>(
-      malloc(sizeof(double) * frameWidth_ * frameHeight_ * 4));
-  for (int idx = 0; idx < frameWidth_ * frameHeight_ * 4; ++idx) {
+      malloc(sizeof(double) * frame_mem_size * 4));
+  for (size_t idx = 0; idx < frame_mem_size * 4; ++idx) {
     rgb_mem[idx] = 0.0;  // Inititalize to zero.
   }
 
@@ -161,14 +173,14 @@ void BilinearInterpolationFrame::sliceFrame() {
   const double TargetFrame_YStart =
       static_cast<double>(targetLevelHeight_ * locationY_ / levelHeight_);
 
-  // Cache X layer coordinate position trannsformation.
+  // Cache X layer coordinate position transformation.
   double *frameX_Cache;
   if (targetLevelWidth_ == levelWidth_) {
     frameX_Cache = NULL;
   } else {
     frameX_Cache =
         reinterpret_cast<double *>(malloc(sizeof(double) * sampleWidth));
-    for (int px = 0; px < sampleWidth; ++px) {
+    for (size_t px = 0; px < static_cast<size_t>(sampleWidth); ++px) {
       const int64_t PositionInLevel_x = px + Level_x;
       frameX_Cache[px] =
           static_cast<double>(PositionInLevel_x * targetLevelWidth_) /
@@ -178,8 +190,8 @@ void BilinearInterpolationFrame::sliceFrame() {
   }
 
   // Walk across layer being downsampled Rows x columns
-  for (int py = 0; py < sampleHeight; ++py) {
-    const int buffer_heightoffset =
+  for (int64_t py = 0; py < sampleHeight; ++py) {
+    const int64_t buffer_heightoffset =
         py * sampleWidth;  // Offset into layer memory
 
     // transform layer coordinate py into frame coordinates
@@ -189,7 +201,8 @@ void BilinearInterpolationFrame::sliceFrame() {
             static_cast<double>(levelHeight_) -
         TargetFrame_YStart;
     const double framey_floor = floor(framey);
-    const int cy = static_cast<int>(framey_floor);  // frame Y coordinate
+    // frame Y coordinate
+    const int64_t cy = static_cast<int64_t>(framey_floor);
     if (cy <= -1 || cy >= levelHeight_) {
       continue;
     }
@@ -200,7 +213,7 @@ void BilinearInterpolationFrame::sliceFrame() {
         1.0 - ny_weight;  // releative contribution of point at position cy
 
     // iterate over columns
-    for (int px = 0; px < sampleWidth; ++px) {
+    for (int64_t px = 0; px < sampleWidth; ++px) {
       const uint32_t pixel =
           buf_bytes[px + buffer_heightoffset];  // Pixel value to be downsampled
       const int alpha = pixel >> 24;            // Alpha value of pixel
@@ -225,13 +238,14 @@ void BilinearInterpolationFrame::sliceFrame() {
 
       // If layer does not require downsampling.. Just copy values across
       if (targetLevelWidth_ == levelWidth_) {
-        const int cx = px + Level_x - locationX_;
+        const int64_t cx = px + Level_x - locationX_;
         set_pixel(rgb_mem, frameWidth_, frameHeight_, cx, cy, red_d, green_d,
                   blue_d, 1.0);
       } else {
         const double framex = frameX_Cache[px];
         const double framex_floor = floor(framex);
-        const int cx = static_cast<int>(framex_floor);  // Frame coordinate
+        // Frame coordinate
+        const int64_t cx = static_cast<int64_t>(framex_floor);
         const double nx_weight =
             framex - framex_floor;                // Projection into cx + 1
         const double x_weight = 1.0 - nx_weight;  // Projection into cx
@@ -251,14 +265,14 @@ void BilinearInterpolationFrame::sliceFrame() {
   }
   free(buf_bytes);  // Free buffer read from openslide
 
-  // Allocate memory to transform downsampled frame into ARGB
-  uint32_t *downsample_bytes = reinterpret_cast<uint32_t *>(malloc(
-      (size_t)frameWidth_ * (size_t)frameHeight_ * (size_t)sizeof(uint32_t)));
-  int areaindex = 0;
-  for (int idx = 0; idx < frameHeight_ * frameWidth_; ++idx) {
+  // Allocate memory to transform downsampled frame into ABGR
+  std::unique_ptr<uint32_t[]> raw_bytes = std::make_unique<uint32_t[]>(
+                                                              frame_mem_size);
+  size_t areaindex = 0;
+  for (size_t idx = 0; idx < frame_mem_size; ++idx) {
     const double area = rgb_mem[areaindex + 3];
     if (area == 0) {
-      downsample_bytes[idx] = 0xFFFFFFFF;  // If no pixels were projected to
+      raw_bytes[idx] = 0xFFFFFFFF;  // If no pixels were projected to
     } else {                               // space set white.
       // Get R, G, B pixel weighted area sums.  Divide by area
       const int red = static_cast<int>(rgb_mem[areaindex] / area);
@@ -266,7 +280,7 @@ void BilinearInterpolationFrame::sliceFrame() {
       const int blue = static_cast<int>(rgb_mem[areaindex + 2] / area);
 
       // Dicom color space is ABGR
-      downsample_bytes[idx] = 0xFF000000 | ((blue & 0xFF) << 16) |
+      raw_bytes[idx] = 0xFF000000 | ((blue & 0xFF) << 16) |
                               ((green & 0xFF) << 8) | (red & 0xFF);
     }
     areaindex += 4;
@@ -275,18 +289,38 @@ void BilinearInterpolationFrame::sliceFrame() {
 
   // Create a boot::gli view of memory in downsample_bytes
   boost::gil::rgba8c_view_t gil = boost::gil::interleaved_view(
-      (size_t)frameWidth_, (size_t)frameHeight_,
-      (const boost::gil::rgba8c_pixel_t *)downsample_bytes,
+      frameWidth_, frameHeight_,
+      (const boost::gil::rgba8c_pixel_t *)raw_bytes.get(),
       frameWidth_ * sizeof(uint32_t));
 
   // Create gli::image to copy bytes into
   boost::gil::rgb8_image_t exp(frameWidth_, frameHeight_);
   boost::gil::rgb8_view_t rgbView = view(exp);
   boost::gil::copy_pixels(gil, rgbView);
-  free(
-      downsample_bytes);  // Free downsampled bytes. Image now in boost::gli obj
   // Compress memory (RAW, jpeg, or jpeg2000)
   data_ = compressor_->compress(rgbView, &size_);
+  if (!store_raw_bytes_) {
+    raw_compressed_bytes_ = NULL;
+    raw_compressed_bytes_size_ = 0;
+  } else {
+    // Convert memory buffer back from DICOM representation
+    // to standard representation
+    for (size_t idx = 0; idx < frame_mem_size; ++idx) {
+      const uint32_t color = raw_bytes[idx];
+      const uint32_t red = color & 0xFF;
+      // const uint32_t green = (color >> 8) & 0xFF;
+      const uint32_t  blue = (color >> 16) & 0xFF;
+      // const uint32_t  alpha = (color >> 24) & 0xFF;
+      // format alpha, red, green blue
+      raw_bytes[idx] = (color & 0xff00ff00) | (red << 16) | blue;
+    }
+    raw_compressed_bytes_ = std::move(compress_memory(
+                                   reinterpret_cast<uint8_t*>(raw_bytes.get()),
+                                   frame_mem_size * sizeof(uint32_t),
+                                   &raw_compressed_bytes_size_));
+    BOOST_LOG_TRIVIAL(debug) << " compressed raw frame size: " <<
+                                raw_compressed_bytes_size_ / 1024 << "kb";
+  }
   BOOST_LOG_TRIVIAL(debug) << " frame size: " << size_ / 1024 << "kb";
   done_ = true;
 }
@@ -296,8 +330,10 @@ void BilinearInterpolationFrame::clear_dicom_mem() {
 }
 
 int64_t BilinearInterpolationFrame::get_raw_frame_bytes(uint8_t *raw_memory,
-                                                  int64_t memorysize) const {
-  return 0;
+                                                    int64_t memorysize) const {
+  return decompress_memory(raw_compressed_bytes_.get(),
+                           raw_compressed_bytes_size_,
+                           raw_memory, memorysize);
 }
 
 bool BilinearInterpolationFrame::isDone() const { return done_; }
@@ -309,7 +345,7 @@ uint8_t *BilinearInterpolationFrame::get_dicom_frame_bytes() {
 size_t BilinearInterpolationFrame::getSize() const { return size_; }
 
 bool BilinearInterpolationFrame::has_compressed_raw_bytes() const {
-  return false;
+  return (raw_compressed_bytes_ != NULL && raw_compressed_bytes_size_ > 0);
 }
 
 }  // namespace wsiToDicomConverter
