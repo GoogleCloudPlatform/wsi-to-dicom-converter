@@ -325,7 +325,8 @@ int WsiToDcm::dicomizeTiff(
               frameHeightDownsampled, level_frameWidth, level_frameHeight,
               level_compression, quality, levelWidthDownsampled,
               levelHeightDownsampled, levelWidth, levelHeight, firstLevelWidth,
-              firstLevelHeight);
+              firstLevelHeight, save_compressed_raw,
+              higher_magnifcation_dicom_files);
         } else {
           frameData = std::make_unique<NearestNeighborFrame>(
               osr, x, y, levelToGet, frameWidthDownsampled,

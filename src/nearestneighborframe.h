@@ -27,7 +27,8 @@
 
 namespace wsiToDicomConverter {
 
-// Frame represents a single image frame from the OpenSlide library
+// Frame represents a DICOM image frame from the OpenSlide library or
+// downsampled from level captured at higher magnification.
 class NearestNeighborFrame : public Frame {
  public:
   // osr - openslide
