@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
   bool stopDownsamplingAtSingleFrame;
   bool useBilinearDownsampling;
   bool floorCorrectDownsampling;
+  bool preferProgressiveDownsampling;
   std::vector<int> downsamples;
   downsamples.resize(1, 0);
   bool sparse;
@@ -121,7 +122,16 @@ int main(int argc, char *argv[]) {
         "correspondance for level images which are dimensionally not perfect "
         "multiples. Example (40x 45,771x35,037) downsampled (16x) -> "
         "(2.5x 2,860 x 2,189)  openslide reported downsampling: 16.004892."
-        " Floor correction = 16");
+        " Floor correction = 16")
+        ("progressiveDownsample",
+        programOptions::bool_switch(
+        &preferProgressiveDownsampling)->default_value(false),
+        "Preferentially generate downsampled images progressively from "
+        "prior downsampled images. Faster, increased memory requirment, and "
+        "avoids rounding bug in openslide api which can cause pixel level "
+        "alignemnt issues when generating output from images captured at "
+        "multiple downsampeling levels. To use images must be generated from "
+        "highest to lowest magnification.");
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
     positionalOptions.add("outFolder", 1);
@@ -175,6 +185,7 @@ int main(int argc, char *argv[]) {
   request.stopDownsamplingAtSingleFrame = stopDownsamplingAtSingleFrame;
   request.useBilinearDownsampling = useBilinearDownsampling;
   request.floorCorrectDownsampling = floorCorrectDownsampling;
+  request.preferProgressiveDownsampling = preferProgressiveDownsampling;
   request.debug = debug;
   return wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
 }

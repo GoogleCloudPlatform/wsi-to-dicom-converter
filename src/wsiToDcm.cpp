@@ -104,7 +104,7 @@ int WsiToDcm::dicomizeTiff(
     int32_t retileLevels, std::vector<int> downsamples, bool tiled,
     int batchLimit, int8_t threads, bool dropFirstRowAndColumn,
     bool stop_downsampling_at_singleframe, bool useBilinearDownsampling,
-    bool floorCorrectDownsampling) {
+    bool floorCorrectDownsampling, bool preferProgressiveDownsampling) {
   bool retile = retileLevels > 0;
 
   if (studyId.size() < 1) {
@@ -216,7 +216,6 @@ int WsiToDcm::dicomizeTiff(
       }
       levelToGet -= 1;
     }
-    double multiplicator = openslide_get_level_downsample(osr, levelToGet);
     /*
        DICOM requires uniform pixel spacing across downsampled image
        for pixel spacing based metrics to produce images with compatiable
@@ -230,18 +229,40 @@ int WsiToDcm::dicomizeTiff(
        mis-alignment in the downsampled imageing. Flooring, the multiplier
        returned by openslide_get_level_downsample corrects this by restoring
        consistent downsamping and pixel spacing across the image.
-    */    
-    if (floorCorrectDownsampling) {
-      multiplicator = floor(multiplicator);
-    }
-    // Downsampling factor required to go from selected downsampled level to the
-    // desired level of downsampling
-    const double downsampleOfLevel =
-        static_cast<double>(downsample) / multiplicator;
-
+    */
+    double multiplicator;
+    double downsampleOfLevel;
     int64_t levelWidth;
     int64_t levelHeight;
-    openslide_get_level_dimensions(osr, levelToGet, &levelWidth, &levelHeight);
+
+    // ProgressiveDownsampling
+    if (higher_magnifcation_dicom_files.dicom_file_count() > 0) {
+      DcmFileDraft* dicom_file =
+                            higher_magnifcation_dicom_files.get_dicom_file(0);
+      multiplicator = static_cast<double>(dicom_file->get_downsample());
+      downsampleOfLevel = static_cast<double>(downsample) / multiplicator;
+      // check that downsampling is going from higher to lower magnification
+      if (downsampleOfLevel >= 1.0) {
+        levelWidth = dicom_file->get_image_width();
+        levelHeight = dicom_file->get_image_height();
+      } else {
+        // revert to openslide downsampling.
+        higher_magnifcation_dicom_files.clear_dicom_files();
+      }
+    }
+
+    // if no higher_magnifcation_dicom_files then downsample from openslide
+    if (higher_magnifcation_dicom_files.dicom_file_count() == 0) {
+      multiplicator = openslide_get_level_downsample(osr, levelToGet);
+      // Downsampling factor required to go from selected
+      // downsampled level to the desired level of downsampling
+      if (floorCorrectDownsampling) {
+        multiplicator = floor(multiplicator);
+      }
+      downsampleOfLevel = static_cast<double>(downsample) / multiplicator;
+      openslide_get_level_dimensions(osr, levelToGet,
+                                     &levelWidth, &levelHeight);
+    }
     BOOST_LOG_TRIVIAL(debug) << "level size: " << levelWidth << ' '
                              << levelHeight << ' ' << multiplicator;
     int64_t frameWidthDownsampled;
@@ -310,11 +331,22 @@ int WsiToDcm::dicomizeTiff(
 
       DcmFileDraft Joins threads and combines results and writes dcm file.
     */
+    BOOST_LOG_TRIVIAL(debug) << "higher_magnifcation_dicom_files " <<
+                          higher_magnifcation_dicom_files.dicom_file_count();
 
-    // TODO(philbrik): Enable after completion of downsampling change.
-    const bool preferProgressiveDownsampling = false;
+    // Preallocate vector space for frames
+    const int frameX = std::ceil(static_cast<double>(levelWidthDownsampled) /
+                                 static_cast<double>(level_frameWidth));
+    const int frameY = std::ceil(static_cast<double>(levelHeightDownsampled) /
+                                 static_cast<double>(level_frameHeight));
+    if (batchLimit == 0) {
+      framesData.reserve(frameX * frameY);
+    } else {
+      framesData.reserve(std::min(frameX * frameY, batchLimit));
+    }
     const bool save_compressed_raw = preferProgressiveDownsampling &&
                                      downsample > 1;
+
     while (y < levelHeight) {
       while (x < levelWidth) {
         assert(osr != nullptr && openslide_get_error(osr) == nullptr);
@@ -406,7 +438,8 @@ int WsiToDcm::wsi2dcm(WsiRequest wsiRequest) {
         wsiRequest.dropFirstRowAndColumn,
         wsiRequest.stopDownsamplingAtSingleFrame,
         wsiRequest.useBilinearDownsampling,
-        wsiRequest.floorCorrectDownsampling);
+        wsiRequest.floorCorrectDownsampling,
+        wsiRequest.preferProgressiveDownsampling);
   } catch (int exception) {
     return 1;
   }
