@@ -45,6 +45,7 @@ int main(int argc, char *argv[]) {
   bool useBilinearDownsampling;
   bool floorCorrectDownsampling;
   bool preferProgressiveDownsampling;
+  int compressionQuality;
   std::vector<int> downsamples;
   downsamples.resize(1, 0);
   bool sparse;
@@ -131,7 +132,11 @@ int main(int argc, char *argv[]) {
         "avoids rounding bug in openslide api which can cause pixel level "
         "alignemnt issues when generating output from images captured at "
         "multiple downsampling levels. To use images must be generated from "
-        "highest to lowest magnification.");
+        "highest to lowest magnification.")
+        ("compressionQuality",
+        programOptions::value<int>(
+        &compressionQuality)->default_value(80),
+        "Compression quality range(0 - 100");
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
     positionalOptions.add("outFolder", 1);
@@ -164,7 +169,7 @@ int main(int argc, char *argv[]) {
   request.frameSizeX = tileWidth;
   request.frameSizeY = tileHeight;
   request.compression = dcmCompressionFromString(compression);
-  request.quality = 80;
+  request.quality = std::max(std::min(100, compressionQuality), 0);
   request.startOnLevel = start;
   request.stopOnLevel = stop;
   request.imageName = seriesDescription;
