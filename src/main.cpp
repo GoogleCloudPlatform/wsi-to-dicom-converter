@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
         ("stopDownsamplingAtSingleFrame",
         programOptions::bool_switch(
         &stopDownsamplingAtSingleFrame)->default_value(false),
-        "Stop generating image downsampels if image dimensions < "
+        "Stop image downsampling if image dimensions < "
         "frame dimensions.")
         ("bilinearDownsampling",
         programOptions::bool_switch(
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
         "prior downsampled images. Faster, increased memory requirment, and "
         "avoids rounding bug in openslide api which can cause pixel level "
         "alignemnt issues when generating output from images captured at "
-        "multiple downsampeling levels. To use images must be generated from "
+        "multiple downsampling levels. To use images must be generated from "
         "highest to lowest magnification.");
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
