@@ -98,6 +98,9 @@ struct WsiRequest {
 
   // floor correct reported openslide downsampling.
   bool floorCorrectDownsampling = false;
+
+  // prefer progressive downsampling.
+  bool preferProgressiveDownsampling = false;
 };
 
 // Contains static methods for generation DICOM files
@@ -122,7 +125,8 @@ class WsiToDcm {
                           bool dropFirstRowAndColumn,
                           bool stopDownSamplingAtSingleFrame,
                           bool useBilinearDownsampling,
-                          bool floorCorrectDownsampling);
+                          bool floorCorrectDownsampling,
+                          bool preferProgressiveDownsampling);
 
   static void checkArguments(WsiRequest wsiRequest);
 };
