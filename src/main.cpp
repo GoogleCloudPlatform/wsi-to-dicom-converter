@@ -13,6 +13,7 @@
 // limitations under the License.
 #include <boost/program_options.hpp>
 
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
