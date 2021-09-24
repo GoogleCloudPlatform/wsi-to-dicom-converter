@@ -458,10 +458,12 @@ int WsiToDcm::dicomizeTiff(
   for (int32_t level = startOnLevel;
         level < levels && (stopOnLevel < startOnLevel || level <= stopOnLevel);
         level++) {
+    const bool progressive_downsample = preferProgressiveDownsampling &&
+                          higherMagnifcationDicomFiles.dicom_file_count() > 0;
     slideLevelDim = std::move(get_slide_level_dim(
                                                 retile,
                                                 downsamples,
-                                                preferProgressiveDownsampling,
+                                                progressive_downsample,
                                                 floorCorrectDownsampling,
                                                 osr,
                                                 level,
@@ -564,7 +566,7 @@ int WsiToDcm::dicomizeTiff(
     } else {
       framesData.reserve(std::min(frameX * frameY, batchLimit));
     }
-    bool save_compressed_raw = preferProgressiveDownsampling;
+    bool saveCompressedRaw = preferProgressiveDownsampling;
     if ((downsample == 1) &&
         (0 == get_openslide_level_for_downsample(osr, 2))) {
       // Memory optimization, if processing highest resolution image with no
@@ -572,7 +574,7 @@ int WsiToDcm::dicomizeTiff(
       // highest resolution image.  Do not save compressed raw versions of
       // the highest resolution.  Start progressive downsampling from
       // downsample level 2 and on.
-      save_compressed_raw = false;
+      saveCompressedRaw = false;
     }
     //  Walk through all frames in selected best layer. Extract frames from
     //  layer FrameDim = (frameWidthDownsampled, frameHeightDownsampled)
@@ -594,14 +596,14 @@ int WsiToDcm::dicomizeTiff(
               frameHeightDownsampled, levelFrameWidth, levelFrameHeight,
               levelCompression, quality, levelWidthDownsampled,
               levelHeightDownsampled, levelWidth, levelHeight, firstLevelWidth,
-              firstLevelHeight, save_compressed_raw,
+              firstLevelHeight, saveCompressedRaw,
               higherMagnifcationDicomFiles);
         } else {
           frameData = std::make_unique<NearestNeighborFrame>(
               osr, x, y, levelToGet, frameWidthDownsampled,
               frameHeightDownsampled, multiplicator, levelFrameWidth,
               levelFrameHeight, levelCompression, quality,
-              save_compressed_raw, higherMagnifcationDicomFiles);
+              saveCompressedRaw, higherMagnifcationDicomFiles);
         }
 
         boost::asio::post(
@@ -643,12 +645,11 @@ int WsiToDcm::dicomizeTiff(
       generatedDicomFiles.push_back(std::move(filedraft));
     }
     pool.join();
-    if (preferProgressiveDownsampling) {
-      higherMagnifcationDicomFiles.set_dicom_files(
-                                             std::move(generatedDicomFiles));
-    } else {
+    if  (!saveCompressedRaw) {
       generatedDicomFiles.clear();
     }
+    higherMagnifcationDicomFiles.set_dicom_files(
+                                           std::move(generatedDicomFiles));
     if (stopDownsamplingAtSingleFrame && numberOfFrames <= 1) {
       break;
     }
