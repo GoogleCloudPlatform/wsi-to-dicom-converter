@@ -101,6 +101,9 @@ struct WsiRequest {
 
   // prefer progressive downsampling.
   bool preferProgressiveDownsampling = false;
+
+  // crop frame so downsampleing generates uniform pixel spacing.
+  bool cropFrameToGenerateUniformPixelSpacing = false;
 };
 
 // Contains static methods for generation DICOM files
@@ -114,19 +117,28 @@ class WsiToDcm {
 
  private:
   // Generates tasks and handling thread pool
-  static int dicomizeTiff(std::string inputFile, std::string outputFileMask,
-                          int64_t frameSizeX, int64_t frameSizeY,
-                          DCM_Compression compression, int32_t quality,
-                          int32_t startOnLevel, int32_t stopOnLevel,
-                          std::string imageName, std::string studyId,
-                          std::string seriesId, std::string jsonFile,
-                          int32_t retileLevels, std::vector<int> downsamples,
-                          bool tiled, int32_t batchLimit, int8_t threads,
-                          bool dropFirstRowAndColumn,
-                          bool stopDownSamplingAtSingleFrame,
-                          bool useBilinearDownsampling,
-                          bool floorCorrectDownsampling,
-                          bool preferProgressiveDownsampling);
+  static int dicomizeTiff(const std::string &inputFile,
+                          const std::string &outputFileMask,
+                          const int64_t frameSizeX,
+                          const int64_t frameSizeY,
+                          const DCM_Compression compression,
+                          const int32_t quality,
+                          const  int32_t startOnLevel,
+                          const  int32_t stopOnLevel,
+                          const std::string &imageName,
+                          std::string studyId,
+                          std::string seriesId,
+                          const std::string &jsonFile,
+                          const int32_t retileLevels,
+                          const std::vector<int> &downsamples,
+                          const bool tiled, const int32_t batchLimit,
+                          const int8_t threads,
+                          const bool dropFirstRowAndColumn,
+                          const bool stopDownSamplingAtSingleFrame,
+                          const bool useBilinearDownsampling,
+                          const bool floorCorrectDownsampling,
+                          const bool preferProgressiveDownsampling,
+                          const bool cropFrameToGenerateUniformPixelSpacing);
 
   static void checkArguments(WsiRequest wsiRequest);
 };
