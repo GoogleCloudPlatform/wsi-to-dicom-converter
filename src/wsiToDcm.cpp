@@ -458,12 +458,12 @@ int WsiToDcm::dicomizeTiff(
   for (int32_t level = startOnLevel;
         level < levels && (stopOnLevel < startOnLevel || level <= stopOnLevel);
         level++) {
-    const bool progressive_downsample = preferProgressiveDownsampling &&
-                          higherMagnifcationDicomFiles.dicom_file_count() > 0;
+    const bool progressiveDownsample = preferProgressiveDownsampling &&
+                           higherMagnifcationDicomFiles.dicom_file_count() > 0;
     slideLevelDim = std::move(get_slide_level_dim(
                                                 retile,
                                                 downsamples,
-                                                progressive_downsample,
+                                                progressiveDownsample,
                                                 floorCorrectDownsampling,
                                                 osr,
                                                 level,
