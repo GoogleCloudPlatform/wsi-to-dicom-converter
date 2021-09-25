@@ -72,3 +72,43 @@ diff ./endToEnd/test7GeneratedImage.ppm ./endToEnd/test7ExpectedImage.ppm
 ./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test8  --levels 6 --tileHeight 100  --tileWidth 100 --compression raw --dropFirstRowAndColumn --progressiveDownsample
 dcm2pnm ./endToEnd/level-5-frames-0-1.dcm ./endToEnd/test8GeneratedImage.ppm
 diff ./endToEnd/test8GeneratedImage.ppm ./endToEnd/test8ExpectedImage.ppm
+
+#test - use uniformPixelSpacing, nearest neighbor downsampling, & progressiveDownsample to generate DICOM
+./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test9  --levels 16 --tileHeight 100  --tileWidth 100 --compression raw --progressiveDownsample --uniformPixelSpacing --stopDownsamplingAtSingleFrame
+dcm2pnm +Fa +Sxf 1.0 ./endToEnd/level-4-frames-0-4.dcm ./endToEnd/test9GeneratedImage.ppm
+dcm2json ./endToEnd/level-4-frames-0-4.dcm ./endToEnd/test9Generated.json
+diff ./endToEnd/test9GeneratedImage.ppm.0.ppm ./endToEnd/test9ExpectedImage.ppm.0.ppm
+diff ./endToEnd/test9GeneratedImage.ppm.1.ppm ./endToEnd/test9ExpectedImage.ppm.1.ppm
+diff ./endToEnd/test9GeneratedImage.ppm.2.ppm ./endToEnd/test9ExpectedImage.ppm.2.ppm
+diff ./endToEnd/test9GeneratedImage.ppm.3.ppm ./endToEnd/test9ExpectedImage.ppm.3.ppm
+compare ./endToEnd/test9Generated.json ./endToEnd/test9Expected.json
+
+#test - use uniformPixelSpacing, bilinearDownsampling downsampling, & progressiveDownsample to generate DICOM
+./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test10  --levels 16 --tileHeight 100  --tileWidth 100 --compression raw --progressiveDownsample --uniformPixelSpacing --stopDownsamplingAtSingleFrame --bilinearDownsampling
+dcm2pnm +Fa +Sxf 1.0 ./endToEnd/level-4-frames-0-4.dcm ./endToEnd/test10GeneratedImage.ppm
+dcm2json ./endToEnd/level-4-frames-0-4.dcm ./endToEnd/test10Generated.json
+diff ./endToEnd/test10GeneratedImage.ppm.0.ppm ./endToEnd/test10ExpectedImage.ppm.0.ppm
+diff ./endToEnd/test10GeneratedImage.ppm.1.ppm ./endToEnd/test10ExpectedImage.ppm.1.ppm
+diff ./endToEnd/test10GeneratedImage.ppm.2.ppm ./endToEnd/test10ExpectedImage.ppm.2.ppm
+diff ./endToEnd/test10GeneratedImage.ppm.3.ppm ./endToEnd/test10ExpectedImage.ppm.3.ppm
+compare ./endToEnd/test10Generated.json ./endToEnd/test10Expected.json
+
+#test - use uniformPixelSpacing & nearest neighbor downsampling to generate DICOM
+./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test11  --levels 16 --tileHeight 100  --tileWidth 100 --compression raw --uniformPixelSpacing --stopDownsamplingAtSingleFrame
+dcm2pnm +Fa +Sxf 1.0 ./endToEnd/level-4-frames-0-4.dcm ./endToEnd/test11GeneratedImage.ppm
+dcm2json ./endToEnd/level-4-frames-0-4.dcm ./endToEnd/test11Generated.json
+diff ./endToEnd/test11GeneratedImage.ppm.0.ppm ./endToEnd/test11ExpectedImage.ppm.0.ppm
+diff ./endToEnd/test11GeneratedImage.ppm.1.ppm ./endToEnd/test11ExpectedImage.ppm.1.ppm
+diff ./endToEnd/test11GeneratedImage.ppm.2.ppm ./endToEnd/test11ExpectedImage.ppm.2.ppm
+diff ./endToEnd/test11GeneratedImage.ppm.3.ppm ./endToEnd/test11ExpectedImage.ppm.3.ppm
+compare ./endToEnd/test11Generated.json ./endToEnd/test11Expected.json
+
+#test - use uniformPixelSpacing & bilinearDownsampling downsampling to generate DICOM
+./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test12  --levels 16 --tileHeight 100  --tileWidth 100 --compression raw --uniformPixelSpacing --stopDownsamplingAtSingleFrame --bilinearDownsampling
+dcm2pnm +Fa +Sxf 1.0  ./endToEnd/level-4-frames-0-4.dcm ./endToEnd/test12GeneratedImage.ppm
+dcm2json ./endToEnd/level-4-frames-0-4.dcm ./endToEnd/test12Generated.json
+diff ./endToEnd/test12GeneratedImage.ppm.0.ppm ./endToEnd/test12ExpectedImage.ppm.0.ppm
+diff ./endToEnd/test12GeneratedImage.ppm.1.ppm ./endToEnd/test12ExpectedImage.ppm.1.ppm
+diff ./endToEnd/test12GeneratedImage.ppm.2.ppm ./endToEnd/test12ExpectedImage.ppm.2.ppm
+diff ./endToEnd/test12GeneratedImage.ppm.3.ppm ./endToEnd/test12ExpectedImage.ppm.3.ppm
+compare ./endToEnd/test12Generated.json ./endToEnd/test12Expected.json
