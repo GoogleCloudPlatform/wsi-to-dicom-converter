@@ -202,13 +202,11 @@ int WsiToDcm::dicomizeTiff(
   }
   BOOST_LOG_TRIVIAL(debug) << " ";
   BOOST_LOG_TRIVIAL(debug) << "Level Count: " << svs_level_count;
-  bool adapative_stop_downsampling = false;
 
   DICOMFileFrameRegionReader higherMagnifcationDicomFiles;
   std::vector<std::unique_ptr<DcmFileDraft>> generatedDicomFiles;
   for (int32_t level = startOnLevel;
-       level < levels && (stopOnLevel < startOnLevel || level <= stopOnLevel) &&
-       !adapative_stop_downsampling;
+       level < levels && (stopOnLevel < startOnLevel || level <= stopOnLevel);
        level++) {
     boost::asio::thread_pool pool(threadsForPool);
     BOOST_LOG_TRIVIAL(debug) << " ";
