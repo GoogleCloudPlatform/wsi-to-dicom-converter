@@ -160,8 +160,7 @@ std::unique_ptr<SlideLevelDim> get_slide_level_dim(
                                   SlideLevelDim *priorLevel,
                                   DCM_Compression levelCompression,
                                   const int64_t initialX,
-                                  const int64_t initialY,
-                                  SlideLevelDim * smallestSlideLevel) {
+                                  const int64_t initialY) {
   int32_t levelToGet = level;
   int64_t downsample = 1;
   bool readOpenslide = false;
@@ -333,8 +332,6 @@ int WsiToDcm::dicomizeTiff(
   }
   BOOST_LOG_TRIVIAL(debug) << " ";
   BOOST_LOG_TRIVIAL(debug) << "Level Count: " << svsLevelCount;
-  std::unique_ptr<SlideLevelDim> smallestSlideLevel = NULL;
-
 
   DICOMFileFrameRegionReader higherMagnifcationDicomFiles;
   std::vector<std::unique_ptr<DcmFileDraft>> generatedDicomFiles;
@@ -356,8 +353,7 @@ int WsiToDcm::dicomizeTiff(
                                                 slideLevelDim.get(),
                                                 compression,
                                                 initialX,
-                                                initialY,
-                                                smallestSlideLevel.get()));
+                                                initialY));
     const int64_t downsample = slideLevelDim->downsample;
     const int32_t levelToGet  = slideLevelDim->levelToGet;
     const double multiplicator = slideLevelDim->multiplicator;
