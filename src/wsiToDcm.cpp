@@ -157,7 +157,7 @@ std::unique_ptr<SlideLevelDim> get_slide_level_dim(
                                   const int32_t level,
                                   const int64_t frameWidth,
                                   const int64_t frameHeight,
-                                  SlideLevelDim *prior_level,
+                                  SlideLevelDim *priorLevel,
                                   DCM_Compression levelCompression,
                                   const int64_t initialX,
                                   const int64_t initialY,
@@ -193,13 +193,13 @@ std::unique_ptr<SlideLevelDim> get_slide_level_dim(
   bool generateUsingOpenSlide = true;
   // ProgressiveDownsampling
   if (preferProgressiveDownsampling) {
-    if (prior_level != NULL) {
-      multiplicator = static_cast<double>(prior_level->downsample);
+    if (priorLevel != NULL) {
+      multiplicator = static_cast<double>(priorLevel->downsample);
       downsampleOfLevel = static_cast<double>(downsample) / multiplicator;
       // check that downsampling is going from higher to lower magnification
       if (downsampleOfLevel >= 1.0) {
-        levelWidth = prior_level->levelWidthDownsampled;
-        levelHeight = prior_level->levelHeightDownsampled;
+        levelWidth = priorLevel->levelWidthDownsampled;
+        levelHeight = priorLevel->levelHeightDownsampled;
         generateUsingOpenSlide = false;
       }
     }
