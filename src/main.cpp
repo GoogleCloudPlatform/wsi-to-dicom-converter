@@ -71,7 +71,9 @@ int main(int argc, char *argv[]) {
                          "will be readed from wsi file")(
         "downsamples",
         programOptions::value<std::vector<int> >(&downsamples)->multitoken(),
-        "downsample for each level, downsample is size factor for each level")(
+        "downsample for each level, downsample is size factor for each level."
+        " If used with progressiveDownsample, downsamples must be ordered from "
+        "low downsampling to high downsampling (e.g., 1 2 4)")(
         "startOn", programOptions::value<int>(&start)->default_value(0),
         "level to start")("stopOn",
                           programOptions::value<int>(&stop)->default_value(-1),

@@ -39,6 +39,24 @@
 
 namespace wsiToDicomConverter {
 
+class SlideLevelDim {
+ public:
+  int32_t levelToGet;
+  int64_t downsample;
+  double multiplicator;
+  double downsampleOfLevel;
+  int64_t levelWidth;
+  int64_t levelHeight;
+  int64_t frameWidthDownsampled;
+  int64_t frameHeightDownsampled;
+  int64_t levelWidthDownsampled;
+  int64_t levelHeightDownsampled;
+  int64_t levelFrameWidth;
+  int64_t levelFrameHeight;
+  DCM_Compression levelCompression;
+  bool readOpenslide;
+};
+
 inline void isFileExist(const std::string &name) {
   if (!boost::filesystem::exists(name)) {
     BOOST_LOG_TRIVIAL(error) << "can't access " << name;
@@ -129,6 +147,118 @@ int32_t get_openslide_level_for_downsample(openslide_t *osr,
     }
     return (levelToGet - 1);
 }
+
+std::unique_ptr<SlideLevelDim> get_slide_level_dim(
+                                  const bool retile,
+                                  const std::vector<int> &downsamples,
+                                  const bool preferProgressiveDownsampling,
+                                  const bool floorCorrectDownsampling,
+                                  openslide_t *osr,
+                                  const int32_t level,
+                                  const int64_t frameWidth,
+                                  const int64_t frameHeight,
+                                  SlideLevelDim *priorLevel,
+                                  DCM_Compression levelCompression,
+                                  const int64_t initialX,
+                                  const int64_t initialY) {
+  int32_t levelToGet = level;
+  int64_t downsample = 1;
+  bool readOpenslide = false;
+  if (retile) {
+    if (downsamples.size() > level && downsamples[level] >= 1) {
+      downsample = downsamples[level];
+    } else {
+      downsample = static_cast<int64_t>(pow(2, level));
+    }
+  }
+  /*
+     DICOM requires uniform pixel spacing across downsampled image
+     for pixel spacing based metrics to produce images with compatiable
+     coordinate systems across zoom levels.
+
+     Downsampled acquistions can have in image dimensions which are
+     non-interger multiples of the highest magnification. Example: Aperio svs
+     imaging, E.g. (40x -> 10x reports the 10x image has having a
+     downsampling  factor of 4.00018818010427. This results in non-uniform
+     scaling of the pixels and can result in small, but signifcant
+     mis-alignment in the downsampled imageing. Flooring, the multiplier
+     returned by openslide_get_level_downsample corrects this by restoring
+     consistent downsamping and pixel spacing across the image.
+  */
+  double multiplicator;
+  double downsampleOfLevel;
+  int64_t levelWidth;
+  int64_t levelHeight;
+  bool generateUsingOpenSlide = true;
+  // ProgressiveDownsampling
+  if (preferProgressiveDownsampling) {
+    if (priorLevel != NULL) {
+      multiplicator = static_cast<double>(priorLevel->downsample);
+      downsampleOfLevel = static_cast<double>(downsample) / multiplicator;
+      // check that downsampling is going from higher to lower magnification
+      if (downsampleOfLevel >= 1.0) {
+        levelWidth = priorLevel->levelWidthDownsampled;
+        levelHeight = priorLevel->levelHeightDownsampled;
+        generateUsingOpenSlide = false;
+      }
+    }
+  }
+
+  // if no higherMagnifcationDicomFiles then downsample from openslide
+  if (generateUsingOpenSlide) {
+    levelToGet = get_openslide_level_for_downsample(osr, downsample);
+
+    multiplicator = openslide_get_level_downsample(osr, levelToGet);
+    // Downsampling factor required to go from selected
+    // downsampled level to the desired level of downsampling
+    if (floorCorrectDownsampling) {
+      multiplicator = floor(multiplicator);
+    }
+    downsampleOfLevel = static_cast<double>(downsample) / multiplicator;
+    openslide_get_level_dimensions(osr, levelToGet,
+                                   &levelWidth, &levelHeight);
+    readOpenslide = true;
+  }
+  // Adjust level size by starting position if skipping row and column.
+  // levelHeightDownsampled and levelWidthDownsampled will reflect
+  // new starting position.
+  int64_t frameWidthDownsampled;
+  int64_t frameHeightDownsampled;
+  int64_t levelWidthDownsampled;
+  int64_t levelHeightDownsampled;
+  int64_t levelFrameWidth;
+  int64_t levelFrameHeight;
+  dimensionDownsampling(frameWidth, frameHeight,
+                        levelWidth - initialX,
+                        levelHeight - initialY,
+                        retile, level, downsampleOfLevel,
+                        &frameWidthDownsampled,
+                        &frameHeightDownsampled,
+                        &levelWidthDownsampled,
+                        &levelHeightDownsampled,
+                        &levelFrameWidth,
+                        &levelFrameHeight,
+                        &levelCompression);
+
+  std::unique_ptr<SlideLevelDim> slideLevelDim;
+  slideLevelDim = std::make_unique<SlideLevelDim>();
+  slideLevelDim->levelToGet = levelToGet;
+  slideLevelDim->downsample = downsample;
+  slideLevelDim->multiplicator = multiplicator;
+  slideLevelDim->downsampleOfLevel = downsampleOfLevel;
+  slideLevelDim->levelWidth = levelWidth;
+  slideLevelDim->levelHeight = levelHeight;
+  slideLevelDim->frameWidthDownsampled = frameWidthDownsampled;
+  slideLevelDim->frameHeightDownsampled = frameHeightDownsampled;
+  slideLevelDim->levelWidthDownsampled = levelWidthDownsampled;
+  slideLevelDim->levelHeightDownsampled = levelHeightDownsampled;
+  slideLevelDim->levelFrameWidth = levelFrameWidth;
+  slideLevelDim->levelFrameHeight = levelFrameHeight;
+  slideLevelDim->levelCompression = levelCompression;
+  slideLevelDim->readOpenslide = readOpenslide;
+  return (std::move(slideLevelDim));
+}
+
 int WsiToDcm::dicomizeTiff(
     std::string inputFile, std::string outputFileMask, int64_t frameWidth,
     int64_t frameHeight, DCM_Compression compression, int quality,
@@ -168,7 +298,7 @@ int WsiToDcm::dicomizeTiff(
     throw 1;
   }
   int32_t levels = openslide_get_level_count(osr);
-  const int32_t svs_level_count = levels;
+  const int32_t svsLevelCount = levels;
   if (retile) {
     levels = retileLevels;
   }
@@ -178,14 +308,14 @@ int WsiToDcm::dicomizeTiff(
 
   double firstLevelMppX = 0.0;
   double firstLevelMppY = 0.0;
-  const char *open_slide_firstLevelMppX =
+  const char *openslideFirstLevelMppX =
       openslide_get_property_value(osr, "openslide.mpp-x");
-  const char *open_slide_firstLevelMppY =
+  const char *openslideFirstLevelMppY =
       openslide_get_property_value(osr, "openslide.mpp-y");
-  if (open_slide_firstLevelMppX != nullptr &&
-      open_slide_firstLevelMppY != nullptr) {
-    firstLevelMppX = std::stod(open_slide_firstLevelMppX);
-    firstLevelMppY = std::stod(open_slide_firstLevelMppY);
+  if (openslideFirstLevelMppX != nullptr &&
+      openslideFirstLevelMppY != nullptr) {
+    firstLevelMppX = std::stod(openslideFirstLevelMppX);
+    firstLevelMppY = std::stod(openslideFirstLevelMppY);
   }
 
   int8_t threadsForPool = boost::thread::hardware_concurrency();
@@ -201,115 +331,83 @@ int WsiToDcm::dicomizeTiff(
     initialY = 1;
   }
   BOOST_LOG_TRIVIAL(debug) << " ";
-  BOOST_LOG_TRIVIAL(debug) << "Level Count: " << svs_level_count;
+  BOOST_LOG_TRIVIAL(debug) << "Level Count: " << svsLevelCount;
 
   DICOMFileFrameRegionReader higherMagnifcationDicomFiles;
   std::vector<std::unique_ptr<DcmFileDraft>> generatedDicomFiles;
+  std::unique_ptr<SlideLevelDim> slideLevelDim = NULL;
   for (int32_t level = startOnLevel;
        level < levels && (stopOnLevel < startOnLevel || level <= stopOnLevel);
        level++) {
+    const bool progressiveDownsample = preferProgressiveDownsampling &&
+                           higherMagnifcationDicomFiles.dicom_file_count() > 0;
+    slideLevelDim = std::move(get_slide_level_dim(
+                                                retile,
+                                                downsamples,
+                                                progressiveDownsample,
+                                                floorCorrectDownsampling,
+                                                osr,
+                                                level,
+                                                frameWidth,
+                                                frameHeight,
+                                                slideLevelDim.get(),
+                                                compression,
+                                                initialX,
+                                                initialY));
+    const int64_t downsample = slideLevelDim->downsample;
+    const int32_t levelToGet  = slideLevelDim->levelToGet;
+    const double multiplicator = slideLevelDim->multiplicator;
+    const double downsampleOfLevel = slideLevelDim->downsampleOfLevel;
+    const int64_t levelWidth = slideLevelDim->levelWidth;
+    const int64_t levelHeight = slideLevelDim->levelHeight;
+    const int64_t frameWidthDownsampled = slideLevelDim->frameWidthDownsampled;
+    const int64_t frameHeightDownsampled =
+                                       slideLevelDim->frameHeightDownsampled;
+    const int64_t levelWidthDownsampled = slideLevelDim->levelWidthDownsampled;
+    const int64_t levelHeightDownsampled =
+                                       slideLevelDim->levelHeightDownsampled;
+    const int64_t levelFrameWidth = slideLevelDim->levelFrameWidth;
+    const int64_t levelFrameHeight = slideLevelDim->levelFrameHeight;
+    const DCM_Compression levelCompression = slideLevelDim->levelCompression;
+    if (levelWidthDownsampled == 0 || levelHeightDownsampled == 0) {
+      // frame is being downsampled to nothing skip image generation.
+      BOOST_LOG_TRIVIAL(debug) << "Layer has a 0 length dimension. Skipping "
+                                  "dcm generation for layer.";
+      break;
+    }
+    if (slideLevelDim->readOpenslide) {
+      // If slide level was initalized from openslide
+      // clear higherMagnifcationDicomFiles so
+      // level is downsampled from openslide and not
+      // prior level if progressiveDownsample is enabled.
+      higherMagnifcationDicomFiles.clear_dicom_files();
+    }
     boost::asio::thread_pool pool(threadsForPool);
     BOOST_LOG_TRIVIAL(debug) << " ";
     BOOST_LOG_TRIVIAL(debug) << "Starting Level " << level;
     uint32_t row = 1;
     uint32_t column = 1;
-    int32_t levelToGet = level;
-    int64_t downsample = 1;
-    if (retile) {
-      if (downsamples.size() > level && downsamples[level] >= 1) {
-        downsample = downsamples[level];
-      } else {
-        downsample = static_cast<int64_t>(pow(2, level));
-      }
-      levelToGet = get_openslide_level_for_downsample(osr, downsample);
-    }
-    /*
-       DICOM requires uniform pixel spacing across downsampled image
-       for pixel spacing based metrics to produce images with compatiable
-       coordinate systems across zoom levels.
-
-       Downsampled acquistions can have in image dimensions which are
-       non-interger multiples of the highest magnification. Example: Aperio svs
-       imaging, E.g. (40x -> 10x reports the 10x image has having a
-       downsampling  factor of 4.00018818010427. This results in non-uniform
-       scaling of the pixels and can result in small, but signifcant
-       mis-alignment in the downsampled imageing. Flooring, the multiplier
-       returned by openslide_get_level_downsample corrects this by restoring
-       consistent downsamping and pixel spacing across the image.
-    */
-    double multiplicator;
-    double downsampleOfLevel;
-    int64_t levelWidth;
-    int64_t levelHeight;
-
-    // ProgressiveDownsampling
-    if (higherMagnifcationDicomFiles.dicom_file_count() > 0) {
-      DcmFileDraft* dicom_file =
-                            higherMagnifcationDicomFiles.get_dicom_file(0);
-      multiplicator = static_cast<double>(dicom_file->get_downsample());
-      downsampleOfLevel = static_cast<double>(downsample) / multiplicator;
-      // check that downsampling is going from higher to lower magnification
-      if (downsampleOfLevel >= 1.0) {
-        levelWidth = dicom_file->get_image_width();
-        levelHeight = dicom_file->get_image_height();
-      } else {
-        // revert to openslide downsampling.
-        higherMagnifcationDicomFiles.clear_dicom_files();
-      }
-    }
-
-    // if no higherMagnifcationDicomFiles then downsample from openslide
-    if (higherMagnifcationDicomFiles.dicom_file_count() == 0) {
-      multiplicator = openslide_get_level_downsample(osr, levelToGet);
-      // Downsampling factor required to go from selected
-      // downsampled level to the desired level of downsampling
-      if (floorCorrectDownsampling) {
-        multiplicator = floor(multiplicator);
-      }
-      downsampleOfLevel = static_cast<double>(downsample) / multiplicator;
-      openslide_get_level_dimensions(osr, levelToGet,
-                                     &levelWidth, &levelHeight);
-    }
     BOOST_LOG_TRIVIAL(debug) << "level size: " << levelWidth << ' '
                              << levelHeight << ' ' << multiplicator;
-    int64_t frameWidthDownsampled;
-    int64_t frameHeightDownsampled;
-    int64_t levelWidthDownsampled;
-    int64_t levelHeightDownsampled;
     int64_t x = initialX;
     int64_t y = initialY;
-    uint32_t numberOfFrames = 0;
+    size_t numberOfFrames = 0;
     std::vector<std::unique_ptr<Frame>> framesData;
-    int64_t levelFrameWidth;
-    int64_t levelFrameHeight;
-    DCM_Compression levelCompression = compression;
+    const int64_t firstLevelDimX = firstLevelWidth - initialX;
+    const int64_t firstLevelDimY = firstLevelHeight - initialY;
+    const int64_t widthAdjustment = ((levelWidthDownsampled * downsample) -
+                                      firstLevelDimX);
+    const int64_t heightAdjustment = ((levelHeightDownsampled * downsample) -
+                                                              firstLevelDimY);
+    const double levelWidthAdjustment = static_cast<double>(firstLevelDimX +
+                                                              widthAdjustment);
+    const double levelHeightAdjustment = static_cast<double>(
+                                            firstLevelDimY + heightAdjustment);
+    const double levelWidthMM = levelWidthAdjustment * firstLevelMppX / 1000;
+    const double levelHeightMM = levelHeightAdjustment * firstLevelMppY / 1000;
 
-    // Adjust level size by starting position if skipping row and column.
-    // levelHeightDownsampled and levelWidthDownsampled will reflect
-    // new starting position.
-    dimensionDownsampling(frameWidth, frameHeight, levelWidth - initialX,
-                          levelHeight - initialY, retile, level,
-                          downsampleOfLevel, &frameWidthDownsampled,
-                          &frameHeightDownsampled, &levelWidthDownsampled,
-                          &levelHeightDownsampled, &levelFrameWidth,
-                          &levelFrameHeight, &levelCompression);
-
-    const int64_t width_adjustment = ((levelWidthDownsampled * downsample) -
-                                      (firstLevelWidth-initialX));
-    const int64_t height_adjustment = ((levelHeightDownsampled * downsample) -
-                                       (firstLevelHeight-initialY));
-    const double level_width_adjustment = static_cast<double>(
-                                              (firstLevelWidth - initialX) +
-                                               width_adjustment);
-    const double level_height_adjustment = static_cast<double>(
-                                              (firstLevelHeight - initialY) +
-                                               height_adjustment);
-    const double levelWidthMM = level_width_adjustment * firstLevelMppX /
-                                  1000;
-    const double levelHeightMM = level_height_adjustment * firstLevelMppY /
-                                   1000;
     BOOST_LOG_TRIVIAL(debug) << "level width & height adjustment (pixels): " <<
-                                 width_adjustment << ", " << height_adjustment;
+                                 widthAdjustment << ", " << heightAdjustment;
 
     BOOST_LOG_TRIVIAL(debug) << "multiplicator: " << multiplicator;
     BOOST_LOG_TRIVIAL(debug) << "levelToGet: " << levelToGet;
@@ -317,16 +415,6 @@ int WsiToDcm::dicomizeTiff(
     BOOST_LOG_TRIVIAL(debug) << "downsampleOfLevel: " << downsampleOfLevel;
     BOOST_LOG_TRIVIAL(debug) << "frameDownsampled: " << frameWidthDownsampled
                              << ", " << frameHeightDownsampled;
-
-    BOOST_LOG_TRIVIAL(debug) << "levelDownsampled: " << levelWidthDownsampled
-                             << ", " << levelHeightDownsampled;
-
-    if (levelWidthDownsampled == 0 || levelHeightDownsampled == 0) {
-      // frame is being downsampled to nothing skip file.
-      BOOST_LOG_TRIVIAL(debug) << "Layer has a 0 length dimension. Skipping "
-                                  "dcm generation for layer.";
-      continue;
-    }
     BOOST_LOG_TRIVIAL(debug) << "higherMagnifcationDicomFiles " <<
                           higherMagnifcationDicomFiles.dicom_file_count();
 
