@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "src/wsiToDcm.h"
@@ -169,31 +170,35 @@ int main(int argc, char *argv[]) {
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = inputFile;
   request.outputFileMask = outputFolder;
-  request.frameSizeX = tileWidth;
-  request.frameSizeY = tileHeight;
+  request.frameSizeX = std::max(tileWidth, 1);
+  request.frameSizeY = std::max(tileHeight, 1);
   request.compression = dcmCompressionFromString(compression);
   request.quality = std::max(std::min(100, compressionQuality), 0);
-  request.startOnLevel = start;
-  request.stopOnLevel = stop;
+  request.startOnLevel = std::max(start, 0);
+  request.stopOnLevel =  std::max(stop, -1);
   request.imageName = seriesDescription;
   request.studyId = studyId;
   request.seriesId = seriesId;
   request.jsonFile = jsonFile;
-  request.retileLevels = levels;
+  request.retileLevels = std::max(levels, 0);
   if (levels > 0 && levels+1 > downsamples.size()) {
     // fix buffer overun bug.  accessing meory outside of
     // downsample buffer when retileing.
     downsamples.resize(levels+1, 0);
   }
-  request.downsamples = &downsamples[0];
+  for (size_t idx = 0; idx < downsamples.size(); ++idx) {
+    downsamples[idx] = std::max(downsamples[idx], 0);
+  }
+  request.downsamples = std::move(downsamples);
   request.tiled = !sparse;
-  request.batchLimit = batch;
-  request.threads = threads;
+  request.batchLimit = std::max(batch, 0);
+  request.threads = std::max(threads, -1);
   request.dropFirstRowAndColumn = dropFirstRowAndColumn;
   request.stopDownsamplingAtSingleFrame = stopDownsamplingAtSingleFrame;
   request.useBilinearDownsampling = useBilinearDownsampling;
   request.floorCorrectDownsampling = floorCorrectDownsampling;
   request.preferProgressiveDownsampling = preferProgressiveDownsampling;
   request.debug = debug;
-  return wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
+  wsiToDicomConverter::WsiToDcm converter(&request);
+  return converter.wsi2dcm();
 }

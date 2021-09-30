@@ -15,14 +15,34 @@
 #ifndef SRC_WSITODCM_H_
 #define SRC_WSITODCM_H_
 #include <boost/cstdint.hpp>
+#include <openslide.h>
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "src/enums.h"
 
 namespace wsiToDicomConverter {
+
+class SlideLevelDim {
+ public:
+  int32_t levelToGet;
+  int64_t downsample;
+  double multiplicator;
+  double downsampleOfLevel;
+  int64_t levelWidth;
+  int64_t levelHeight;
+  int64_t frameWidthDownsampled;
+  int64_t frameHeightDownsampled;
+  int64_t levelWidthDownsampled;
+  int64_t levelHeightDownsampled;
+  int64_t levelFrameWidth;
+  int64_t levelFrameHeight;
+  DCM_Compression levelCompression;
+  bool readOpenslide;
+};
 
 // Structure for wsi2dcm settings
 struct WsiRequest {
@@ -67,7 +87,7 @@ struct WsiRequest {
   // level0 100x100
   // level1 50x50
   // level2 10x10
-  int* downsamples;
+  std::vector<int> downsamples;
 
   // frame organization type
   // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.17.3.html
@@ -109,26 +129,33 @@ class WsiToDcm {
  public:
   // Performs file checks and generation of tasks
   // for generation of frames and DICOM files
-  static int wsi2dcm(WsiRequest wsiRequest);
-  WsiToDcm();
+  explicit WsiToDcm(WsiRequest *wsiRequest);
+  int wsi2dcm();
 
  private:
-  // Generates tasks and handling thread pool
-  static int dicomizeTiff(std::string inputFile, std::string outputFileMask,
-                          int64_t frameSizeX, int64_t frameSizeY,
-                          DCM_Compression compression, int32_t quality,
-                          int32_t startOnLevel, int32_t stopOnLevel,
-                          std::string imageName, std::string studyId,
-                          std::string seriesId, std::string jsonFile,
-                          int32_t retileLevels, std::vector<int> downsamples,
-                          bool tiled, int32_t batchLimit, int8_t threads,
-                          bool dropFirstRowAndColumn,
-                          bool stopDownSamplingAtSingleFrame,
-                          bool useBilinearDownsampling,
-                          bool floorCorrectDownsampling,
-                          bool preferProgressiveDownsampling);
+  WsiRequest *wsiRequest_;
+  bool retile_;
+  openslide_t *osr_;
+  int64_t initialX_;
+  int64_t initialY_;
+  int64_t firstLevelWidth_;
+  int64_t firstLevelHeight_;
+  int32_t svsLevelCount_;
 
-  static void checkArguments(WsiRequest wsiRequest);
+
+  // Generates tasks and handling thread pool
+  int dicomizeTiff();
+  void checkArguments();
+  int32_t getOpenslideLevelForDownsample(int64_t downsample);
+  std::unique_ptr<SlideLevelDim> getSlideLevelDim(
+                                      const int32_t level,
+                                      SlideLevelDim *priorLevel,
+                                      bool enableProgressiveDownsample = true);
+
+  double  getDownsampledLevelDimensionMM(const int64_t adjustedFirstLevelDim,
+                                         const int64_t levelDimDownsampled,
+                                         const double downsample,
+                                        const char* openSlideLevelDimProperty);
 };
 
 }  // namespace wsiToDicomConverter
