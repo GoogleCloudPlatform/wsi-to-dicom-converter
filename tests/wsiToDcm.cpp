@@ -24,11 +24,13 @@
 #include <boost/filesystem.hpp>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 #include "tests/testUtils.h"
 
 TEST(readTiff, simple) {
-  int downsample = 1;
+  std::vector<int>  downsamples;
+  downsamples.push_back(1);
   std::string dcmFile = std::string(testPath) + "level-0-frames-0-30.dcm";
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = tiffFileName;
@@ -42,9 +44,10 @@ TEST(readTiff, simple) {
   request.studyId = "study";
   request.seriesId = "series";
   request.batchLimit = 100;
-  request.downsamples = &downsample;
+  request.downsamples = std::move(downsamples);
   request.debug = true;
-  wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
+  wsiToDicomConverter::WsiToDcm converter(&request);
+  converter.wsi2dcm();
   ASSERT_TRUE(boost::filesystem::exists(dcmFile));
   DcmFileFormat dcmFileFormat;
   dcmFileFormat.loadFile(dcmFile.c_str());
@@ -57,7 +60,8 @@ TEST(readTiff, simple) {
 TEST(readTiff, withJson) {
   std::string dcmFile = std::string(testPath) + "level-0-frames-0-1.dcm";
   std::string jsonFile = std::string(testPath) + "testDateTags.json";
-  int  downsample = 1;
+  std::vector<int>  downsamples;
+  downsamples.push_back(1);
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = tiffFileName;
   request.outputFileMask = testPath;
@@ -70,9 +74,10 @@ TEST(readTiff, withJson) {
   request.studyId = "study";
   request.seriesId = "series";
   request.batchLimit = 100;
-  request.downsamples = &downsample;
+  request.downsamples = std::move(downsamples);;
   request.debug = true;
-  wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
+  wsiToDicomConverter::WsiToDcm converter(&request);
+  converter.wsi2dcm();
   ASSERT_TRUE(boost::filesystem::exists(dcmFile));
   DcmFileFormat dcmFileFormat;
   dcmFileFormat.loadFile(dcmFile.c_str());
@@ -88,7 +93,8 @@ TEST(readTiff, withJson) {
 
 TEST(readTiff, multiFile) {
   std::string dcmFile = std::string(testPath) + "level-0-frames-";
-  int downsample = 1;
+  std::vector<int>  downsamples;
+  downsamples.push_back(1);
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = tiffFileName;
   request.outputFileMask = testPath;
@@ -100,10 +106,10 @@ TEST(readTiff, multiFile) {
   request.studyId = "study";
   request.seriesId = "series";
   request.batchLimit = 10;
-  request.downsamples = &downsample;
+  request.downsamples = std::move(downsamples);;
   request.debug = true;
-  wsiToDicomConverter::WsiToDcm::wsi2dcm(request);
-
+  wsiToDicomConverter::WsiToDcm converter(&request);
+  converter.wsi2dcm();
   ASSERT_TRUE(boost::filesystem::exists(dcmFile + "0-10.dcm"));
   ASSERT_TRUE(boost::filesystem::exists(dcmFile + "10-20.dcm"));
   ASSERT_TRUE(boost::filesystem::exists(dcmFile + "20-30.dcm"));
@@ -130,4 +136,3 @@ TEST(compressionString, unknown) {
     ASSERT_EQ(dcmCompressionFromString("jpeg/"), UNKNOWN);
     ASSERT_EQ(dcmCompressionFromString("jpeg2000."), UNKNOWN);
 }
-

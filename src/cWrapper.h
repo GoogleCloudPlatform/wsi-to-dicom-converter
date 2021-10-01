@@ -38,7 +38,9 @@ int wsi2dcm(const char* inputFile, const char* outputFileMask,
             int quality, int startOnLevel, int stopOnLevel,
             const char* imageName, const char* studyId, const char* seriesId,
             int retileLevels, int* downsamples, bool tiled, int batchLimit,
-            int threads, bool debug);
+            int threads, bool debug, bool stopDownsamplingAtSingleFrame,
+            bool bilinearDownsampling, bool floorCorrectDownsampling,
+            bool progressiveDownsample);
 
 // Performs file checks and generation of tasks
 // for generation of frames and DICOM files
@@ -49,7 +51,9 @@ int wsi2dcmJson(const char* inputFile, const char* outputFileMask,
                 const char* imageName, const char* studyId,
                 const char* seriesId, const char* jsonFile, int retileLevels,
                 int* downsamples, bool tiled, int batchLimit, int threads,
-                bool debug);
+                bool debug, bool stopDownsamplingAtSingleFrame,
+                bool bilinearDownsampling, bool floorCorrectDownsampling,
+                bool progressiveDownsample);
 #ifdef __cplusplus
 }
 #endif
