@@ -264,7 +264,7 @@ double  WsiToDcm::getDownsampledLevelDimensionMM(
 }
 
 std::unique_ptr<SlideLevelDim>  WsiToDcm::getSmallestSlideDim(
-                                          std::vector<int32_t> *slide_levels) {
+                                          std::vector<int32_t> *slideLevels) {
   std::unique_ptr<SlideLevelDim> smallestSlideDim = NULL;
   int32_t levels;
   if (retile_) {
@@ -290,7 +290,7 @@ std::unique_ptr<SlideLevelDim>  WsiToDcm::getSmallestSlideDim(
                                   smallestSlideDim->levelWidthDownsampled <<
                                    ", " <<
                                    smallestSlideDim->levelHeightDownsampled;
-      slide_levels->push_back(level);
+      slideLevels->push_back(level);
       if (wsiRequest_->stopDownsamplingAtSingleFrame) {
         const int64_t frameX = std::ceil(
             static_cast<double>(smallestSlideDim->levelWidthDownsampled) /
@@ -361,9 +361,9 @@ int WsiToDcm::dicomizeTiff() {
   // spacing across all downsample images is uniform.
   int64_t firstSlideWidthCrop;
   int64_t firstSlideHeightCrop;
-  std::vector<int32_t> slide_levels;
+  std::vector<int32_t> slideLevels;
   std::unique_ptr<SlideLevelDim> smallestSlideDim = std::move(
-                                          getSmallestSlideDim(&slide_levels));
+                                          getSmallestSlideDim(&slideLevels));
   if (wsiRequest_->cropFrameToGenerateUniformPixelSpacing) {
     std::unique_ptr<SlideLevelDim> firstSlideLevel =
                   std::move(getSlideLevelDim(0, NULL, smallestSlideDim.get()));
@@ -389,7 +389,7 @@ int WsiToDcm::dicomizeTiff() {
   DICOMFileFrameRegionReader higherMagnifcationDicomFiles;
   std::vector<std::unique_ptr<DcmFileDraft>> generatedDicomFiles;
   std::unique_ptr<SlideLevelDim> slideLevelDim = NULL;
-  for (const int32_t &level : slide_levels) {
+  for (const int32_t &level : slideLevels) {
     // only progressive downsample if have higher mag buffer filled.
     slideLevelDim = std::move(getSlideLevelDim(level,
                                                slideLevelDim.get(),

@@ -153,7 +153,7 @@ class WsiToDcm {
   int32_t getOpenslideLevelForDownsample(int64_t downsample);
 
   std::unique_ptr<SlideLevelDim>  getSmallestSlideDim(
-                                          std::vector<int32_t> *slide_levels);
+                                          std::vector<int32_t> *slideLevels);
 
   std::unique_ptr<SlideLevelDim> getSlideLevelDim(
                                       const int32_t level,
