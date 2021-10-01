@@ -133,6 +133,7 @@ int32_t WsiToDcm::getOpenslideLevelForDownsample(int64_t downsample) {
 
 std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(const int32_t level,
                                             SlideLevelDim *priorLevel,
+                                            SlideLevelDim * smallestSlideDim,
                                             bool enableProgressiveDownsample) {
   int32_t levelToGet = level;
   int64_t downsample = 1;
@@ -196,6 +197,14 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(const int32_t level,
   // Adjust level size by starting position if skipping row and column.
   // levelHeightDownsampled and levelWidthDownsampled will reflect
   // new starting position.
+  int64_t cropSourceLevelWidth = 0;
+  int64_t cropSourceLevelHeight = 0;
+  if (smallestSlideDim != NULL) {
+    cropSourceLevelWidth = (levelWidth - initialX_) %
+                            smallestSlideDim->levelWidthDownsampled;
+    cropSourceLevelHeight = (levelHeight - initialY_) %
+                             smallestSlideDim->levelHeightDownsampled;
+  }
   int64_t frameWidthDownsampled;
   int64_t frameHeightDownsampled;
   int64_t levelWidthDownsampled;
@@ -204,8 +213,8 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(const int32_t level,
   int64_t levelFrameHeight;
   DCM_Compression levelCompression = wsiRequest_->compression;
   dimensionDownsampling(wsiRequest_->frameSizeX, wsiRequest_->frameSizeY,
-                        levelWidth - initialX_,
-                        levelHeight - initialY_,
+                        levelWidth - cropSourceLevelWidth - initialX_,
+                        levelHeight - cropSourceLevelHeight - initialY_,
                         retile_, level, downsampleOfLevel,
                         &frameWidthDownsampled,
                         &frameHeightDownsampled,
@@ -229,6 +238,8 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(const int32_t level,
   slideLevelDim->levelHeightDownsampled = levelHeightDownsampled;
   slideLevelDim->levelFrameWidth = levelFrameWidth;
   slideLevelDim->levelFrameHeight = levelFrameHeight;
+  slideLevelDim->cropSourceLevelWidth = cropSourceLevelWidth;
+  slideLevelDim->cropSourceLevelHeight = cropSourceLevelHeight;
   slideLevelDim->levelCompression = levelCompression;
   slideLevelDim->readOpenslide = readOpenslide;
   return (std::move(slideLevelDim));
@@ -250,6 +261,51 @@ double  WsiToDcm::getDownsampledLevelDimensionMM(
   const double levelDim = static_cast<double>(adjustedFirstLevelDim +
                                                  dimAdjustment);
   return levelDim * firstLevelMpp / 1000;
+}
+
+std::unique_ptr<SlideLevelDim>  WsiToDcm::getSmallestSlideDim(
+                                          std::vector<int32_t> *slide_levels) {
+  std::unique_ptr<SlideLevelDim> smallestSlideDim = NULL;
+  int32_t levels;
+  if (retile_) {
+    levels = wsiRequest_->retileLevels;
+  } else {
+    levels = svsLevelCount_;
+  }
+  for (int32_t level = wsiRequest_->startOnLevel; level < levels &&
+           (wsiRequest_->stopOnLevel < wsiRequest_->startOnLevel ||
+                                 level <= wsiRequest_->stopOnLevel); level++) {
+      std::unique_ptr<SlideLevelDim> tempSlideLevelDim =
+              std::move(getSlideLevelDim(level, smallestSlideDim.get(), NULL));
+      if (tempSlideLevelDim->levelWidthDownsampled == 0 ||
+          tempSlideLevelDim->levelHeightDownsampled == 0) {
+        // frame is being downsampled to nothing skip file.
+        BOOST_LOG_TRIVIAL(debug) << "Layer has a 0 length dimension. Skipping "
+                                    "dcm generation for layer.";
+        break;
+      }
+      smallestSlideDim = std::move(tempSlideLevelDim);
+      BOOST_LOG_TRIVIAL(debug) << "Uncropped dimensions Level[" <<
+                                  level << "]: " <<
+                                  smallestSlideDim->levelWidthDownsampled <<
+                                   ", " <<
+                                   smallestSlideDim->levelHeightDownsampled;
+      slide_levels->push_back(level);
+      if (wsiRequest_->stopDownsamplingAtSingleFrame) {
+        const int64_t frameX = std::ceil(
+            static_cast<double>(smallestSlideDim->levelWidthDownsampled) /
+            static_cast<double>(smallestSlideDim->levelFrameWidth));
+        const int64_t frameY = std::ceil(
+            static_cast<double>(smallestSlideDim->levelHeightDownsampled) /
+            static_cast<double>(smallestSlideDim->levelFrameHeight));
+        BOOST_LOG_TRIVIAL(debug) << "Level[" <<level << "] frames:" <<
+                                    frameX << ", " << frameY;
+        if (frameX <= 1 && frameY <= 1) {
+          break;
+        }
+      }
+    }
+  return (std::move(smallestSlideDim));
 }
 
 int WsiToDcm::dicomizeTiff() {
@@ -282,13 +338,7 @@ int WsiToDcm::dicomizeTiff() {
     BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
     throw 1;
   }
-  int32_t levels;
   svsLevelCount_ = openslide_get_level_count(osr_);
-  if (retile_) {
-    levels = wsiRequest_->retileLevels;
-  } else {
-    levels = svsLevelCount_;
-  }
   openslide_get_level_dimensions(osr_, 0,
                                  &firstLevelWidth_, &firstLevelHeight_);
 
@@ -306,16 +356,44 @@ int WsiToDcm::dicomizeTiff() {
   }
   BOOST_LOG_TRIVIAL(debug) << " ";
   BOOST_LOG_TRIVIAL(debug) << "Level Count: " << svsLevelCount_;
+  // Determine smallest_slide downsample dimensions to enable
+  // slide pixel spacing normalization croping to ensure pixel
+  // spacing across all downsample images is uniform.
+  int64_t firstSlideWidthCrop;
+  int64_t firstSlideHeightCrop;
+  std::vector<int32_t> slide_levels;
+  std::unique_ptr<SlideLevelDim> smallestSlideDim = std::move(
+                                          getSmallestSlideDim(&slide_levels));
+  if (wsiRequest_->cropFrameToGenerateUniformPixelSpacing) {
+    std::unique_ptr<SlideLevelDim> firstSlideLevel =
+                  std::move(getSlideLevelDim(0, NULL, smallestSlideDim.get()));
+    firstSlideWidthCrop = firstSlideLevel->cropSourceLevelWidth;
+    firstSlideHeightCrop = firstSlideLevel->cropSourceLevelHeight;
+  } else {
+    firstSlideWidthCrop = 0;
+    firstSlideHeightCrop = 0;
+    smallestSlideDim = NULL;
+  }
+
+  BOOST_LOG_TRIVIAL(debug) << "Cropping source image: " <<
+                              firstSlideWidthCrop <<
+                              ", " <<
+                              firstSlideHeightCrop;
+  if (firstSlideWidthCrop >= firstLevelWidth_ ||
+      firstSlideHeightCrop >= firstLevelHeight_) {
+      BOOST_LOG_TRIVIAL(info) << "Error Pixel spacing normalization " <<
+                         "cropped entire input image. Cannot generate DICOM.";
+      return 0;
+  }
 
   DICOMFileFrameRegionReader higherMagnifcationDicomFiles;
   std::vector<std::unique_ptr<DcmFileDraft>> generatedDicomFiles;
   std::unique_ptr<SlideLevelDim> slideLevelDim = NULL;
-  for (int32_t level = wsiRequest_->startOnLevel; level < levels &&
-           (wsiRequest_->stopOnLevel < wsiRequest_->startOnLevel ||
-                                 level <= wsiRequest_->stopOnLevel); level++) {
+  for (const int32_t &level : slide_levels) {
     // only progressive downsample if have higher mag buffer filled.
     slideLevelDim = std::move(getSlideLevelDim(level,
                                                slideLevelDim.get(),
+                                               smallestSlideDim.get(),
                         higherMagnifcationDicomFiles.dicom_file_count() > 0));
 
     const int64_t downsample = slideLevelDim->downsample;
@@ -332,6 +410,8 @@ int WsiToDcm::dicomizeTiff() {
                                        slideLevelDim->levelHeightDownsampled;
     const int64_t levelFrameWidth = slideLevelDim->levelFrameWidth;
     const int64_t levelFrameHeight = slideLevelDim->levelFrameHeight;
+    const int64_t cropSourceLevelHeight = slideLevelDim->cropSourceLevelHeight;
+    const int64_t cropSourceLevelWidth = slideLevelDim->cropSourceLevelWidth;
     const DCM_Compression levelCompression = slideLevelDim->levelCompression;
     if (levelWidthDownsampled == 0 || levelHeightDownsampled == 0) {
       // frame is being downsampled to nothing skip image generation.
@@ -359,11 +439,11 @@ int WsiToDcm::dicomizeTiff() {
     std::vector<std::unique_ptr<Frame>> framesData;
 
     const double levelWidthMM = getDownsampledLevelDimensionMM(
-                          firstLevelWidth_ - initialX_,
+                          firstLevelWidth_ - firstSlideWidthCrop - initialX_,
                           levelWidthDownsampled, downsample,
                           "openslide.mpp-x");
     const double levelHeightMM = getDownsampledLevelDimensionMM(
-                          firstLevelHeight_ - initialY_,
+                          firstLevelHeight_ - firstSlideHeightCrop - initialY_,
                           levelHeightDownsampled, downsample,
                           "openslide.mpp-y");
 
@@ -375,7 +455,9 @@ int WsiToDcm::dicomizeTiff() {
                              << ", " << frameHeightDownsampled;
     BOOST_LOG_TRIVIAL(debug) << "higherMagnifcationDicomFiles " <<
                           higherMagnifcationDicomFiles.dicom_file_count();
-
+    BOOST_LOG_TRIVIAL(debug) << "Croping source image: " <<
+                             cropSourceLevelWidth << ", " <<
+                             cropSourceLevelHeight;
     // Preallocate vector space for frames
     const int frameX = std::ceil(static_cast<double>(levelWidthDownsampled) /
                                  static_cast<double>(levelFrameWidth));
@@ -405,8 +487,8 @@ int WsiToDcm::dicomizeTiff() {
     //
     //  DcmFileDraft Joins threads and combines results and writes dcm file.
 
-    while (y < levelHeight) {
-      while (x < levelWidth) {
+    while (y < levelHeight - cropSourceLevelHeight) {
+      while (x < levelWidth - cropSourceLevelWidth) {
         assert(osr != nullptr && openslide_get_error(osr_) == nullptr);
         std::unique_ptr<Frame> frameData;
         if (wsiRequest_->useBilinearDownsampling) {
@@ -472,6 +554,10 @@ int WsiToDcm::dicomizeTiff() {
     }
     higherMagnifcationDicomFiles.set_dicom_files(
                                            std::move(generatedDicomFiles));
+    // The combination of cropFrameToGenerateUniformPixelSpacing &
+    // can result in cropping images which span multiple frames/times
+    // to one frame. Check here if stopDownsamplingAtSingleFrame is enabled
+    // and if the image was written in one frame.
     if (wsiRequest_->stopDownsamplingAtSingleFrame && numberOfFrames <= 1) {
       break;
     }

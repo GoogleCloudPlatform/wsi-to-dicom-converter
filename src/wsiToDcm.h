@@ -40,6 +40,8 @@ class SlideLevelDim {
   int64_t levelHeightDownsampled;
   int64_t levelFrameWidth;
   int64_t levelFrameHeight;
+  int64_t cropSourceLevelWidth;
+  int64_t cropSourceLevelHeight;
   DCM_Compression levelCompression;
   bool readOpenslide;
 };
@@ -121,6 +123,9 @@ struct WsiRequest {
 
   // prefer progressive downsampling.
   bool preferProgressiveDownsampling = false;
+
+  // crop frame so downsampleing generates uniform pixel spacing.
+  bool cropFrameToGenerateUniformPixelSpacing = false;
 };
 
 // Contains static methods for generation DICOM files
@@ -142,14 +147,18 @@ class WsiToDcm {
   int64_t firstLevelHeight_;
   int32_t svsLevelCount_;
 
-
   // Generates tasks and handling thread pool
   int dicomizeTiff();
   void checkArguments();
   int32_t getOpenslideLevelForDownsample(int64_t downsample);
+
+  std::unique_ptr<SlideLevelDim>  getSmallestSlideDim(
+                                          std::vector<int32_t> *slide_levels);
+
   std::unique_ptr<SlideLevelDim> getSlideLevelDim(
                                       const int32_t level,
                                       SlideLevelDim *priorLevel,
+                                      SlideLevelDim * smallestSlideDim,
                                       bool enableProgressiveDownsample = true);
 
   double  getDownsampledLevelDimensionMM(const int64_t adjustedFirstLevelDim,
