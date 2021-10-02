@@ -28,21 +28,55 @@ namespace wsiToDicomConverter {
 
 class SlideLevelDim {
  public:
+  // level being generated
+  int32_t level;
+
+  // level being downsampled from
   int32_t levelToGet;
+
+  // total downsample being done from highest mag (level 0)
   int64_t downsample;
+
+  // downsample from level being downsampled from to level 0
   double multiplicator;
+
+  // downsample between selected source level and level being generated.
   double downsampleOfLevel;
+
+  // width of the source level (pixels)
   int64_t levelWidth;
+
+  // height of the source level (pixels)
   int64_t levelHeight;
+
+  // width of frame to pull from source level
   int64_t frameWidthDownsampled;
+
+  // height  of frame to pull from source level
   int64_t frameHeightDownsampled;
+
+  // width of level being generated (pixels)
   int64_t levelWidthDownsampled;
+
+  // height of level being generated (pixels)
   int64_t levelHeightDownsampled;
+
+  // frame width in level being generated  (pixels)
   int64_t levelFrameWidth;
+
+  // frame height in level being generated (pixels)
   int64_t levelFrameHeight;
+
+  // Pixels to crop source level width.
   int64_t cropSourceLevelWidth;
+
+  // Pixels to crop source level height.
   int64_t cropSourceLevelHeight;
+
+  // Compression to use to generate output
   DCM_Compression levelCompression;
+
+  // True if source level is being read using openslide.
   bool readOpenslide;
 };
 
@@ -135,7 +169,25 @@ class WsiToDcm {
   // Performs file checks and generation of tasks
   // for generation of frames and DICOM files
   explicit WsiToDcm(WsiRequest *wsiRequest);
+  virtual ~WsiToDcm();
+
   int wsi2dcm();
+
+  std::unique_ptr<SlideLevelDim>  getSmallestSlideDim(
+                                          std::vector<int32_t> *slideLevels);
+
+  std::unique_ptr<SlideLevelDim> getSlideLevelDim(
+                                      const int32_t level,
+                                      SlideLevelDim *priorLevel,
+                                      SlideLevelDim * smallestSlideDim,
+                                      bool enableProgressiveDownsample = true);
+
+  double  getDownsampledLevelDimensionMM(const int64_t adjustedFirstLevelDim,
+                                         const int64_t levelDimDownsampled,
+                                         const double downsample,
+                                         const char* openSlideLevelDimProperty);
+
+  int32_t getOpenslideLevelForDownsample(int64_t downsample);
 
  private:
   WsiRequest *wsiRequest_;
@@ -150,21 +202,6 @@ class WsiToDcm {
   // Generates tasks and handling thread pool
   int dicomizeTiff();
   void checkArguments();
-  int32_t getOpenslideLevelForDownsample(int64_t downsample);
-
-  std::unique_ptr<SlideLevelDim>  getSmallestSlideDim(
-                                          std::vector<int32_t> *slideLevels);
-
-  std::unique_ptr<SlideLevelDim> getSlideLevelDim(
-                                      const int32_t level,
-                                      SlideLevelDim *priorLevel,
-                                      SlideLevelDim * smallestSlideDim,
-                                      bool enableProgressiveDownsample = true);
-
-  double  getDownsampledLevelDimensionMM(const int64_t adjustedFirstLevelDim,
-                                         const int64_t levelDimDownsampled,
-                                         const double downsample,
-                                        const char* openSlideLevelDimProperty);
 };
 
 }  // namespace wsiToDicomConverter

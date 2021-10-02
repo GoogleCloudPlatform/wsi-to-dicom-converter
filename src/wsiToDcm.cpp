@@ -70,9 +70,56 @@ inline DCM_Compression compressionFromString(std::string compressionStr) {
 }
 
 WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
+  retile_ = wsiRequest_->retileLevels > 0;
+
+  if (wsiRequest_->studyId.size() < 1) {
+    char studyIdGenerated[100];
+    dcmGenerateUniqueIdentifier(studyIdGenerated, SITE_STUDY_UID_ROOT);
+    wsiRequest_->studyId = studyIdGenerated;
+  }
+
+  if (wsiRequest_->seriesId.size() < 1) {
+    char seriesIdGenerated[100];
+    dcmGenerateUniqueIdentifier(seriesIdGenerated, SITE_SERIES_UID_ROOT);
+    wsiRequest_->seriesId = seriesIdGenerated;
+  }
+
+  const char *slideFile = wsiRequest_->inputFile.c_str();
+  if (!openslide_detect_vendor(slideFile)) {
+    BOOST_LOG_TRIVIAL(error) << "file format is not supported by openslide";
+    osr_ = NULL;
+    return;
+  }
+  osr_ = openslide_open(slideFile);
+  if (openslide_get_error(osr_)) {
+    BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
+    osr_ = NULL;
+    return;
+  }
+  svsLevelCount_ = openslide_get_level_count(osr_);
+  openslide_get_level_dimensions(osr_, 0,
+                                 &firstLevelWidth_, &firstLevelHeight_);
+  BOOST_LOG_TRIVIAL(info) << "dicomization is started";
+  initialX_ = 0;
+  initialY_ = 0;
+  if (wsiRequest_->dropFirstRowAndColumn) {
+    initialX_ = 1;
+    initialY_ = 1;
+  }
+}
+
+WsiToDcm::~WsiToDcm() {
+  if (osr_ != NULL) {
+    openslide_close(osr_);
+    osr_ = NULL;
+  }
 }
 
 void WsiToDcm::checkArguments() {
+  if (osr_ == NULL) {
+    // Openslide did not intialize
+    throw 1;
+  }
   if (wsiRequest_ == NULL) {
     BOOST_LOG_TRIVIAL(error) << "request not initalized.";
     throw 1;
@@ -173,6 +220,7 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(const int32_t level,
       downsampleOfLevel = static_cast<double>(downsample) / multiplicator;
       // check that downsampling is going from higher to lower magnification
       if (downsampleOfLevel >= 1.0) {
+        levelToGet = priorLevel->level;
         levelWidth = priorLevel->levelWidthDownsampled;
         levelHeight = priorLevel->levelHeightDownsampled;
         generateUsingOpenSlide = false;
@@ -226,6 +274,7 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(const int32_t level,
 
   std::unique_ptr<SlideLevelDim> slideLevelDim;
   slideLevelDim = std::make_unique<SlideLevelDim>();
+  slideLevelDim->level = level;
   slideLevelDim->levelToGet = levelToGet;
   slideLevelDim->downsample = downsample;
   slideLevelDim->multiplicator = multiplicator;
@@ -309,51 +358,16 @@ std::unique_ptr<SlideLevelDim>  WsiToDcm::getSmallestSlideDim(
 }
 
 int WsiToDcm::dicomizeTiff() {
-  retile_ = wsiRequest_->retileLevels > 0;
-
-  if (wsiRequest_->studyId.size() < 1) {
-    char studyIdGenerated[100];
-    dcmGenerateUniqueIdentifier(studyIdGenerated, SITE_STUDY_UID_ROOT);
-    wsiRequest_->studyId = studyIdGenerated;
-  }
-
-  if (wsiRequest_->seriesId.size() < 1) {
-    char seriesIdGenerated[100];
-    dcmGenerateUniqueIdentifier(seriesIdGenerated, SITE_SERIES_UID_ROOT);
-    wsiRequest_->seriesId = seriesIdGenerated;
-  }
-
   std::unique_ptr<DcmTags> tags = std::make_unique<DcmTags>();
   if (wsiRequest_->jsonFile.size() > 0) {
     tags->readJsonFile(wsiRequest_->jsonFile);
   }
-
-  const char *slideFile = wsiRequest_->inputFile.c_str();
-  if (!openslide_detect_vendor(slideFile)) {
-    BOOST_LOG_TRIVIAL(error) << "file format is not supported by openslide";
-    throw 1;
-  }
-  osr_ = openslide_open(slideFile);
-  if (openslide_get_error(osr_)) {
-    BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
-    throw 1;
-  }
-  svsLevelCount_ = openslide_get_level_count(osr_);
-  openslide_get_level_dimensions(osr_, 0,
-                                 &firstLevelWidth_, &firstLevelHeight_);
 
   int8_t threadsForPool = boost::thread::hardware_concurrency();
   if (wsiRequest_->threads > 0) {
     threadsForPool = std::min(wsiRequest_->threads, threadsForPool);
   }
 
-  BOOST_LOG_TRIVIAL(info) << "dicomization is started";
-  initialX_ = 0;
-  initialY_ = 0;
-  if (wsiRequest_->dropFirstRowAndColumn) {
-    initialX_ = 1;
-    initialY_ = 1;
-  }
   BOOST_LOG_TRIVIAL(debug) << " ";
   BOOST_LOG_TRIVIAL(debug) << "Level Count: " << svsLevelCount_;
   // Determine smallest_slide downsample dimensions to enable
@@ -562,8 +576,6 @@ int WsiToDcm::dicomizeTiff() {
       break;
     }
   }
-  openslide_close(osr_);
-  osr_ = NULL;
   BOOST_LOG_TRIVIAL(info) << "dicomization is done";
   return 0;
 }

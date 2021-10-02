@@ -136,3 +136,252 @@ TEST(compressionString, unknown) {
     ASSERT_EQ(dcmCompressionFromString("jpeg/"), UNKNOWN);
     ASSERT_EQ(dcmCompressionFromString("jpeg2000."), UNKNOWN);
 }
+
+TEST(getOpenslideLevelForDownsample, image_with_one_level) {
+  std::vector<int>  downsamples;
+  wsiToDicomConverter::WsiRequest request;
+  request.inputFile = tiffFileName;
+  request.outputFileMask = testPath;
+  request.frameSizeX = 500;
+  request.frameSizeY = 500;
+  request.startOnLevel = 0;
+  request.compression = dcmCompressionFromString("jpeg");
+  request.quality = 80;
+  request.imageName = "image";
+  request.studyId = "study";
+  request.seriesId = "series";
+  request.batchLimit = 100;
+  request.retileLevels = 100;
+  request.stopDownsamplingAtSingleFrame = true;
+  request.downsamples = std::move(downsamples);
+  request.debug = true;
+  wsiToDicomConverter::WsiToDcm converter(&request);
+
+  // Not great test. Image has one level.
+  ASSERT_EQ(0, converter.getOpenslideLevelForDownsample(1));
+  ASSERT_EQ(0, converter.getOpenslideLevelForDownsample(99));
+}
+
+TEST(getSmallestSlideDim, smallest_slide) {
+  std::vector<int>  downsamples;
+  wsiToDicomConverter::WsiRequest request;
+  request.inputFile = tiffFileName;
+  request.outputFileMask = testPath;
+  request.frameSizeX = 100;
+  request.frameSizeY = 100;
+  request.startOnLevel = 0;
+  request.compression = dcmCompressionFromString("jpeg");
+  request.quality = 80;
+  request.imageName = "image";
+  request.studyId = "study";
+  request.seriesId = "series";
+  request.batchLimit = 100;
+  request.retileLevels = 100;
+  request.stopDownsamplingAtSingleFrame = true;
+  request.downsamples = std::move(downsamples);
+  request.debug = true;
+  wsiToDicomConverter::WsiToDcm converter(&request);
+  std::vector<int32_t> levels;
+  std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
+  slide_dim = std::move(converter.getSmallestSlideDim(&levels));
+  ASSERT_EQ(6, levels.size());
+  for (int level = 0; level < 6; ++level) {
+      ASSERT_EQ(level, levels[level]);
+  }
+  ASSERT_EQ(slide_dim->levelToGet, 0);
+  ASSERT_EQ(slide_dim->downsample, 32);
+  ASSERT_EQ(slide_dim->multiplicator, 1);
+  ASSERT_EQ(slide_dim->downsampleOfLevel, 32);
+  ASSERT_EQ(slide_dim->levelWidth, 2220);
+  ASSERT_EQ(slide_dim->levelHeight, 2967);
+  ASSERT_EQ(slide_dim->levelWidthDownsampled, 69);
+  ASSERT_EQ(slide_dim->levelHeightDownsampled, 92);
+  ASSERT_EQ(slide_dim->levelFrameWidth, 69);
+  ASSERT_EQ(slide_dim->levelFrameHeight, 92);
+  ASSERT_EQ(slide_dim->frameWidthDownsampled, 2220);
+  ASSERT_EQ(slide_dim->frameHeightDownsampled, 2967);
+}
+
+TEST(getDownsampledLevelDimensionMM, width) {
+  std::vector<int>  downsamples;
+  wsiToDicomConverter::WsiRequest request;
+  request.inputFile = tiffFileName;
+  request.outputFileMask = testPath;
+  request.frameSizeX = 100;
+  request.frameSizeY = 100;
+  request.startOnLevel = 0;
+  request.compression = dcmCompressionFromString("jpeg");
+  request.quality = 80;
+  request.imageName = "image";
+  request.studyId = "study";
+  request.seriesId = "series";
+  request.batchLimit = 100;
+  request.retileLevels = 100;
+  request.stopDownsamplingAtSingleFrame = true;
+  request.downsamples = std::move(downsamples);
+  request.debug = true;
+  wsiToDicomConverter::WsiToDcm converter(&request);
+  double dimX = converter.getDownsampledLevelDimensionMM(2220, 69, 32.0,
+                                                         "openslide.mpp-x");
+  ASSERT_TRUE(std::abs(dimX - 1.10179) < 0.0001);
+}
+
+TEST(getDownsampledLevelDimensionMM, height) {
+  std::vector<int>  downsamples;
+  wsiToDicomConverter::WsiRequest request;
+  request.inputFile = tiffFileName;
+  request.outputFileMask = testPath;
+  request.frameSizeX = 100;
+  request.frameSizeY = 100;
+  request.startOnLevel = 0;
+  request.compression = dcmCompressionFromString("jpeg");
+  request.quality = 80;
+  request.imageName = "image";
+  request.studyId = "study";
+  request.seriesId = "series";
+  request.batchLimit = 100;
+  request.retileLevels = 100;
+  request.stopDownsamplingAtSingleFrame = true;
+  request.downsamples = std::move(downsamples);
+  request.debug = true;
+  wsiToDicomConverter::WsiToDcm converter(&request);
+  double dimY = converter.getDownsampledLevelDimensionMM(2967, 92, 32.0,
+                                                         "openslide.mpp-y");
+  ASSERT_TRUE(std::abs(dimY - 1.46906) < 0.0001);
+}
+
+TEST(getSlideLevelDim, no_cropping_no_progressive) {
+  std::vector<int>  downsamples;
+  wsiToDicomConverter::WsiRequest request;
+  request.inputFile = tiffFileName;
+  request.outputFileMask = testPath;
+  request.frameSizeX = 100;
+  request.frameSizeY = 100;
+  request.startOnLevel = 0;
+  request.compression = dcmCompressionFromString("jpeg");
+  request.quality = 80;
+  request.imageName = "image";
+  request.studyId = "study";
+  request.seriesId = "series";
+  request.batchLimit = 100;
+  request.retileLevels = 100;
+  request.stopDownsamplingAtSingleFrame = true;
+  request.downsamples = std::move(downsamples);
+  request.debug = true;
+  wsiToDicomConverter::WsiToDcm converter(&request);
+  std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
+  slide_dim = std::move(converter.getSlideLevelDim(1, NULL, NULL, false));
+  ASSERT_EQ(slide_dim->levelWidthDownsampled, 1110);
+  ASSERT_EQ(slide_dim->levelHeightDownsampled, 1483);
+  ASSERT_EQ(slide_dim->levelToGet, 0);
+  ASSERT_EQ(slide_dim->downsample, 2);
+  ASSERT_EQ(slide_dim->level, 1);
+  ASSERT_EQ(slide_dim->multiplicator, 1);
+  ASSERT_EQ(slide_dim->downsampleOfLevel, 2);
+  ASSERT_EQ(slide_dim->levelWidth, 2220);
+  ASSERT_EQ(slide_dim->levelHeight, 2967);
+  ASSERT_EQ(slide_dim->levelFrameWidth, 100);
+  ASSERT_EQ(slide_dim->levelFrameHeight, 100);
+  ASSERT_EQ(slide_dim->frameWidthDownsampled, 200);
+  ASSERT_EQ(slide_dim->frameHeightDownsampled, 200);
+  ASSERT_EQ(slide_dim->cropSourceLevelWidth, 0);
+  ASSERT_EQ(slide_dim->cropSourceLevelHeight, 0);
+  ASSERT_TRUE(slide_dim->readOpenslide);
+}
+
+TEST(getSlideLevelDim, croping_no_progressive) {
+  std::vector<int>  downsamples;
+  wsiToDicomConverter::WsiRequest request;
+  request.inputFile = tiffFileName;
+  request.outputFileMask = testPath;
+  request.frameSizeX = 100;
+  request.frameSizeY = 100;
+  request.startOnLevel = 0;
+  request.compression = dcmCompressionFromString("jpeg");
+  request.quality = 80;
+  request.imageName = "image";
+  request.studyId = "study";
+  request.seriesId = "series";
+  request.batchLimit = 100;
+  request.retileLevels = 100;
+  request.stopDownsamplingAtSingleFrame = true;
+  request.downsamples = std::move(downsamples);
+  request.debug = true;
+  wsiToDicomConverter::WsiToDcm converter(&request);
+  std::vector<int32_t> levels;
+  std::unique_ptr<wsiToDicomConverter::SlideLevelDim> smallestSlideDim;
+  std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
+  smallestSlideDim = std::move(converter.getSmallestSlideDim(&levels));
+  slide_dim = std::move(converter.getSlideLevelDim(1,
+                                                   NULL,
+                                                   smallestSlideDim.get(),
+                                                   false));
+  ASSERT_EQ(slide_dim->levelWidthDownsampled, 1104);
+  ASSERT_EQ(slide_dim->levelHeightDownsampled, 1472);
+  ASSERT_EQ(slide_dim->levelToGet, 0);
+  ASSERT_EQ(slide_dim->downsample, 2);
+  ASSERT_EQ(slide_dim->level, 1);
+  ASSERT_EQ(slide_dim->multiplicator, 1);
+  ASSERT_EQ(slide_dim->downsampleOfLevel, 2);
+  ASSERT_EQ(slide_dim->levelWidth, 2220);
+  ASSERT_EQ(slide_dim->levelHeight, 2967);
+  ASSERT_EQ(slide_dim->levelFrameWidth, 100);
+  ASSERT_EQ(slide_dim->levelFrameHeight, 100);
+  ASSERT_EQ(slide_dim->frameWidthDownsampled, 200);
+  ASSERT_EQ(slide_dim->frameHeightDownsampled, 200);
+  ASSERT_EQ(slide_dim->frameWidthDownsampled, 200);
+  ASSERT_EQ(slide_dim->frameHeightDownsampled, 200);
+  ASSERT_EQ(slide_dim->cropSourceLevelWidth, 2220 - 2208);
+  ASSERT_EQ(slide_dim->cropSourceLevelHeight, 2967 - 2944);
+  ASSERT_TRUE(slide_dim->readOpenslide);
+}
+
+TEST(getSlideLevelDim, cropping_progressive) {
+  std::vector<int>  downsamples;
+  wsiToDicomConverter::WsiRequest request;
+  request.inputFile = tiffFileName;
+  request.outputFileMask = testPath;
+  request.frameSizeX = 100;
+  request.frameSizeY = 100;
+  request.startOnLevel = 0;
+  request.compression = dcmCompressionFromString("jpeg");
+  request.quality = 80;
+  request.imageName = "image";
+  request.studyId = "study";
+  request.seriesId = "series";
+  request.batchLimit = 100;
+  request.retileLevels = 100;
+  request.stopDownsamplingAtSingleFrame = true;
+  request.preferProgressiveDownsampling = true;
+  request.downsamples = std::move(downsamples);
+  request.debug = true;
+  wsiToDicomConverter::WsiToDcm converter(&request);
+  std::vector<int32_t> levels;
+  std::unique_ptr<wsiToDicomConverter::SlideLevelDim> smallestSlideDim;
+  std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
+  smallestSlideDim = std::move(converter.getSmallestSlideDim(&levels));
+  slide_dim = std::move(converter.getSlideLevelDim(1,
+                                                   NULL,
+                                                   smallestSlideDim.get(),
+                                                   false));
+  slide_dim = std::move(converter.getSlideLevelDim(2,
+                                                   slide_dim.get(),
+                                                   smallestSlideDim.get(),
+                                                   true));
+  ASSERT_EQ(slide_dim->levelWidthDownsampled, 552);
+  ASSERT_EQ(slide_dim->levelHeightDownsampled, 736);
+  ASSERT_EQ(slide_dim->levelToGet, 1);
+  ASSERT_EQ(slide_dim->level, 2);
+  ASSERT_EQ(slide_dim->downsample, 4);
+  ASSERT_EQ(slide_dim->multiplicator, 2);
+  ASSERT_EQ(slide_dim->downsampleOfLevel, 2);
+  ASSERT_EQ(slide_dim->levelWidth, 1104);
+  ASSERT_EQ(slide_dim->levelHeight, 1472);
+  ASSERT_EQ(slide_dim->levelFrameWidth, 100);
+  ASSERT_EQ(slide_dim->levelFrameHeight, 100);
+  ASSERT_EQ(slide_dim->frameWidthDownsampled, 200);
+  ASSERT_EQ(slide_dim->frameHeightDownsampled, 200);
+  ASSERT_EQ(slide_dim->cropSourceLevelWidth, 0);
+  ASSERT_EQ(slide_dim->cropSourceLevelHeight, 0);
+  ASSERT_FALSE(slide_dim->readOpenslide);
+}
