@@ -569,9 +569,10 @@ int WsiToDcm::dicomizeTiff() {
     higherMagnifcationDicomFiles.set_dicom_files(
                                            std::move(generatedDicomFiles));
     // The combination of cropFrameToGenerateUniformPixelSpacing &
-    // can result in cropping images which span multiple frames/times
-    // to one frame. Check here if stopDownsamplingAtSingleFrame is enabled
-    // and if the image was written in one frame.
+    // stopDownsamplingAtSingleFrame can result in cropping images
+    // which would otherwise span multiple frames to one frame.
+    // Check if stopDownsamplingAtSingleFrame is enabled
+    // and if the downsampled image was written in one frame.
     if (wsiRequest_->stopDownsamplingAtSingleFrame && numberOfFrames <= 1) {
       break;
     }
