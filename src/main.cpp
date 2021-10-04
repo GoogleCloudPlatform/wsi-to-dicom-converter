@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
         ("uniformPixelSpacing",
         programOptions::bool_switch(
         &cropFrameToGenerateUniformPixelSpacing)->default_value(false),
-        "Crop imaging to generate downsampled mages with unifrom pixel "
+        "Crop imaging to generate downsampled images with unifrom pixel "
         "spacing. Not compatiable with dropFirstRowAndColumn. Recommended, "
         "use uniformPixelSpacing in combination with both "
         "--stopDownsamplingAtSingleFrame --progressiveDownsample");
