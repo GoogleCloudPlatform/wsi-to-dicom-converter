@@ -397,7 +397,7 @@ int WsiToDcm::dicomizeTiff() {
       firstSlideHeightCrop >= firstLevelHeight_) {
       BOOST_LOG_TRIVIAL(info) << "Error Pixel spacing normalization " <<
                          "cropped entire input image. Cannot generate DICOM.";
-      return 0;
+      return 1;
   }
 
   DICOMFileFrameRegionReader higherMagnifcationDicomFiles;
