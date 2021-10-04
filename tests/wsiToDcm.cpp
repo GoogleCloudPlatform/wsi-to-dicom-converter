@@ -329,7 +329,13 @@ TEST(getSlideLevelDim, croping_no_progressive) {
   ASSERT_EQ(slide_dim->levelFrameHeight, 100);
   ASSERT_EQ(slide_dim->frameWidthDownsampled, 200);
   ASSERT_EQ(slide_dim->frameHeightDownsampled, 200);
+  // 2220 = width of source imaging being downsampled
+  // 2208 = width of smallestSlideDim scaled to source level(0)
+  // downsampling factor. 2208 = 69 (width pixels) * 32 (downsample factor)
   ASSERT_EQ(slide_dim->cropSourceLevelWidth, 2220 - 2208);
+  // 2967 = height of source imaging being downsampled
+  // 2944 = height of smallestSlideDim scaled to source level(0)
+  // downsampling factor. 2944 = 92 (height pixels) * 32 (downsample factor)
   ASSERT_EQ(slide_dim->cropSourceLevelHeight, 2967 - 2944);
   ASSERT_TRUE(slide_dim->readOpenslide);
 }
