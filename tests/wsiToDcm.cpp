@@ -329,8 +329,6 @@ TEST(getSlideLevelDim, croping_no_progressive) {
   ASSERT_EQ(slide_dim->levelFrameHeight, 100);
   ASSERT_EQ(slide_dim->frameWidthDownsampled, 200);
   ASSERT_EQ(slide_dim->frameHeightDownsampled, 200);
-  ASSERT_EQ(slide_dim->frameWidthDownsampled, 200);
-  ASSERT_EQ(slide_dim->frameHeightDownsampled, 200);
   ASSERT_EQ(slide_dim->cropSourceLevelWidth, 2220 - 2208);
   ASSERT_EQ(slide_dim->cropSourceLevelHeight, 2967 - 2944);
   ASSERT_TRUE(slide_dim->readOpenslide);
