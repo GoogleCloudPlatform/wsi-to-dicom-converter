@@ -176,8 +176,10 @@ class WsiToDcm {
   std::unique_ptr<SlideLevelDim>  getSmallestSlideDim(
                                           std::vector<int32_t> *slideLevels);
 
+  // level = downsampled slide level to return. level < 0 forces to return
+  // dimensions of largest level, 0
   std::unique_ptr<SlideLevelDim> getSlideLevelDim(
-                                      const int32_t level,
+                                      int32_t level,
                                       SlideLevelDim *priorLevel,
                                       SlideLevelDim * smallestSlideDim,
                                       bool enableProgressiveDownsample = true);
@@ -195,8 +197,8 @@ class WsiToDcm {
   openslide_t *osr_;
   int64_t initialX_;
   int64_t initialY_;
-  int64_t firstLevelWidth_;
-  int64_t firstLevelHeight_;
+  int64_t largestSlideLevelWidth_;
+  int64_t largestSlideLevelHeight_;
   int32_t svsLevelCount_;
 
   // Generates tasks and handling thread pool
