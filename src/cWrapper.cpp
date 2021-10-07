@@ -23,13 +23,15 @@ int wsi2dcm(const char *inputFile, const char *outputFileMask,
             int retileLevels, int *downsamples, bool tiled, int batchLimit,
             int threads, bool debug, bool stopDownsamplingAtSingleFrame,
             bool bilinearDownsampling, bool floorCorrectDownsampling,
-            bool progressiveDownsample) {
+            bool progressiveDownsample,
+            bool cropFrameToGenerateUniformPixelSpacing) {
   return wsi2dcmJson(
       inputFile, outputFileMask, frameSizeX, frameSizeY, compression, quality,
       startOnLevel, stopOnLevel, imageName, studyId, seriesId, "", retileLevels,
       downsamples, tiled, batchLimit, threads, debug,
       stopDownsamplingAtSingleFrame, bilinearDownsampling,
-      floorCorrectDownsampling, progressiveDownsample);
+      floorCorrectDownsampling, progressiveDownsample,
+      cropFrameToGenerateUniformPixelSpacing);
 }
 
 int wsi2dcmJson(const char *inputFile, const char *outputFileMask,
@@ -40,7 +42,8 @@ int wsi2dcmJson(const char *inputFile, const char *outputFileMask,
                 int *downsamples, bool tiled, int batchLimit, int threads,
                 bool debug, bool stopDownsamplingAtSingleFrame,
                 bool bilinearDownsampling, bool floorCorrectDownsampling,
-                bool progressiveDownsample) {
+                bool progressiveDownsample,
+                bool cropFrameToGenerateUniformPixelSpacing) {
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = inputFile;
   request.outputFileMask = outputFileMask;
@@ -69,6 +72,8 @@ int wsi2dcmJson(const char *inputFile, const char *outputFileMask,
   request.useBilinearDownsampling = bilinearDownsampling;
   request.floorCorrectDownsampling = floorCorrectDownsampling;
   request.preferProgressiveDownsampling = progressiveDownsample;
+  request.cropFrameToGenerateUniformPixelSpacing =
+                                        cropFrameToGenerateUniformPixelSpacing;
   wsiToDicomConverter::WsiToDcm converter(&request);
   return converter.wsi2dcm();
 }

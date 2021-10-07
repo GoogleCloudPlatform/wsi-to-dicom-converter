@@ -47,6 +47,7 @@ int main(int argc, char *argv[]) {
   bool useBilinearDownsampling;
   bool floorCorrectDownsampling;
   bool preferProgressiveDownsampling;
+  bool cropFrameToGenerateUniformPixelSpacing;
   int compressionQuality;
   std::vector<int> downsamples;
   downsamples.resize(1, 0);
@@ -119,7 +120,7 @@ int main(int argc, char *argv[]) {
         programOptions::bool_switch(
         &useBilinearDownsampling)->default_value(false),
         "Use bilinear interpolation to downsample images instead of"
-        " nearest neighbor interpolation.")
+        " nearest neighbor interpolation to improve downsample image quality.")
         ("floorCorrectOpenslideLevelDownsamples",
         programOptions::bool_switch(
         &floorCorrectDownsampling)->default_value(false),
@@ -140,7 +141,14 @@ int main(int argc, char *argv[]) {
         ("compressionQuality",
         programOptions::value<int>(
         &compressionQuality)->default_value(80),
-        "Compression quality range(0 - 100");
+        "Compression quality range(0 - 100")
+        ("uniformPixelSpacing",
+        programOptions::bool_switch(
+        &cropFrameToGenerateUniformPixelSpacing)->default_value(false),
+        "Crop imaging to generate downsampled images with unifrom pixel "
+        "spacing. Not compatiable with dropFirstRowAndColumn. Recommended, "
+        "use uniformPixelSpacing in combination with both "
+        "--stopDownsamplingAtSingleFrame --progressiveDownsample");
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
     positionalOptions.add("outFolder", 1);
@@ -166,6 +174,11 @@ int main(int argc, char *argv[]) {
     std::cerr << "Unhandled Exception reached the top of main: "
               << exception.what() << ", application will now exit" << std::endl;
     return ERROR_UNHANDLED_EXCEPTION;
+  }
+  if (cropFrameToGenerateUniformPixelSpacing && dropFirstRowAndColumn) {
+     std::cerr << "Options: uniformPixelSpacing and dropFirstRowAndColumn are"
+              << " not compatible." << std::endl;
+      return 1;
   }
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = inputFile;
@@ -198,6 +211,8 @@ int main(int argc, char *argv[]) {
   request.useBilinearDownsampling = useBilinearDownsampling;
   request.floorCorrectDownsampling = floorCorrectDownsampling;
   request.preferProgressiveDownsampling = preferProgressiveDownsampling;
+  request.cropFrameToGenerateUniformPixelSpacing =
+                                      cropFrameToGenerateUniformPixelSpacing;
   request.debug = debug;
   wsiToDicomConverter::WsiToDcm converter(&request);
   return converter.wsi2dcm();

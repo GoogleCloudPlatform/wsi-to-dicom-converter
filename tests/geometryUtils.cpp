@@ -22,7 +22,6 @@ TEST(geometryTest, frameSizeWithoutRetile) {
   int64_t frameWidth = 150;
   int64_t frameHeight = 150;
   bool retile = true;
-  int level = 0;
   double downsampleOfLevel = 1;
   int64_t frameWidthDownsampled;
   int64_t frameHeightDownsampled;
@@ -33,7 +32,7 @@ TEST(geometryTest, frameSizeWithoutRetile) {
   DCM_Compression level_compression = JPEG;
 
   wsiToDicomConverter::dimensionDownsampling(
-      frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
+      frameWidth, frameHeight, levelWidth, levelHeight, retile,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
       &level_frameHeight, &level_compression);
@@ -46,7 +45,7 @@ TEST(geometryTest, frameSizeWithoutRetile) {
   frameHeight = 50;
 
   wsiToDicomConverter::dimensionDownsampling(
-      frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
+      frameWidth, frameHeight, levelWidth, levelHeight, retile,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
       &level_frameHeight, &level_compression);
@@ -62,7 +61,6 @@ TEST(geometryTest, frameSizeWithRetile) {
   int64_t frameWidth = 42;
   int64_t frameHeight = 42;
   bool retile = true;
-  int level = 2;
   double downsampleOfLevel = 2;
   int64_t frameWidthDownsampled;
   int64_t frameHeightDownsampled;
@@ -72,7 +70,7 @@ TEST(geometryTest, frameSizeWithRetile) {
   int64_t level_frameHeight;
   DCM_Compression level_compression = JPEG;
   wsiToDicomConverter::dimensionDownsampling(
-      frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
+      frameWidth, frameHeight, levelWidth, levelHeight, retile,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
       &level_frameHeight, &level_compression);
@@ -87,7 +85,7 @@ TEST(geometryTest, frameSizeWithRetile) {
   frameHeight = 55;
 
   wsiToDicomConverter::dimensionDownsampling(
-      frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
+      frameWidth, frameHeight, levelWidth, levelHeight, retile,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
       &level_frameHeight, &level_compression);
@@ -101,7 +99,7 @@ TEST(geometryTest, frameSizeWithRetile) {
   frameHeight = 42;
 
   wsiToDicomConverter::dimensionDownsampling(
-      frameWidth, frameHeight, levelWidth, levelHeight, retile, level,
+      frameWidth, frameHeight, levelWidth, levelHeight, retile,
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
       &level_frameHeight, &level_compression);
