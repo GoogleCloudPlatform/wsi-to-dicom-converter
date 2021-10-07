@@ -420,9 +420,9 @@ std::unique_ptr<SlideLevelDim>  WsiToDcm::getSmallestSlideDim(
       }
       std::tuple<int32_t, int64_t> tpl(level, tempDownsample);
       levelProcessOrder.push_back(tpl);
-      if (wsiRequest_->stopDownsamplingAtSingleFrame && frameCount <= 1) {
-        BOOST_LOG_TRIVIAL(debug) << "Level[" <<level << "] frames:" <<
+      BOOST_LOG_TRIVIAL(debug) << "Level[" <<level << "] frames:" <<
                                     frameX << ", " << frameY;
+      if (wsiRequest_->stopDownsamplingAtSingleFrame && frameCount <= 1) {
         smallestLevelIsSingleFrame = true;
       }
     }
