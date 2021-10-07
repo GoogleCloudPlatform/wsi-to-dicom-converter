@@ -96,6 +96,7 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
     return;
   }
   svsLevelCount_ = openslide_get_level_count(osr_);
+  // Openslide API call 0 returns dimensions of highest resolution image.
   openslide_get_level_dimensions(osr_, 0,
                                  &largestSlideLevelWidth_,
                                  &largestSlideLevelHeight_);
@@ -341,12 +342,12 @@ bool downsample_order(const std::tuple<int32_t, int64_t> &i,
   const int64_t iDownsample = std::get<1>(i);
   const int64_t jDownsample = std::get<1>(j);
   if (iDownsample != jDownsample) {
-    // Sorta Downsampel : e/g/. Area 1, 2, 4, 8. 16
+    // Sort on downsample: e.g. 1, 2, 4, 8, 16 (highest to lowest mag.)
     return iDownsample < jDownsample;
   }
   const int32_t iLevel = std::get<0>(i);
   const int32_t jLevel = std::get<0>(j);
-  // Sort in order by level e.g., Level 1, 2, 3, 4
+  // Sort by level e.g., 1, 2, 3, 4
   return iLevel < jLevel;
 }
 
@@ -359,10 +360,10 @@ std::unique_ptr<SlideLevelDim>  WsiToDcm::getSmallestSlideDim(
   } else {
     levels = svsLevelCount_;
   }
-  bool smallest_level_is_single_frame = false;
+  bool smallestLevelIsSingleFrame = false;
   std::vector<std::tuple<int32_t, int64_t>> levelProcessOrder;
-  int64_t smallsest_downsample;
-  bool layer_has_shown_zero_length_dim_msg = false;
+  int64_t smallestDownsample;
+  bool layerHasShownZeroLengthDimMsg = false;
   for (int32_t level = wsiRequest_->startOnLevel; level < levels &&
            (wsiRequest_->stopOnLevel < wsiRequest_->startOnLevel ||
                                  level <= wsiRequest_->stopOnLevel); level++) {
@@ -371,8 +372,8 @@ std::unique_ptr<SlideLevelDim>  WsiToDcm::getSmallestSlideDim(
       if (tempSlideLevelDim->levelWidthDownsampled == 0 ||
           tempSlideLevelDim->levelHeightDownsampled == 0) {
         // frame is being downsampled to nothing skip file.
-        if (!layer_has_shown_zero_length_dim_msg) {
-          layer_has_shown_zero_length_dim_msg = true;
+        if (!layerHasShownZeroLengthDimMsg) {
+          layerHasShownZeroLengthDimMsg = true;
           BOOST_LOG_TRIVIAL(debug) << "Layer has a 0 length dimension."
                                       " Skipping dcm generation for layer.";
         }
@@ -385,39 +386,44 @@ std::unique_ptr<SlideLevelDim>  WsiToDcm::getSmallestSlideDim(
             static_cast<double>(tempSlideLevelDim->levelHeightDownsampled) /
             static_cast<double>(tempSlideLevelDim->levelFrameHeight));
       const int64_t frameCount = frameX * frameY;
-      const int64_t temp_downsample = tempSlideLevelDim->downsample;
+      const int64_t tempDownsample = tempSlideLevelDim->downsample;
       BOOST_LOG_TRIVIAL(debug) << "Uncropped dimensions Level[" <<
                                   level << "]: " <<
                                   tempSlideLevelDim->levelWidthDownsampled <<
                                    ", " <<
                                    tempSlideLevelDim->levelHeightDownsampled;
-      if ((smallestSlideDim == NULL) ||
-          ((!wsiRequest_->stopDownsamplingAtSingleFrame ||
-            !smallest_level_is_single_frame) &&
-           (temp_downsample > smallsest_downsample)) ||
-          (smallest_level_is_single_frame &&
-           wsiRequest_->stopDownsamplingAtSingleFrame &&
-           frameCount == 1 && temp_downsample < smallsest_downsample)) {
-        // if (smallest slice level not initalized) or
-        //
-        // if ((not stopDownsamplingAtSingleFrame or haven't seen single
-        // frame yet) and dimensions are smaller than previous frame) or
-        //
-        // if smallest area is single frame a stop downsampling at single
-        // frame and temp level is also single frame and temp level area
+      bool setSmallestSlice = false;
+      if (smallestSlideDim == NULL) {
+        // if (smallest slice level not initalized)
+        setSmallestSlice = true;
+      } else if (tempDownsample > smallestDownsample &&
+        (!wsiRequest_->stopDownsamplingAtSingleFrame ||
+        !smallestLevelIsSingleFrame)) {
+        // if dimensions are smaller than previous frame and
+        // not stopDownsamplingAtSingleFrame or haven't seen single frame.
+        setSmallestSlice = true;
+      } else if (smallestLevelIsSingleFrame &&
+        wsiRequest_->stopDownsamplingAtSingleFrame &&
+        frameCount == 1 && tempDownsample < smallestDownsample) {
+        // if smallest area is a single frame and stopDownsamplingAtSingleFrame
+        // and temp level is also a single frame and temp level
         // is bigger than previous found smallest level.
+        //
+        // TLDR logic: smallestSlideDim == largest level that fits in a single
+        // frame.
+        setSmallestSlice = true;
+      }
+      if (setSmallestSlice) {
         smallestSlideDim = std::move(tempSlideLevelDim);
-        smallsest_downsample = temp_downsample;
+        smallestDownsample = tempDownsample;
         BOOST_LOG_TRIVIAL(debug) << "Set Smallest";
       }
-      std::tuple<int32_t, int64_t> tpl(level, temp_downsample);
+      std::tuple<int32_t, int64_t> tpl(level, tempDownsample);
       levelProcessOrder.push_back(tpl);
-      if (wsiRequest_->stopDownsamplingAtSingleFrame) {
+      if (wsiRequest_->stopDownsamplingAtSingleFrame && frameCount <= 1) {
         BOOST_LOG_TRIVIAL(debug) << "Level[" <<level << "] frames:" <<
                                     frameX << ", " << frameY;
-        if (frameCount <= 1) {
-          smallest_level_is_single_frame = true;
-        }
+        smallestLevelIsSingleFrame = true;
       }
     }
     // Process process levels in order of area largest to smallest.

@@ -204,13 +204,13 @@ TEST(getSmallestSlideDim, smallest_slide) {
 
 TEST(getSmallestSlideDim, smallest_slide_middle) {
   std::vector<int>  downsamples;
-  downsamples.push_back(64);
-  downsamples.push_back(32);
-  downsamples.push_back(16);
-  downsamples.push_back(8);
-  downsamples.push_back(4);
-  downsamples.push_back(1);
-  downsamples.push_back(2);
+  downsamples.push_back(64);  // ingored; stopDownsamplingAtSingleFrame == true
+  downsamples.push_back(32);  // Level = 1
+  downsamples.push_back(16);  // Level = 2
+  downsamples.push_back(8);   // Level = 3
+  downsamples.push_back(4);   // Level = 4
+  downsamples.push_back(1);   // Level = 5
+  downsamples.push_back(2);   // Level = 6
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = tiffFileName;
   request.outputFileMask = testPath;
@@ -454,12 +454,12 @@ TEST(getSlideLevelDim, cropping_progressive) {
 
 TEST(getSlideLevelDim, largest_when_levels_are_out_of_order) {
   std::vector<int>  downsamples;
-  downsamples.push_back(16);
-  downsamples.push_back(8);
-  downsamples.push_back(4);
-  downsamples.push_back(32);
-  downsamples.push_back(1);
-  downsamples.push_back(2);
+  downsamples.push_back(16);  // Level = 0
+  downsamples.push_back(8);   // Level = 1
+  downsamples.push_back(4);   // Level = 2
+  downsamples.push_back(32);  // Level = 3
+  downsamples.push_back(1);   // Level = 4
+  downsamples.push_back(2);   // Level = 5
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = tiffFileName;
   request.outputFileMask = testPath;
@@ -484,6 +484,11 @@ TEST(getSlideLevelDim, largest_when_levels_are_out_of_order) {
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> smallestSlideDim;
   smallestSlideDim = std::move(converter.getSmallestSlideDim(&levels));
   ASSERT_EQ(levels.size(), 6);
+  // levels correspond to position in downsamples vector
+  int expected_levels[] = {4, 5, 2, 1, 0, 3};
+  for (int level = 0; level < 6; ++level) {
+      ASSERT_EQ(expected_levels[level], levels[level]);
+  }
   // -1 = get largest slice.
   ASSERT_EQ(smallestSlideDim->levelWidthDownsampled, 69);
   ASSERT_EQ(smallestSlideDim->levelHeightDownsampled, 92);
