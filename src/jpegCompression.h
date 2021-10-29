@@ -22,11 +22,11 @@
 class JpegCompression : public Compressor {
  public:
   explicit JpegCompression(const int quality);
-  ~JpegCompression();
+  virtual ~JpegCompression();
 
   // Gets Raw data from rgb view and performs compression on it
-  std::unique_ptr<uint8_t[]> compress(const boost::gil::rgb8_view_t& view,
-                                      size_t* size);
+  virtual std::unique_ptr<uint8_t[]> compress(
+                            const boost::gil::rgb8_view_t& view, size_t* size);
 
  private:
   jpeg_compress_struct _cinfo;

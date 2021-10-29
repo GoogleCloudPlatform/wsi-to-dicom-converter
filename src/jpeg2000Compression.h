@@ -23,7 +23,7 @@ class Jpeg2000Compression : public RawCompression {
  public:
   Jpeg2000Compression() {}
 
-  ~Jpeg2000Compression();
+  virtual ~Jpeg2000Compression();
 
   // Performs compression
   virtual std::unique_ptr<uint8_t[]> writeToMemory(unsigned int width,
@@ -33,8 +33,8 @@ class Jpeg2000Compression : public RawCompression {
                                                    size_t* size);
 
   // Gets Raw data from rgb view and performs compression on it
-  std::unique_ptr<uint8_t[]> compress(const boost::gil::rgb8_view_t& view,
-                                      size_t* size);
+  virtual std::unique_ptr<uint8_t[]> compress(
+                            const boost::gil::rgb8_view_t& view, size_t* size);
 
  private:
   uint8_t* buffer_;
