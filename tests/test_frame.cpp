@@ -48,14 +48,12 @@ size_t TestFrame::getSize() const {
 
 int64_t TestFrame::get_raw_frame_bytes(uint8_t *raw_memory,
                                        int64_t memorysize) const {
-  const int64_t expected_memsize = width_ * height_ * 4;
+  const int64_t expected_memsize = width_ * height_ * sizeof(uint32_t);
   if (memorysize != expected_memsize) {
     return 0;
   }
   uint8_t *ptr_raw_value = reinterpret_cast<uint8_t *>(rawValue_.get());
-  for (size_t idx; idx < expected_memsize; ++idx) {
-    raw_memory[idx] = ptr_raw_value[idx];
-  }
+  std::memcpy(raw_memory, ptr_raw_value, expected_memsize);
   return (expected_memsize);
 }
 
