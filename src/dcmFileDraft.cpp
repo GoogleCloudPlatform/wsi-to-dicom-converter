@@ -54,7 +54,7 @@ DcmFileDraft::DcmFileDraft(
     batchNumber_ = 0;
   } else {
     batchNumber_ =  prior_frame_batches->size();
-    for (size_t idx; idx < batchNumber_; ++idx) {
+    for (size_t idx = 0; idx < batchNumber_; ++idx) {
       prior_batch_frames_ += prior_frame_batches->at(idx)->
                                                        get_file_frame_count();
     }
