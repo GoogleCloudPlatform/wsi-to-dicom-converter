@@ -120,7 +120,7 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
   retile_ = wsiRequest_->retileLevels > 0;
   if (!retile_ && wsiRequest_->cropFrameToGenerateUniformPixelSpacing) {
     BOOST_LOG_TRIVIAL(error) << "Cropping the imaging to achieve uniform"
-                                " pixel spacing requires image downsampling.";
+                                " pixel spacing requires image downsampling."
                                 " Downsampling is specified using the"
                                 " --downsamples or --levels command line"
                                 " parameter.";

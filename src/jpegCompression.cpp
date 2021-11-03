@@ -52,7 +52,7 @@ std::unique_ptr<uint8_t[]> JpegCompression::compress(
   JSAMPLE *row_address = reinterpret_cast<JSAMPLE *>(&row.front());
   for (int y = 0; y < view.height(); ++y) {
     std::copy(view.row_begin(y), view.row_end(y), row.begin());
-    jpeg_write_scanlines(&_cinfo, (JSAMPARRAY)&row_address, 1) != 1;
+    jpeg_write_scanlines(&_cinfo, (JSAMPARRAY)&row_address, 1);
   }
   jpeg_finish_compress(&_cinfo);
   std::unique_ptr<uint8_t[]> output = std::make_unique<uint8_t[]>(outlen);
