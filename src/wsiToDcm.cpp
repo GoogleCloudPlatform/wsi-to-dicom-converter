@@ -273,10 +273,12 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int32_t level,
   int64_t cropSourceLevelWidth = 0;
   int64_t cropSourceLevelHeight = 0;
   if (smallestSlideDim != NULL) {
-    cropSourceLevelWidth = (levelWidth - initialX_) %
-                            smallestSlideDim->levelWidthDownsampled;
-    cropSourceLevelHeight = (levelHeight - initialY_) %
-                             smallestSlideDim->levelHeightDownsampled;
+    const int64_t upsampleFactor = smallestSlideDim->downsample /
+                                                                multiplicator;
+    cropSourceLevelWidth = (levelWidth - initialX_) - (upsampleFactor *
+                            smallestSlideDim->levelWidthDownsampled);
+    cropSourceLevelHeight = (levelHeight - initialY_) - (upsampleFactor *
+                             smallestSlideDim->levelHeightDownsampled);
   }
   int64_t frameWidthDownsampled;
   int64_t frameHeightDownsampled;

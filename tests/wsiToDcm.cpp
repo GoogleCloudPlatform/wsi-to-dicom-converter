@@ -402,8 +402,8 @@ TEST(getSlideLevelDim, cropping_progressive) {
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = tiffFileName;
   request.outputFileMask = testPath;
-  request.frameSizeX = 100;
-  request.frameSizeY = 100;
+  request.frameSizeX = 25;
+  request.frameSizeY = 25;
   request.startOnLevel = 0;
   request.compression = dcmCompressionFromString("jpeg");
   request.quality = 80;
@@ -422,30 +422,30 @@ TEST(getSlideLevelDim, cropping_progressive) {
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> smallestSlideDim;
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
   smallestSlideDim = std::move(converter.getSmallestSlideDim(&levels));
-  ASSERT_EQ(levels.size(), 6);
-  ASSERT_EQ(smallestSlideDim->levelWidthDownsampled, 69);
-  ASSERT_EQ(smallestSlideDim->levelHeightDownsampled, 92);
-  slide_dim = std::move(converter.getSlideLevelDim(1,
+  ASSERT_EQ(levels.size(), 8);
+  ASSERT_EQ(smallestSlideDim->levelWidthDownsampled, 17);
+  ASSERT_EQ(smallestSlideDim->levelHeightDownsampled, 23);
+  slide_dim = std::move(converter.getSlideLevelDim(0,
                                                    NULL,
                                                    smallestSlideDim.get(),
                                                    false));
-  slide_dim = std::move(converter.getSlideLevelDim(2,
+  slide_dim = std::move(converter.getSlideLevelDim(1,
                                                    slide_dim.get(),
                                                    smallestSlideDim.get(),
                                                    true));
-  ASSERT_EQ(slide_dim->levelWidthDownsampled, 552);
-  ASSERT_EQ(slide_dim->levelHeightDownsampled, 736);
-  ASSERT_EQ(slide_dim->levelToGet, 1);
-  ASSERT_EQ(slide_dim->level, 2);
-  ASSERT_EQ(slide_dim->downsample, 4);
-  ASSERT_EQ(slide_dim->multiplicator, 2);
+  ASSERT_EQ(slide_dim->levelWidthDownsampled,  1088);
+  ASSERT_EQ(slide_dim->levelHeightDownsampled, 1472);
+  ASSERT_EQ(slide_dim->levelToGet, 0);
+  ASSERT_EQ(slide_dim->level, 1);
+  ASSERT_EQ(slide_dim->downsample, 2);
+  ASSERT_EQ(slide_dim->multiplicator, 1);
   ASSERT_EQ(slide_dim->downsampleOfLevel, 2);
-  ASSERT_EQ(slide_dim->levelWidth, 1104);
-  ASSERT_EQ(slide_dim->levelHeight, 1472);
-  ASSERT_EQ(slide_dim->levelFrameWidth, 100);
-  ASSERT_EQ(slide_dim->levelFrameHeight, 100);
-  ASSERT_EQ(slide_dim->frameWidthDownsampled, 200);
-  ASSERT_EQ(slide_dim->frameHeightDownsampled, 200);
+  ASSERT_EQ(slide_dim->levelWidth, 2176);
+  ASSERT_EQ(slide_dim->levelHeight, 2944);
+  ASSERT_EQ(slide_dim->levelFrameWidth, 25);
+  ASSERT_EQ(slide_dim->levelFrameHeight, 25);
+  ASSERT_EQ(slide_dim->frameWidthDownsampled, 50);
+  ASSERT_EQ(slide_dim->frameHeightDownsampled, 50);
   ASSERT_EQ(slide_dim->cropSourceLevelWidth, 0);
   ASSERT_EQ(slide_dim->cropSourceLevelHeight, 0);
   ASSERT_FALSE(slide_dim->readOpenslide);
@@ -519,3 +519,4 @@ TEST(getSlideLevelDim, largest_when_levels_are_out_of_order) {
   ASSERT_EQ(slide_dim->cropSourceLevelHeight, 2967 - 2944);
   ASSERT_TRUE(slide_dim->readOpenslide);
 }
+
