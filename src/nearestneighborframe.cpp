@@ -90,11 +90,11 @@ class convert_rgba_to_rgb {
 };
 
 void NearestNeighborFrame::sliceFrame() {
-  uint32_t *buf = reinterpret_cast<uint32_t *>(
-      malloc(static_cast<size_t>(frameWidthDownsampled_ *
-                                 frameHeightDownsampled_) * sizeof(uint32_t)));
+  std::unique_ptr<uint32_t[]>buf =
+                          std::make_unique<uint32_t[]>(frameWidthDownsampled_ *
+                                                      frameHeightDownsampled_);
   if (dcm_frame_region_reader.dicom_file_count() == 0) {
-    openslide_read_region(osr_, buf, static_cast<int64_t>(locationX_ *
+    openslide_read_region(osr_, buf.get(), static_cast<int64_t>(locationX_ *
                                                           multiplicator_),
                           static_cast<int64_t>(locationY_ * multiplicator_),
                           level_, frameWidthDownsampled_,
@@ -107,13 +107,13 @@ void NearestNeighborFrame::sliceFrame() {
     dcm_frame_region_reader.read_region(locationX_, locationY_,
                                         frameWidthDownsampled_,
                                         frameHeightDownsampled_,
-                                        buf);
+                                        buf.get());
   }
   boost::gil::rgba8c_view_t gil = boost::gil::interleaved_view(
-                     frameWidthDownsampled_,
-                     frameHeightDownsampled_,
-                     reinterpret_cast<const boost::gil::rgba8c_pixel_t *>(buf),
-                     frameWidthDownsampled_ * sizeof(uint32_t));
+              frameWidthDownsampled_,
+              frameHeightDownsampled_,
+              reinterpret_cast<const boost::gil::rgba8c_pixel_t *>(buf.get()),
+              frameWidthDownsampled_ * sizeof(uint32_t));
 
   boost::gil::rgba8_image_t newFrame(frameWidth_, frameHeight_);
   if (frameWidthDownsampled_ != frameWidth_ ||
@@ -150,7 +150,6 @@ void NearestNeighborFrame::sliceFrame() {
   boost::gil::copy_and_convert_pixels(gil, rgbView, convert_rgba_to_rgb());
   data_ = compressor_->compress(rgbView, &size_);
   BOOST_LOG_TRIVIAL(debug) << " frame size: " << size_ / 1024 << "kb";
-  free(buf);
   done_ = true;
 }
 

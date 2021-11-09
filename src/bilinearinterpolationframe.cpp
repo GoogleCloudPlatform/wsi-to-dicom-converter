@@ -133,9 +133,8 @@ void BilinearInterpolationFrame::sliceFrame() {
   }
 
   // Allocate memory to retrieve layer data from openslide
-  uint32_t *buf_bytes = reinterpret_cast<uint32_t *>(
-      malloc(static_cast<size_t>(sampleWidth * sampleHeight) *
-             sizeof(uint32_t)));
+  std::unique_ptr<uint32_t[]> buf_bytes = std::make_unique<uint32_t[]>(
+                              static_cast<size_t>(sampleWidth * sampleHeight));
 
   // Open slide API samples using xy coordinages from level 0 image.
   // upsample coordinates to level 0 to compute sampleing site.
@@ -145,7 +144,7 @@ void BilinearInterpolationFrame::sliceFrame() {
     // Open slide read region returns ARGB formated pixels
     // Values are pre-multiplied with alpha
     // https://github.com/openslide/openslide/wiki/PremultipliedARGB
-    openslide_read_region(osr_, buf_bytes, Level0_x,
+    openslide_read_region(osr_, buf_bytes.get(), Level0_x,
                           Level0_y, level_, sampleWidth, sampleHeight);
     if (openslide_get_error(osr_)) {
        BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
@@ -153,15 +152,16 @@ void BilinearInterpolationFrame::sliceFrame() {
     }
   } else {
     dcm_frame_region_reader.read_region(Level_x, Level_y, sampleWidth,
-                                        sampleHeight, buf_bytes);
+                                        sampleHeight, buf_bytes.get());
   }
 
 
   // Allocate memory (size (width/height) of frame being downsampled into) to
   // hold RGB and RGB_Area downsampleing accumulators.
-  const size_t frame_mem_size = static_cast<size_t>(frameWidth_ * frameHeight_);
-  double *rgb_mem = reinterpret_cast<double *>(
-      malloc(sizeof(double) * frame_mem_size * 4));
+  const size_t frame_mem_size = static_cast<size_t>(frameWidth_ *
+                                                                frameHeight_);
+  std::unique_ptr<double[]> rgb_mem = std::make_unique<double[]>(frame_mem_size
+                                                                 * 4);
   for (size_t idx = 0; idx < frame_mem_size * 4; ++idx) {
     rgb_mem[idx] = 0.0;  // Inititalize to zero.
   }
@@ -174,12 +174,9 @@ void BilinearInterpolationFrame::sliceFrame() {
       static_cast<double>(targetLevelHeight_ * locationY_ / levelHeight_);
 
   // Cache X layer coordinate position transformation.
-  double *frameX_Cache;
-  if (targetLevelWidth_ == levelWidth_) {
-    frameX_Cache = NULL;
-  } else {
-    frameX_Cache =
-        reinterpret_cast<double *>(malloc(sizeof(double) * sampleWidth));
+  std::unique_ptr<double[]> frameX_Cache = NULL;
+  if (targetLevelWidth_ != levelWidth_)  {
+    frameX_Cache = std::make_unique<double[]>(sampleWidth);
     for (size_t px = 0; px < static_cast<size_t>(sampleWidth); ++px) {
       const int64_t PositionInLevel_x = px + Level_x;
       frameX_Cache[px] =
@@ -239,8 +236,8 @@ void BilinearInterpolationFrame::sliceFrame() {
       // If layer does not require downsampling.. Just copy values across
       if (targetLevelWidth_ == levelWidth_) {
         const int64_t cx = px + Level_x - locationX_;
-        set_pixel(rgb_mem, frameWidth_, frameHeight_, cx, cy, red_d, green_d,
-                  blue_d, 1.0);
+        set_pixel(rgb_mem.get(), frameWidth_, frameHeight_, cx, cy, red_d,
+                  green_d, blue_d, 1.0);
       } else {
         const double framex = frameX_Cache[px];
         const double framex_floor = floor(framex);
@@ -249,21 +246,17 @@ void BilinearInterpolationFrame::sliceFrame() {
         const double nx_weight =
             framex - framex_floor;                // Projection into cx + 1
         const double x_weight = 1.0 - nx_weight;  // Projection into cx
-        set_pixel(rgb_mem, frameWidth_, frameHeight_, cx, cy, red_d, green_d,
-                  blue_d, x_weight * y_weight);
-        set_pixel(rgb_mem, frameWidth_, frameHeight_, cx + 1, cy, red_d,
+        set_pixel(rgb_mem.get(), frameWidth_, frameHeight_, cx, cy, red_d,
+                  green_d, blue_d, x_weight * y_weight);
+        set_pixel(rgb_mem.get(), frameWidth_, frameHeight_, cx + 1, cy, red_d,
                   green_d, blue_d, nx_weight * y_weight);
-        set_pixel(rgb_mem, frameWidth_, frameHeight_, cx + 1, cy + 1, red_d,
-                  green_d, blue_d, nx_weight * ny_weight);
-        set_pixel(rgb_mem, frameWidth_, frameHeight_, cx, cy + 1, red_d,
+        set_pixel(rgb_mem.get(), frameWidth_, frameHeight_, cx + 1, cy + 1,
+                  red_d, green_d, blue_d, nx_weight * ny_weight);
+        set_pixel(rgb_mem.get(), frameWidth_, frameHeight_, cx, cy + 1, red_d,
                   green_d, blue_d, x_weight * ny_weight);
       }
     }
   }
-  if (frameX_Cache != NULL) {
-    free(frameX_Cache);  // Free frameX_Cache
-  }
-  free(buf_bytes);  // Free buffer read from openslide
 
   // Allocate memory to transform downsampled frame into ABGR
   std::unique_ptr<uint32_t[]> raw_bytes = std::make_unique<uint32_t[]>(
@@ -285,7 +278,6 @@ void BilinearInterpolationFrame::sliceFrame() {
     }
     areaindex += 4;
   }
-  free(rgb_mem);  // Free RGB area accumulator memory
 
   // Create a boot::gli view of memory in downsample_bytes
   boost::gil::rgba8c_view_t gil = boost::gil::interleaved_view(
