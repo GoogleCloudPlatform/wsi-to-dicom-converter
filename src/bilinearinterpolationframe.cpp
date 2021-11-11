@@ -23,9 +23,6 @@
 #include <utility>
 
 #include "src/bilinearinterpolationframe.h"
-#include "src/jpeg2000Compression.h"
-#include "src/jpegCompression.h"
-#include "src/rawCompression.h"
 #include "src/zlibWrapper.h"
 
 
@@ -38,37 +35,23 @@ BilinearInterpolationFrame::BilinearInterpolationFrame(
     int quality, int64_t levelWidthDownsampled, int64_t levelHeightDownsampled,
     int64_t levelWidth, int64_t levelHeight, int64_t level0Width,
     int64_t level0Height, bool store_raw_bytes,
-    const DICOMFileFrameRegionReader &frame_region_reader)
-    : dcm_frame_region_reader(frame_region_reader) {
-  done_ = false;
+    DICOMFileFrameRegionReader *frame_region_reader) : Frame(locationX,
+                                                             locationY,
+                                                             frameWidth,
+                                                             frameHeight,
+                                                          compression, quality,
+                                                          store_raw_bytes) {
   osr_ = osr;
-  locationX_ = locationX;
-  locationY_ = locationY;
   level_ = level;
   frameWidthDownsampled_ = frameWidthDownsampled;
   frameHeightDownsampled_ = frameHeightDownsampled;
   targetLevelWidth_ = levelWidthDownsampled;
   targetLevelHeight_ = levelHeightDownsampled;
-
   levelWidth_ = levelWidth;
   levelHeight_ = levelHeight;
   level0Width_ = level0Width;
   level0Height_ = level0Height;
-  frameWidth_ = frameWidth;
-  frameHeight_ = frameHeight;
-  // flag indicates if raw frame bytes should be retained.
-  // required for to enable progressive downsampling.
-  store_raw_bytes_ = store_raw_bytes;
-  switch (compression) {
-    case JPEG:
-      compressor_ = std::make_unique<JpegCompression>(quality);
-      break;
-    case JPEG2000:
-      compressor_ = std::make_unique<Jpeg2000Compression>();
-      break;
-    default:
-      compressor_ = std::make_unique<RawCompression>();
-  }
+  dcmFrameRegionReader_ = frame_region_reader;
 }
 
 BilinearInterpolationFrame::~BilinearInterpolationFrame() {}
@@ -86,51 +69,66 @@ void set_pixel(double *rgb_mem, const int64_t width, const int64_t height,
   rgb_mem[pix + 3] += percent;
 }
 
-int64_t BilinearInterpolationFrame::get_frame_width() const {
-  return frameWidth_;
-}
-
-int64_t BilinearInterpolationFrame::get_frame_height() const {
-  return frameHeight_;
-}
-
-void BilinearInterpolationFrame::sliceFrame() {
-  // Downsamples a rectangular region a layer of a SVS and compresses frame
-  // output.
-
+void BilinearInterpolationFrame::_get_frame_location_and_dim(int64_t *LevelX,
+                                                      int64_t *LevelY,
+                                                      int64_t *sampleWidth,
+                                                      int64_t *sampleHeight) {
   // Slightly over estimate X and Y downsampling necessary to scale down from
   // levelheight to target height downsamping factor used to expand sampleing
   // region to incorporate pixels on the edge of the sampling region which
   // effect the edge pixel values.
-  const int64_t down_sample_y =
+  const int64_t downsample_y =
       static_cast<int64_t>(ceil(static_cast<double>(levelHeight_) /
                                static_cast<double>(targetLevelHeight_)) - 1.0);
-  const int64_t down_sample_x =
+  const int64_t downsample_x =
       static_cast<int64_t>(ceil(static_cast<double>(levelWidth_) /
                                static_cast<double>(targetLevelWidth_)) - 1.0);
 
   // Extend samping with to include boundry voxels.  Sample sampleWidth &
   // sampleHeight = target sampling region for level to downsample
-  int64_t sampleWidth = 2 * down_sample_x + frameWidthDownsampled_;
-  int64_t sampleHeight = 2 * down_sample_y + frameHeightDownsampled_;
+  int64_t sample_width = 2 * downsample_x + frameWidthDownsampled_;
+  int64_t sample_height = 2 * downsample_y + frameHeightDownsampled_;
 
   // Adjust sampleing region and start position to include surrounding voxels
-  int64_t Level_x = locationX_ - down_sample_x;
-  int64_t Level_y = locationY_ - down_sample_y;
-  if (Level_x < 0) {
-    sampleWidth += Level_x;
-    Level_x = 0;
+  int64_t level_x = locationX_ - downsample_x;
+  int64_t level_y = locationY_ - downsample_y;
+  if (level_x < 0) {
+    sample_width += level_x;
+    level_x = 0;
   }
-  if (Level_y < 0) {
-    sampleHeight += Level_y;
-    Level_y = 0;
+  if (level_y < 0) {
+    sample_height += level_y;
+    level_y = 0;
   }
-  if (Level_x + sampleWidth >= levelWidth_) {
-    sampleWidth = levelWidth_ - Level_x - 1;
+  if (level_x + sample_width >= levelWidth_) {
+    sample_width = levelWidth_ - level_x - 1;
   }
-  if (Level_y + sampleHeight >= levelHeight_) {
-    sampleHeight = levelHeight_ - Level_y - 1;
+  if (level_y + sample_height >= levelHeight_) {
+    sample_height = levelHeight_ - level_y - 1;
   }
+  *LevelX = level_x;
+  *LevelY = level_y;
+  *sampleWidth = sample_width;
+  *sampleHeight = sample_height;
+}
+
+void BilinearInterpolationFrame::incSourceFrameReadCounter() {
+  if (dcmFrameRegionReader_->dicom_file_count() != 0) {
+    // Computes frames which downsample region will access from and increments
+    // source frame counter.
+    int64_t Level_x, Level_y, sampleWidth, sampleHeight;
+    _get_frame_location_and_dim(&Level_x, &Level_y, &sampleWidth,
+                                &sampleHeight);
+    dcmFrameRegionReader_->incSourceFrameReadCounter(Level_x, Level_y,
+                                                    sampleWidth, sampleHeight);
+  }
+}
+
+void BilinearInterpolationFrame::sliceFrame() {
+  // Downsamples a rectangular region a layer of a SVS and compresses frame
+  // output.
+  int64_t Level_x, Level_y, sampleWidth, sampleHeight;
+  _get_frame_location_and_dim(&Level_x, &Level_y, &sampleWidth, &sampleHeight);
 
   // Allocate memory to retrieve layer data from openslide
   std::unique_ptr<uint32_t[]> buf_bytes = std::make_unique<uint32_t[]>(
@@ -138,7 +136,7 @@ void BilinearInterpolationFrame::sliceFrame() {
 
   // Open slide API samples using xy coordinages from level 0 image.
   // upsample coordinates to level 0 to compute sampleing site.
-  if (dcm_frame_region_reader.dicom_file_count() == 0) {
+  if (dcmFrameRegionReader_->dicom_file_count() == 0) {
     const int64_t Level0_x = (Level_x * level0Width_) / levelWidth_;
     const int64_t Level0_y = (Level_y * level0Height_) / levelHeight_;
     // Open slide read region returns ARGB formated pixels
@@ -151,10 +149,9 @@ void BilinearInterpolationFrame::sliceFrame() {
        throw 1;
     }
   } else {
-    dcm_frame_region_reader.read_region(Level_x, Level_y, sampleWidth,
+    dcmFrameRegionReader_->read_region(Level_x, Level_y, sampleWidth,
                                         sampleHeight, buf_bytes.get());
   }
-
 
   // Allocate memory (size (width/height) of frame being downsampled into) to
   // hold RGB and RGB_Area downsampleing accumulators.
@@ -292,8 +289,7 @@ void BilinearInterpolationFrame::sliceFrame() {
   // Compress memory (RAW, jpeg, or jpeg2000)
   data_ = compressor_->compress(rgbView, &size_);
   if (!store_raw_bytes_) {
-    raw_compressed_bytes_ = NULL;
-    raw_compressed_bytes_size_ = 0;
+    clear_raw_mem();
   } else {
     // Convert memory buffer back from DICOM representation
     // to standard representation
@@ -317,27 +313,6 @@ void BilinearInterpolationFrame::sliceFrame() {
   done_ = true;
 }
 
-void BilinearInterpolationFrame::clear_dicom_mem() {
-  data_ = NULL;
-}
-
-int64_t BilinearInterpolationFrame::get_raw_frame_bytes(uint8_t *raw_memory,
-                                                    int64_t memorysize) const {
-  return decompress_memory(raw_compressed_bytes_.get(),
-                           raw_compressed_bytes_size_,
-                           raw_memory, memorysize);
-}
-
-bool BilinearInterpolationFrame::isDone() const { return done_; }
-
-uint8_t *BilinearInterpolationFrame::get_dicom_frame_bytes() {
-  return data_.get();
-}
-
-size_t BilinearInterpolationFrame::getSize() const { return size_; }
-
-bool BilinearInterpolationFrame::has_compressed_raw_bytes() const {
-  return (raw_compressed_bytes_ != NULL && raw_compressed_bytes_size_ > 0);
-}
-
 }  // namespace wsiToDicomConverter
+
+

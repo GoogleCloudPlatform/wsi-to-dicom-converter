@@ -72,7 +72,12 @@ class DICOMFileFrameRegionReader {
   //
   // Returns: True if has files, false if no DICOM files set.
   bool read_region(int64_t layer_x, int64_t layer_y, int64_t mem_width,
-                   int64_t mem_height, uint32_t *memory) const;
+                   int64_t mem_height, uint32_t *memory);
+
+  bool incSourceFrameReadCounter(int64_t layer_x,
+                                               int64_t layer_y,
+                                               int64_t mem_width,
+                                               int64_t mem_height);
 
  private:
   // Reads a frame from as set of loaded DICOM files.
@@ -85,7 +90,9 @@ class DICOMFileFrameRegionReader {
   // Returns:
   //   true if frame memory initalized
   bool get_frame_bytes(int64_t index, uint32_t* frame_memory,
-                       const int64_t frame_buffer_size_bytes) const;
+                       const int64_t frame_buffer_size_bytes);
+
+  Frame* get_frame_ptr(int64_t index);
 
   // Copies a memory region from a frame memory to memory buffer.
   //

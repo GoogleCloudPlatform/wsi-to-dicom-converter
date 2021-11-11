@@ -77,7 +77,7 @@ class DcmFileDraft {
   int64_t get_image_height() const;
   int64_t get_file_frame_count() const;
   int64_t get_downsample() const;
-  const Frame* const get_frame(int64_t idx) const;
+  Frame* get_frame(int64_t idx) const;
 
  private:
   std::vector<std::unique_ptr<Frame> > framesData_;

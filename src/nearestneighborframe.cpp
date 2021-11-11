@@ -35,42 +35,21 @@ NearestNeighborFrame::NearestNeighborFrame(
     int64_t frameWidthDownsampled, int64_t frameHeightDownsampled,
     double multiplicator, int64_t frameWidth, int64_t frameHeight,
     DCM_Compression compression, int quality, bool store_raw_bytes,
-    const DICOMFileFrameRegionReader &frame_region_reader) :
-    dcm_frame_region_reader(frame_region_reader) {
-  done_ = false;
+    DICOMFileFrameRegionReader *frame_region_reader): Frame(locationX,
+                                                            locationY,
+                                                            frameWidth,
+                                                             frameHeight,
+                                                        compression, quality,
+                                                        store_raw_bytes) {
   osr_ = osr;
-  locationX_ = locationX;
-  locationY_ = locationY;
   level_ = level;
   frameWidthDownsampled_ = frameWidthDownsampled;
   frameHeightDownsampled_ = frameHeightDownsampled;
   multiplicator_ = multiplicator;
-  frameWidth_ = frameWidth;
-  frameHeight_ = frameHeight;
-  // flag indicates if raw frame bytes should be retained.
-  // required for to enable progressive downsampling.
-  store_raw_bytes_ = store_raw_bytes;
-  switch (compression) {
-    case JPEG:
-      compressor_ = std::make_unique<JpegCompression>(quality);
-      break;
-    case JPEG2000:
-      compressor_ = std::make_unique<Jpeg2000Compression>();
-      break;
-    default:
-      compressor_ = std::make_unique<RawCompression>();
-  }
+  dcmFrameRegionReader_ = frame_region_reader;
 }
 
 NearestNeighborFrame::~NearestNeighborFrame() {}
-
-int64_t NearestNeighborFrame::get_frame_width() const {
-  return frameWidth_;
-}
-
-int64_t NearestNeighborFrame::get_frame_height() const {
-  return frameHeight_;
-}
 
 class convert_rgba_to_rgb {
  public:
@@ -89,11 +68,19 @@ class convert_rgba_to_rgb {
   }
 };
 
+void NearestNeighborFrame::incSourceFrameReadCounter() {
+  if (dcmFrameRegionReader_->dicom_file_count() != 0) {
+    dcmFrameRegionReader_->incSourceFrameReadCounter(locationX_, locationY_,
+                                        frameWidthDownsampled_,
+                                        frameHeightDownsampled_);
+  }
+}
+
 void NearestNeighborFrame::sliceFrame() {
   std::unique_ptr<uint32_t[]>buf =
                           std::make_unique<uint32_t[]>(frameWidthDownsampled_ *
                                                       frameHeightDownsampled_);
-  if (dcm_frame_region_reader.dicom_file_count() == 0) {
+  if (dcmFrameRegionReader_->dicom_file_count() == 0) {
     openslide_read_region(osr_, buf.get(), static_cast<int64_t>(locationX_ *
                                                           multiplicator_),
                           static_cast<int64_t>(locationY_ * multiplicator_),
@@ -104,7 +91,7 @@ void NearestNeighborFrame::sliceFrame() {
       throw 1;
     }
   } else {
-    dcm_frame_region_reader.read_region(locationX_, locationY_,
+    dcmFrameRegionReader_->read_region(locationX_, locationY_,
                                         frameWidthDownsampled_,
                                         frameHeightDownsampled_,
                                         buf.get());
@@ -128,8 +115,7 @@ void NearestNeighborFrame::sliceFrame() {
 
   // Create a copy of the pre-compressed downsampled bits
   if (!store_raw_bytes_) {
-    raw_compressed_bytes_size_ = 0;
-    raw_compressed_bytes_ = NULL;
+    clear_raw_mem();
   } else {
     const int64_t frame_mem_size = frameWidth_ * frameHeight_;
     std::unique_ptr<uint32_t[]>  raw_bytes = std::make_unique<uint32_t[]>(
@@ -153,26 +139,6 @@ void NearestNeighborFrame::sliceFrame() {
   done_ = true;
 }
 
-int64_t NearestNeighborFrame::get_raw_frame_bytes(uint8_t *raw_memory,
-                                                  int64_t memorysize) const {
-  return decompress_memory(raw_compressed_bytes_.get(),
-                           raw_compressed_bytes_size_, raw_memory, memorysize);
-}
-
-bool NearestNeighborFrame::isDone() const { return done_; }
-
-void NearestNeighborFrame::clear_dicom_mem() {
-  data_ = NULL;
-}
-
-uint8_t *NearestNeighborFrame::get_dicom_frame_bytes() {
-  return data_.get();
-}
-
-size_t NearestNeighborFrame::getSize() const { return size_; }
-
-bool NearestNeighborFrame::has_compressed_raw_bytes() const {
-  return (raw_compressed_bytes_ != NULL && raw_compressed_bytes_size_ > 0);
-}
-
 }  // namespace wsiToDicomConverter
+
+
