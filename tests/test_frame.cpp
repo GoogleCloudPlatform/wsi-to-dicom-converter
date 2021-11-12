@@ -13,6 +13,7 @@
 // limitations under the License.
 #include <boost/log/trivial.hpp>
 
+#include <cstring>
 #include <memory>
 
 #include "tests/test_frame.h"
