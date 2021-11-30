@@ -22,6 +22,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/src/ DICOMIZER_SOURCES)
 include_directories(wsi2dcmCli PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/)
 include_directories(wsi2dcmCli PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/)
+include_directories(wsi2dcmCli PUBLIC /usr/local/include/opencv4/)
 
 set(STATIC_BUILD OFF CACHE BOOL ON)
 set(TESTS_BUILD OFF CACHE BOOL ON)
@@ -36,6 +37,7 @@ include(CMake/JsonCpp.cmake)
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
+FIND_PACKAGE(OpenCV REQUIRED) 
 add_library(wsi2dcm SHARED
     ${DCMTK_SOURCES}
     ${BOOST_SOURCES}
@@ -44,6 +46,7 @@ add_library(wsi2dcm SHARED
     ${LIBJPEG_SOURCES}
     ${DICOMIZER_SOURCES}
     ${JSONCPP_SOURCES}
+    ${OpenCV_SOURCES}
  )
 if(APPLE)
     set(CMAKE_MACOSX_RPATH 1)
@@ -59,7 +62,7 @@ set_target_properties(wsi2dcmCli PROPERTIES
                         OUTPUT_NAME wsi2dcm
                       )
 
-target_link_libraries(wsi2dcm pthread ${STATIC_LIBS} z m lzma xml2)
+target_link_libraries(wsi2dcm pthread ${STATIC_LIBS} z m lzma xml2 ${OpenCV_LIBS})
 target_link_libraries(wsi2dcmCli wsi2dcm)
 
 if (TESTS_BUILD)

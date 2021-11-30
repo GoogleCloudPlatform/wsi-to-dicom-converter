@@ -15,8 +15,9 @@
 # This script updates environment and build wsi2dcm by steps:
 # 1: update of ubuntu deb repos
 # 2: install of tools and libs for build
-# 3: download and unpack source code of libs for build
-# 4: build
+# 3: install opencv
+# 4: download and unpack source code of libs for build
+# 5: build
 
 #1
 echo "deb  http://old-releases.ubuntu.com cosmic universe" | tee -a /etc/apt/sources.list
@@ -24,6 +25,16 @@ apt-get update
 #2
 DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-essential libjsoncpp-dev libjpeg8-dev libgdk-pixbuf2.0-dev libcairo2-dev libsqlite3-dev cmake libglib2.0-dev libxml2-dev libopenjp2-7-dev g++-8 libgtest-dev -y
 #3
+wget -O opencv.zip https://github.com/opencv/opencv/archive/master.zip
+unzip opencv.zip
+mv opencv-master opencv
+mkdir -p opencv_build
+cd /opencv_build
+cmake ../opencv
+make -j12
+make install
+cd /
+#4
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
 cd build
@@ -39,7 +50,7 @@ wget https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3
 tar xvzf openslide-3.4.1.tar.gz  > /dev/null
 wget https://www.ijg.org/files/jpegsr9c.zip
 unzip jpegsr9c.zip > /dev/null
-#4
+#5
 cmake -DSTATIC_BUILD=ON -DTESTS_BUILD=ON ..
 make -j12
 ./gTests

@@ -22,14 +22,14 @@ int wsi2dcm(const char *inputFile, const char *outputFileMask,
             const char *imageName, const char *studyId, const char *seriesId,
             int retileLevels, int *downsamples, bool tiled, int batchLimit,
             int threads, bool debug, bool stopDownsamplingAtSingleFrame,
-            bool bilinearDownsampling, bool floorCorrectDownsampling,
+            bool useOpenCVDownsampling, bool floorCorrectDownsampling,
             bool progressiveDownsample,
             bool cropFrameToGenerateUniformPixelSpacing) {
   return wsi2dcmJson(
       inputFile, outputFileMask, frameSizeX, frameSizeY, compression, quality,
       startOnLevel, stopOnLevel, imageName, studyId, seriesId, "", retileLevels,
       downsamples, tiled, batchLimit, threads, debug,
-      stopDownsamplingAtSingleFrame, bilinearDownsampling,
+      stopDownsamplingAtSingleFrame, useOpenCVDownsampling,
       floorCorrectDownsampling, progressiveDownsample,
       cropFrameToGenerateUniformPixelSpacing);
 }
@@ -41,7 +41,7 @@ int wsi2dcmJson(const char *inputFile, const char *outputFileMask,
                 const char *seriesId, const char *jsonFile, int retileLevels,
                 int *downsamples, bool tiled, int batchLimit, int threads,
                 bool debug, bool stopDownsamplingAtSingleFrame,
-                bool bilinearDownsampling, bool floorCorrectDownsampling,
+                bool useOpenCVDownsampling, bool floorCorrectDownsampling,
                 bool progressiveDownsample,
                 bool cropFrameToGenerateUniformPixelSpacing) {
   wsiToDicomConverter::WsiRequest request;
@@ -69,7 +69,7 @@ int wsi2dcmJson(const char *inputFile, const char *outputFileMask,
   request.threads = threads;
   request.debug = debug;
   request.stopDownsamplingAtSingleFrame = stopDownsamplingAtSingleFrame;
-  request.useBilinearDownsampling = bilinearDownsampling;
+  request.useOpenCVDownsampling = useOpenCVDownsampling;
   request.floorCorrectDownsampling = floorCorrectDownsampling;
   request.preferProgressiveDownsampling = progressiveDownsample;
   request.cropFrameToGenerateUniformPixelSpacing =

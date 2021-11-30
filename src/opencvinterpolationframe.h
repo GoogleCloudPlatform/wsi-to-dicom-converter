@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_BILINEARINTERPOLATIONFRAME_H_
-#define SRC_BILINEARINTERPOLATIONFRAME_H_
+#ifndef SRC_OPENCVINTERPOLATIONFRAME_H_
+#define SRC_OPENCVINTERPOLATIONFRAME_H_
 #include <openslide.h>
 #include <stdlib.h>
+#include <opencv2/opencv.hpp>
 
 #include <memory>
 #include <vector>
@@ -24,10 +25,12 @@
 #include "src/compressor.h"
 #include "src/frame.h"
 
+using namespace cv;
+
 namespace wsiToDicomConverter {
 
 // Frame represents a single image frame from the OpenSlide library
-class BilinearInterpolationFrame : public Frame {
+class OpenCVInterpolationFrame : public Frame {
  public:
   // osr - openslide
   // locationX, locationY - top-left corner of frame in source level coords.
@@ -39,19 +42,19 @@ class BilinearInterpolationFrame : public Frame {
   //                                                level being generated.
   // levelWidth, levelHeight - dimensions of source level being downsampled.
   // level0Width, level0Height - dimensions of base level (highest mag)
-  BilinearInterpolationFrame(openslide_t *osr, int64_t locationX,
+  OpenCVInterpolationFrame(openslide_t *osr, int64_t locationX,
                              int64_t locationY, int32_t level,
                              int64_t frameWidthDownsampled,
                              int64_t frameHeightDownsampled, int64_t frameWidth,
                              int64_t frameHeight, DCM_Compression compression,
-                             int quality, int64_t levelWidthDownsampled,
-                             int64_t levelHeightDownsampled, int64_t levelWidth,
+                             int quality, int64_t levelWidth,
                              int64_t levelHeight, int64_t level0Width,
                              int64_t level0Height,
                              bool store_raw_bytes,
-                             DICOMFileFrameRegionReader* frame_region_reader);
+                             DICOMFileFrameRegionReader* frame_region_reader,
+                             const InterpolationFlags openCVInterpolationMethod);
 
-  virtual ~BilinearInterpolationFrame();
+  virtual ~OpenCVInterpolationFrame();
   // Gets frame by openslide library, performs scaling it and compressing
   virtual void sliceFrame();
   virtual void incSourceFrameReadCounter();
@@ -61,8 +64,6 @@ class BilinearInterpolationFrame : public Frame {
   int64_t level_;
   int64_t frameWidthDownsampled_;
   int64_t frameHeightDownsampled_;
-  int64_t targetLevelWidth_;
-  int64_t targetLevelHeight_;
 
   int64_t levelWidth_;
   int64_t levelHeight_;
@@ -71,11 +72,15 @@ class BilinearInterpolationFrame : public Frame {
   int64_t level0Height_;
   DICOMFileFrameRegionReader *dcmFrameRegionReader_;
 
-  void _get_frame_location_and_dim(int64_t *LevelX, int64_t *LevelY,
-                                   int64_t *sampleWidth,
-                                   int64_t *sampleHeight);
+  bool resized_;
+  int widthScaleFactor_, heightScaleFactor_;
+  int padLeft_, padTop_;
+  int padWidth_, padHeight_;
+  InterpolationFlags openCVInterpolationMethod_;
+
+  inline void scalefactorNormPadding(int *padding, int scalefactor);
 };
 
 }  // namespace wsiToDicomConverter
 
-#endif  // SRC_BILINEARINTERPOLATIONFRAME_H_
+#endif  // SRC_OPENCVINTERPOLATIONFRAME_H_

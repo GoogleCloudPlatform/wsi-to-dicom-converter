@@ -184,10 +184,10 @@ bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
     const int64_t first_frame_y = (layer_y / frameHeight_);
     const int64_t first_frame_x = (layer_x / frameWidth_);
     const int64_t last_frame_y = static_cast<int64_t>(
-                      std::ceil(static_cast<double>(layer_y + mem_height - 1) /
+                      (static_cast<double>(std::min<int64_t>(layer_y + mem_height - 1, imageHeight_)) /
                                 static_cast<double>(frameHeight_)));
     const int64_t last_frame_x = static_cast<int64_t>(
-                      std::ceil(static_cast<double>(layer_x + mem_width - 1) /
+                     (static_cast<double>(std::min<int64_t>(layer_x + mem_width - 1, imageWidth_)) /
                                 static_cast<double>(frameWidth_)));
 
     int64_t frame_yc_offset = first_frame_y * framesPerRow_;
@@ -239,10 +239,10 @@ bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
     const int64_t first_frame_y = (layer_y / frameHeight_);
     const int64_t first_frame_x = (layer_x / frameWidth_);
     const int64_t last_frame_y = static_cast<int64_t>(
-                      std::ceil(static_cast<double>(layer_y + mem_height - 1) /
+                      (static_cast<double>(std::min<int64_t>(layer_y + mem_height - 1, imageHeight_)) /
                                 static_cast<double>(frameHeight_)));
     const int64_t last_frame_x = static_cast<int64_t>(
-                      std::ceil(static_cast<double>(layer_x + mem_width - 1) /
+                     (static_cast<double>(std::min<int64_t>(layer_x + mem_width - 1, imageWidth_)) /
                                 static_cast<double>(frameWidth_)));
 
     BOOST_LOG_TRIVIAL(debug) << "DICOMFileFrameRegionReader::read_region" <<
@@ -276,7 +276,7 @@ bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
 
       // height to copy from frame to mem buffer.  clip to data in frame
       // or remaining in memory buffer.  Which ever is smaller.
-      const int64_t height_copied = std::min(frameHeight_ - frame_start_y,
+      const int64_t height_copied = std::min<int64_t>(frameHeight_ - frame_start_y,
                                             mem_height - my_start);
 
       // iterate over frame columns.
@@ -292,7 +292,7 @@ bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
         }
         // width to copy from frame to mem buffer.  clip to data in frame
         // or remaining in memory buffer.  Which ever is smaller.
-        const int64_t width_copeid = std::min(frameWidth_ - frame_start_x,
+        const int64_t width_copeid = std::min<int64_t>(frameWidth_ - frame_start_x,
                                              mem_width - mx_start);
 
         // copy frame memory to buffer mem.
