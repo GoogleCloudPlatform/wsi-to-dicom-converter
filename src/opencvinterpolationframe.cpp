@@ -20,6 +20,7 @@
 #include <boost/gil/typedefs.hpp>
 #include <boost/log/trivial.hpp>
 
+#include <algorithm>
 #include <utility>
 
 #include "src/jpeg2000Compression.h"
@@ -28,9 +29,7 @@
 #include "src/rawCompression.h"
 #include "src/zlibWrapper.h"
 
-namespace wsiToDicomConverter {
-
-using namespace cv;
+namespace cv::wsiToDicomConverter {
 
 OpenCVInterpolationFrame::OpenCVInterpolationFrame(
     openslide_t *osr, int64_t locationX, int64_t locationY, int32_t level,
@@ -55,7 +54,8 @@ OpenCVInterpolationFrame::OpenCVInterpolationFrame(
   level0Height_ = level0Height;
   dcmFrameRegionReader_ = frame_region_reader;
 
-  resized_ = frameWidth_ != frameWidthDownsampled_ || frameHeight_ != frameHeightDownsampled_;
+  resized_ = frameWidth_ != frameWidthDownsampled_ ||
+             frameHeight_ != frameHeightDownsampled_;
   openCVInterpolationMethod_ = openCVInterpolationMethod;
 
   if  (resized_)  {
@@ -69,12 +69,16 @@ OpenCVInterpolationFrame::OpenCVInterpolationFrame(
 
     widthScaleFactor_ = frameWidthDownsampled_ / frameWidth_;
     heightScaleFactor_ = frameHeightDownsampled_ / frameHeight_;
-    int max_pad_width  = unscaledMaxPadding * static_cast<int>(ceil(widthScaleFactor_));
-    int max_pad_height = unscaledMaxPadding * static_cast<int>(ceil(heightScaleFactor_));
+    int max_pad_width  = unscaledMaxPadding *
+                                    static_cast<int>(ceil(widthScaleFactor_));
+    int max_pad_height = unscaledMaxPadding *
+                                    static_cast<int>(ceil(heightScaleFactor_));
     padLeft_ = std::min<int>(max_pad_width, locationX_);
     padTop_ =  std::min<int>(max_pad_height, locationY_);
-    int padRight = std::min<int>(std::max<int>(0,levelWidth_ - (locationX_ + frameWidthDownsampled_)), max_pad_width);
-    int padBottom = std::min<int>(std::max<int>(0,levelHeight_ - (locationY_ + frameHeightDownsampled_)), max_pad_height);
+    int padRight = std::min<int>(std::max<int>(0, levelWidth_ - (locationX_ +
+                                      frameWidthDownsampled_)), max_pad_width);
+    int padBottom = std::min<int>(std::max<int>(0, levelHeight_ - (locationY_ +
+                                    frameHeightDownsampled_)), max_pad_height);
 
     scalefactorNormPadding(&padLeft_, widthScaleFactor_);
     scalefactorNormPadding(&padTop_, heightScaleFactor_);
@@ -90,12 +94,13 @@ OpenCVInterpolationFrame::OpenCVInterpolationFrame(
     padTop_ = 0;
     padWidth_ = 0;
     padHeight_ = 0;
- }
+  }
 }
 
 OpenCVInterpolationFrame::~OpenCVInterpolationFrame() {}
 
-void OpenCVInterpolationFrame::scalefactorNormPadding(int *padding, int scalefactor) {
+void OpenCVInterpolationFrame::scalefactorNormPadding(int *padding,
+                                                      int scalefactor) {
   *padding = (*padding / scalefactor) * scalefactor;
 }
 
@@ -103,37 +108,46 @@ void OpenCVInterpolationFrame::incSourceFrameReadCounter() {
   if (dcmFrameRegionReader_->dicom_file_count() != 0) {
     // Computes frames which downsample region will access from and increments
     // source frame counter.
-    dcmFrameRegionReader_->incSourceFrameReadCounter(locationX_ - padLeft_, locationY_ - padTop_,
-                                                    frameWidthDownsampled_ + padWidth_, frameHeightDownsampled_ + padHeight_);
+    dcmFrameRegionReader_->incSourceFrameReadCounter(locationX_ - padLeft_,
+                                                     locationY_ - padTop_,
+                                                     frameWidthDownsampled_ +
+                                                     padWidth_,
+                                                     frameHeightDownsampled_ +
+                                                     padHeight_);
   }
 }
 
 void OpenCVInterpolationFrame::sliceFrame() {
-
   // Downsamples a rectangular region a layer of a SVS and compresses frame
   // output.
 
   // Allocate memory to retrieve layer data from openslide
   std::unique_ptr<uint32_t[]> buf_bytes = std::make_unique<uint32_t[]>(
-                              static_cast<size_t>((frameWidthDownsampled_ + padWidth_) *
-                                                  (frameHeightDownsampled_ + padHeight_)));
+                    static_cast<size_t>((frameWidthDownsampled_ + padWidth_) *
+                    (frameHeightDownsampled_ + padHeight_)));
 
-  // If progressively downsampling then dcmFrameRegionReader_ contains previous level
-  // downsample files and their assocciated frames. If no files are contained, either the
-  // highest resolution image is being downsampled or progressive downsampling is not being used.
-  // if this is the case the image is retrieved using openslide.
-  const bool dcmFrameRegionReaderNotInitalized = dcmFrameRegionReader_->dicom_file_count() == 0;
+  // If progressively downsampling then dcmFrameRegionReader_ contains
+  // previous level downsample files and their assocciated frames. If no
+  // files are contained, either the highest resolution image is being
+  // downsampled or progressive downsampling is not being used. If this is
+  // the case the image is retrieved using openslide.
+  const bool dcmFrameRegionReaderNotInitalized =
+                                dcmFrameRegionReader_->dicom_file_count() == 0;
   if (dcmFrameRegionReaderNotInitalized) {
     // Open slide API samples using xy coordinages from level 0 image.
     // upsample coordinates to level 0 to compute sampleing site.
 
-    const int64_t Level0_x = ((locationX_ - padLeft_) * level0Width_) / levelWidth_;
-    const int64_t Level0_y = ((locationY_ - padTop_)* level0Height_) / levelHeight_;
+    const int64_t Level0_x = ((locationX_ - padLeft_) * level0Width_) /
+                             levelWidth_;
+    const int64_t Level0_y = ((locationY_ - padTop_) * level0Height_) /
+                             levelHeight_;
     // Open slide read region returns ARGB formated pixels
     // Values are pre-multiplied with alpha
     // https://github.com/openslide/openslide/wiki/PremultipliedARGB
     openslide_read_region(osr_, buf_bytes.get(), Level0_x,
-                          Level0_y, level_, frameWidthDownsampled_ + padWidth_, frameHeightDownsampled_ + padHeight_);
+                          Level0_y, level_,
+                          frameWidthDownsampled_ + padWidth_,
+                           frameHeightDownsampled_ + padHeight_);
     if (openslide_get_error(osr_)) {
        BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
        throw 1;
@@ -147,7 +161,7 @@ void OpenCVInterpolationFrame::sliceFrame() {
       const int xend = frameWidthDownsampled_ + padWidth_ + yoffset;
       for (uint32_t x = yoffset; x < xend; ++x) {
         const uint32_t pixel = buf_bytes[x];  // Pixel value to be downsampled
-	      const int alpha = pixel >> 24;            // Alpha value of pixel
+        const int alpha = pixel >> 24;            // Alpha value of pixel
         if (alpha == 0) {                         // If transparent skip
           continue;
         }
@@ -160,7 +174,7 @@ void OpenCVInterpolationFrame::sliceFrame() {
         if (alpha != 0xFF) {
           red = red * 255 / alpha;
           green = green * 255 / alpha;
-	        blue = blue * 255 / alpha;
+          blue = blue * 255 / alpha;
         }
         // Swap red and blue channel for dicom compatiability.
         buf_bytes[x] = (alpha << 24) | (blue << 16) | (green << 8) | red;
@@ -168,8 +182,11 @@ void OpenCVInterpolationFrame::sliceFrame() {
       yoffset += frameWidthDownsampled_ + padWidth_;
     }
   } else {
-    dcmFrameRegionReader_->read_region(locationX_ - padLeft_, locationY_ - padTop_, frameWidthDownsampled_ + padWidth_,
-                                       frameHeightDownsampled_ + padHeight_, buf_bytes.get());
+    dcmFrameRegionReader_->read_region(locationX_ - padLeft_,
+                                       locationY_ - padTop_,
+                                       frameWidthDownsampled_ + padWidth_,
+                                       frameHeightDownsampled_ + padHeight_,
+                                       buf_bytes.get());
   }
   const size_t frame_mem_size = static_cast<size_t>(frameWidth_ * frameHeight_);
   std::unique_ptr<uint32_t[]> raw_bytes;
@@ -177,8 +194,11 @@ void OpenCVInterpolationFrame::sliceFrame() {
     // If image is not being resized move memory from buffer to raw_bytes
     raw_bytes = std::move(buf_bytes);
   } else {
-    // Initalize OpenCV image with source image bits padded out to provide context beyond frame boundry.
-    Mat source_image(frameHeightDownsampled_+padHeight_, frameWidthDownsampled_+padWidth_, CV_8UC4, buf_bytes.get());
+    // Initalize OpenCV image with source image bits padded out to
+    // provide context beyond frame boundry.
+    Mat source_image(frameHeightDownsampled_+padHeight_,
+                     frameWidthDownsampled_+padWidth_, CV_8UC4,
+                     buf_bytes.get());
     Mat resized_image;
     const int resize_width = frameWidth_ + (padWidth_ / widthScaleFactor_);
     const int resize_height =  frameHeight_ + (padHeight_ / heightScaleFactor_);
@@ -194,7 +214,8 @@ void OpenCVInterpolationFrame::sliceFrame() {
      cv::INTER_MAX = 7,
     */
     // Open CV resize image
-    resize(source_image, resized_image, Size(resize_width, resize_height), 0, 0, openCVInterpolationMethod_);
+    resize(source_image, resized_image, Size(resize_width, resize_height), 0,
+           0, openCVInterpolationMethod_);
 
     // Copy area of intrest from resized source image to raw bytres buffer
     raw_bytes = std::make_unique<uint32_t[]>(frame_mem_size);
@@ -203,11 +224,12 @@ void OpenCVInterpolationFrame::sliceFrame() {
     const int yend = frameHeight_ + ystart;
     uint32_t raw_offset = 0;
     uint32_t source_yoffset = ystart * resize_width;
-    uint32_t* resized_source_img = reinterpret_cast<uint32_t*>(resized_image.data);
+    uint32_t* resized_source_img =
+                              reinterpret_cast<uint32_t*>(resized_image.data);
     for (uint32_t y = ystart; y < yend; ++y) {
       const uint32_t xend = frameWidth_+xstart + source_yoffset;
       for (uint32_t x = xstart+source_yoffset; x < xend; ++x) {
-	      raw_bytes[raw_offset] = resized_source_img[x];
+        raw_bytes[raw_offset] = resized_source_img[x];
         raw_offset += 1;
       }
       source_yoffset  +=  resize_width;
@@ -241,4 +263,4 @@ void OpenCVInterpolationFrame::sliceFrame() {
   done_ = true;
 }
 
-}  // namespace wsiToDicomConverter
+}  // namespace cv::wsiToDicomConverter

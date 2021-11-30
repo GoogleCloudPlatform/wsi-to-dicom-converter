@@ -25,9 +25,7 @@
 
 #include "src/enums.h"
 
-using namespace cv;
-
-namespace wsiToDicomConverter {
+namespace cv::wsiToDicomConverter {
 
 class SlideLevelDim {
  public:
@@ -212,5 +210,5 @@ class WsiToDcm {
   openslide_t * openslide_ptr();
 };
 
-}  // namespace wsiToDicomConverter
+}  // namespace cv::wsiToDicomConverter
 #endif  // SRC_WSITODCM_H_

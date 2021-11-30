@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
         programOptions::bool_switch(
         &stopDownsamplingAtSingleFrame)->default_value(false),
         "Stop image downsampling if image dimensions < "
-        "frame dimensions.")        
+        "frame dimensions.")
         ("floorCorrectOpenslideLevelDownsamples",
         programOptions::bool_switch(
         &floorCorrectDownsampling)->default_value(false),
@@ -147,7 +147,9 @@ int main(int argc, char *argv[]) {
         ("opencvDownsampling",
         programOptions::value<std::string>(
         &downsamplingAlgorithm)->default_value("NONE"),
-        "OpenCV downsampling algorithm, supported: LANCZOS4, CUBIC, AREA, LINEAR, LINEAR_EXACT, NEAREST, NEAREST_EXACT. Default value 'NONE' uses non-opencv boost::gli nearestneighbor downsampling.");
+        "OpenCV downsampling algorithm, supported: LANCZOS4, CUBIC, AREA, "
+        "LINEAR, LINEAR_EXACT, NEAREST, NEAREST_EXACT. Default value "
+        "'NONE' uses non-opencv boost::gli nearestneighbor downsampling.");
 
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
@@ -232,7 +234,8 @@ int main(int argc, char *argv[]) {
     request.openCVInterpolationMethod = INTER_LANCZOS4;
     request.useOpenCVDownsampling = false;
   } else {
-    std::cerr << "Unrecognized OpenCVDownsamplingAlgorithm: " << downsamplingAlgorithm;
+    std::cerr << "Unrecognized OpenCVDownsamplingAlgorithm: " <<
+                 downsamplingAlgorithm;
     return 1;
   }
 

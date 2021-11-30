@@ -25,9 +25,7 @@
 #include "src/compressor.h"
 #include "src/frame.h"
 
-using namespace cv;
-
-namespace wsiToDicomConverter {
+namespace cv::wsiToDicomConverter {
 
 // Frame represents a single image frame from the OpenSlide library
 class OpenCVInterpolationFrame : public Frame {
@@ -43,16 +41,16 @@ class OpenCVInterpolationFrame : public Frame {
   // levelWidth, levelHeight - dimensions of source level being downsampled.
   // level0Width, level0Height - dimensions of base level (highest mag)
   OpenCVInterpolationFrame(openslide_t *osr, int64_t locationX,
-                             int64_t locationY, int32_t level,
-                             int64_t frameWidthDownsampled,
-                             int64_t frameHeightDownsampled, int64_t frameWidth,
-                             int64_t frameHeight, DCM_Compression compression,
-                             int quality, int64_t levelWidth,
-                             int64_t levelHeight, int64_t level0Width,
-                             int64_t level0Height,
-                             bool store_raw_bytes,
-                             DICOMFileFrameRegionReader* frame_region_reader,
-                             const InterpolationFlags openCVInterpolationMethod);
+                          int64_t locationY, int32_t level,
+                          int64_t frameWidthDownsampled,
+                          int64_t frameHeightDownsampled, int64_t frameWidth,
+                          int64_t frameHeight, DCM_Compression compression,
+                          int quality, int64_t levelWidth,
+                          int64_t levelHeight, int64_t level0Width,
+                          int64_t level0Height,
+                          bool store_raw_bytes,
+                          DICOMFileFrameRegionReader* frame_region_reader,
+                          const InterpolationFlags openCVInterpolationMethod);
 
   virtual ~OpenCVInterpolationFrame();
   // Gets frame by openslide library, performs scaling it and compressing
@@ -81,6 +79,6 @@ class OpenCVInterpolationFrame : public Frame {
   inline void scalefactorNormPadding(int *padding, int scalefactor);
 };
 
-}  // namespace wsiToDicomConverter
+}  // namespace cv::wsiToDicomConverter
 
 #endif  // SRC_OPENCVINTERPOLATIONFRAME_H_
