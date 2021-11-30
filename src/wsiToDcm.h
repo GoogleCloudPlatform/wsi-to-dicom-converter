@@ -25,7 +25,7 @@
 
 #include "src/enums.h"
 
-namespace cv::wsiToDicomConverter {
+namespace wsiToDicomConverter {
 
 class SlideLevelDim {
  public:
@@ -162,7 +162,7 @@ struct WsiRequest {
   // crop frame so downsampleing generates uniform pixel spacing.
   bool cropFrameToGenerateUniformPixelSpacing = false;
 
-  InterpolationFlags openCVInterpolationMethod = INTER_LANCZOS4;
+  cv::InterpolationFlags openCVInterpolationMethod = cv::INTER_LANCZOS4;
 };
 
 // Contains static methods for generation DICOM files
@@ -210,5 +210,5 @@ class WsiToDcm {
   openslide_t * openslide_ptr();
 };
 
-}  // namespace cv::wsiToDicomConverter
+}  // namespace wsiToDicomConverter
 #endif  // SRC_WSITODCM_H_

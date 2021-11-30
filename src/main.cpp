@@ -217,21 +217,21 @@ int main(int argc, char *argv[]) {
 
   request.useOpenCVDownsampling = true;
   if (downsamplingAlgorithm == "LANCZOS4") {
-    request.openCVInterpolationMethod = INTER_LANCZOS4;
+    request.openCVInterpolationMethod = cv::INTER_LANCZOS4;
   } else if (downsamplingAlgorithm == "CUBIC") {
-    request.openCVInterpolationMethod = INTER_CUBIC;
+    request.openCVInterpolationMethod = cv::INTER_CUBIC;
   } else if (downsamplingAlgorithm == "AREA") {
-    request.openCVInterpolationMethod = INTER_AREA;
+    request.openCVInterpolationMethod = cv::INTER_AREA;
   } else if (downsamplingAlgorithm == "LINEAR") {
-    request.openCVInterpolationMethod = INTER_LINEAR;
+    request.openCVInterpolationMethod = cv::INTER_LINEAR;
   } else if (downsamplingAlgorithm == "LINEAR_EXACT") {
-    request.openCVInterpolationMethod = INTER_LINEAR_EXACT;
+    request.openCVInterpolationMethod = cv::INTER_LINEAR_EXACT;
   } else if (downsamplingAlgorithm == "NEAREST") {
-    request.openCVInterpolationMethod = INTER_NEAREST;
+    request.openCVInterpolationMethod = cv::INTER_NEAREST;
   } else if (downsamplingAlgorithm == "NEAREST_EXACT") {
-    request.openCVInterpolationMethod = INTER_NEAREST_EXACT;
+    request.openCVInterpolationMethod = cv::INTER_NEAREST_EXACT;
   } else if (downsamplingAlgorithm == "NONE") {
-    request.openCVInterpolationMethod = INTER_LANCZOS4;
+    request.openCVInterpolationMethod = cv::INTER_LANCZOS4;
     request.useOpenCVDownsampling = false;
   } else {
     std::cerr << "Unrecognized OpenCVDownsamplingAlgorithm: " <<

@@ -29,7 +29,7 @@
 #include "src/rawCompression.h"
 #include "src/zlibWrapper.h"
 
-namespace cv::wsiToDicomConverter {
+namespace wsiToDicomConverter {
 
 OpenCVInterpolationFrame::OpenCVInterpolationFrame(
     openslide_t *osr, int64_t locationX, int64_t locationY, int32_t level,
@@ -38,7 +38,7 @@ OpenCVInterpolationFrame::OpenCVInterpolationFrame(
     int quality, int64_t levelWidth, int64_t levelHeight, int64_t level0Width,
     int64_t level0Height, bool store_raw_bytes,
     DICOMFileFrameRegionReader *frame_region_reader,
-    const InterpolationFlags openCVInterpolationMethod) : Frame(locationX,
+    const cv::InterpolationFlags openCVInterpolationMethod) : Frame(locationX,
                                                                 locationY,
                                                                 frameWidth,
                                                                frameHeight,
@@ -196,10 +196,10 @@ void OpenCVInterpolationFrame::sliceFrame() {
   } else {
     // Initalize OpenCV image with source image bits padded out to
     // provide context beyond frame boundry.
-    Mat source_image(frameHeightDownsampled_+padHeight_,
-                     frameWidthDownsampled_+padWidth_, CV_8UC4,
-                     buf_bytes.get());
-    Mat resized_image;
+    cv::Mat source_image(frameHeightDownsampled_+padHeight_,
+                         frameWidthDownsampled_+padWidth_, CV_8UC4,
+                          buf_bytes.get());
+    cv::Mat resized_image;
     const int resize_width = frameWidth_ + (padWidth_ / widthScaleFactor_);
     const int resize_height =  frameHeight_ + (padHeight_ / heightScaleFactor_);
     /*
@@ -214,8 +214,9 @@ void OpenCVInterpolationFrame::sliceFrame() {
      cv::INTER_MAX = 7,
     */
     // Open CV resize image
-    resize(source_image, resized_image, Size(resize_width, resize_height), 0,
-           0, openCVInterpolationMethod_);
+    cv::resize(source_image, resized_image,
+               cv::Size(resize_width, resize_height), 0, 0,
+               openCVInterpolationMethod_);
 
     // Copy area of intrest from resized source image to raw bytres buffer
     raw_bytes = std::make_unique<uint32_t[]>(frame_mem_size);
@@ -263,4 +264,5 @@ void OpenCVInterpolationFrame::sliceFrame() {
   done_ = true;
 }
 
-}  // namespace cv::wsiToDicomConverter
+}  // namespace wsiToDicomConverter
+

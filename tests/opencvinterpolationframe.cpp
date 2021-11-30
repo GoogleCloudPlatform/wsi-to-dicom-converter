@@ -29,7 +29,8 @@ TEST(OpenCVInterpolationFrame, jpeg) {
   openslide_t* osr = openslide_open(tiffFileName);
   OpenCVInterpolationFrame frame(osr, 0, 0, 0, 100, 100, 100, 100, JPEG, 1,
                                    1000, 1000, 2000, 2000,
-                                   false, &dicom_frame_reader, INTER_LANCZOS4);
+                                   false, &dicom_frame_reader,
+                                   cv::INTER_LANCZOS4);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
   ASSERT_FALSE(frame.has_compressed_raw_bytes());
@@ -41,7 +42,8 @@ TEST(OpenCVInterpolationFrame, jpeg2000Scaling) {
   openslide_t* osr = openslide_open(tiffFileName);
   OpenCVInterpolationFrame frame(osr, 0, 0, 0, 1000, 1000, 100, 100, JPEG2000,
                                    1, 1000, 1000, 2000, 2000,
-                                   true, &dicom_frame_reader, INTER_LANCZOS4);
+                                   true, &dicom_frame_reader,
+                                   cv::INTER_LANCZOS4);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
   ASSERT_TRUE(frame.has_compressed_raw_bytes());
