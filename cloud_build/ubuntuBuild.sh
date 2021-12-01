@@ -30,7 +30,7 @@ unzip opencv.zip
 mv opencv-4.5.4 opencv
 mkdir -p opencv_build
 cd /opencv_build
-cmake ../opencv
+cmake ../opencv -DBUILD_LIST=core,imgproc
 make -j12
 make install
 cd /

@@ -238,8 +238,6 @@ int main(int argc, char *argv[]) {
                  downsamplingAlgorithm;
     return 1;
   }
-
-
   request.debug = debug;
   wsiToDicomConverter::WsiToDcm converter(&request);
   return converter.wsi2dcm();
