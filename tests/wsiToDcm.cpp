@@ -273,9 +273,9 @@ TEST(getDownsampledLevelDimensionMM, width) {
   request.downsamples = std::move(downsamples);
   request.debug = true;
   wsiToDicomConverter::WsiToDcm converter(&request);
-  double dimX = converter.getDownsampledLevelDimensionMM(2220, 69, 32.0,
+  double dimX = converter.getDownsampledLevelDimensionMM(2220,
                                                          "openslide.mpp-x");
-  ASSERT_TRUE(std::abs(dimX - 1.10179) < 0.0001);
+  ASSERT_TRUE(std::abs(dimX - 1.10778) < 0.0001);
 }
 
 TEST(getDownsampledLevelDimensionMM, height) {
@@ -297,9 +297,9 @@ TEST(getDownsampledLevelDimensionMM, height) {
   request.downsamples = std::move(downsamples);
   request.debug = true;
   wsiToDicomConverter::WsiToDcm converter(&request);
-  double dimY = converter.getDownsampledLevelDimensionMM(2967, 92, 32.0,
+  double dimY = converter.getDownsampledLevelDimensionMM(2967,
                                                          "openslide.mpp-y");
-  ASSERT_TRUE(std::abs(dimY - 1.46906) < 0.0001);
+  ASSERT_TRUE(std::abs(dimY - 1.48053) < 0.0001);
 }
 
 TEST(getSlideLevelDim, no_cropping_no_progressive) {

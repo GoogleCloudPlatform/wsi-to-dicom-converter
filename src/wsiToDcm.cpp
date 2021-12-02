@@ -333,8 +333,6 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int32_t level,
 
 double  WsiToDcm::getDownsampledLevelDimensionMM(
                                            const int64_t adjustedFirstLevelDim,
-                                           const int64_t levelDimDownsampled,
-                                           const double downsample,
                                        const char* openSlideLevelDimProperty) {
   double firstLevelMpp = 0.0;
   const char *openslideFirstLevelMpp =
@@ -342,11 +340,7 @@ double  WsiToDcm::getDownsampledLevelDimensionMM(
   if (openslideFirstLevelMpp != nullptr) {
     firstLevelMpp = std::stod(openslideFirstLevelMpp);
   }
-  const int64_t dimAdjustment = (levelDimDownsampled * downsample) -
-                                                  adjustedFirstLevelDim;
-  const double levelDim = static_cast<double>(adjustedFirstLevelDim +
-                                                 dimAdjustment);
-  return levelDim * firstLevelMpp / 1000;
+  return static_cast<double>(adjustedFirstLevelDim) * firstLevelMpp / 1000;
 }
 
 bool downsample_order(const std::tuple<int32_t, int64_t> &i,
@@ -521,6 +515,12 @@ int WsiToDcm::dicomizeTiff() {
   DICOMFileFrameRegionReader higherMagnifcationDicomFiles;
   std::vector<std::unique_ptr<DcmFileDraft>> generatedDicomFiles;
   std::unique_ptr<SlideLevelDim> slideLevelDim = NULL;
+  const double levelWidthMM = getDownsampledLevelDimensionMM(
+                          largestSlideLevelWidth_ - largestSlideWidthCrop -
+                          initialX_, "openslide.mpp-x");
+  const double levelHeightMM = getDownsampledLevelDimensionMM(
+                        largestSlideLevelHeight_ - largestSlideHeightCrop -
+                        initialY_, "openslide.mpp-y");
   for (const int32_t &level : slideLevels) {
     // only progressive downsample if have higher mag buffer filled.
     slideLevelDim = std::move(getSlideLevelDim(level,
@@ -555,15 +555,6 @@ int WsiToDcm::dicomizeTiff() {
     BOOST_LOG_TRIVIAL(debug) << "Starting Level " << level;
     BOOST_LOG_TRIVIAL(debug) << "level size: " << levelWidth << ' '
                              << levelHeight << ' ' << multiplicator;
-    const double levelWidthMM = getDownsampledLevelDimensionMM(
-                          largestSlideLevelWidth_ - largestSlideWidthCrop -
-                          initialX_, levelWidthDownsampled, downsample,
-                          "openslide.mpp-x");
-    const double levelHeightMM = getDownsampledLevelDimensionMM(
-                          largestSlideLevelHeight_ - largestSlideHeightCrop -
-                          initialY_, levelHeightDownsampled, downsample,
-                          "openslide.mpp-y");
-
     BOOST_LOG_TRIVIAL(debug) << "multiplicator: " << multiplicator;
     BOOST_LOG_TRIVIAL(debug) << "levelToGet: " << levelToGet;
     BOOST_LOG_TRIVIAL(debug) << "downsample: " << downsample;

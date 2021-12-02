@@ -188,8 +188,6 @@ class WsiToDcm {
                                       bool enableProgressiveDownsample = true);
 
   double  getDownsampledLevelDimensionMM(const int64_t adjustedFirstLevelDim,
-                                         const int64_t levelDimDownsampled,
-                                         const double downsample,
                                          const char* openSlideLevelDimProperty);
 
   int32_t getOpenslideLevelForDownsample(int64_t downsample);
