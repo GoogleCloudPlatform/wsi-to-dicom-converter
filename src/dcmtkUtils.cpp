@@ -308,7 +308,7 @@ OFCondition DcmtkUtils::insertStaticTags(DcmDataset* dataSet, int level) {
   if (cond.bad()) return cond;
   if (level == 0) {
     cond = dataSet->putAndInsertOFStringArray(DCM_ImageType,
-                                          "DERIVED\\PRIMARY\\VOLUME\\NONE");
+                                          "ORIGINAL\\PRIMARY\\VOLUME\\NONE");
   } else {
     cond = dataSet->putAndInsertOFStringArray(DCM_ImageType,
                                      "DERIVED\\PRIMARY\\VOLUME\\RESAMPLED");

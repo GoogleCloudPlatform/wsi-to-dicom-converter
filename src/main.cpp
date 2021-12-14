@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
   std::string seriesId;
   std::string studyId;
   std::string downsamplingAlgorithm;
+  std::string firstlevelCompression;
   int tileHeight;
   int tileWidth;
   int levels;
@@ -85,6 +86,11 @@ int main(int argc, char *argv[]) {
         "compression",
         programOptions::value<std::string>(&compression)->default_value("jpeg"),
         "compression, supported compressions: jpeg, jpeg2000, raw")(
+        "firstLevelCompression",
+        programOptions::value<std::string>(&firstlevelCompression)
+            ->default_value("default"),
+        "compression, supported compressions: jpeg, jpeg2000, raw")
+        (
         "seriesDescription",
         programOptions::value<std::string>(&seriesDescription)->required(),
         "series description in SeriesDescription tag")(
@@ -133,7 +139,7 @@ int main(int argc, char *argv[]) {
         "alignemnt issues when generating output from images captured at "
         "multiple downsampling levels. To use images must be generated from "
         "highest to lowest magnification.")
-        ("compressionQuality",
+        ("jpegCompressionQuality",
         programOptions::value<int>(
         &compressionQuality)->default_value(80),
         "Compression quality range(0 - 100")
@@ -187,6 +193,12 @@ int main(int argc, char *argv[]) {
   request.outputFileMask = outputFolder;
   request.frameSizeX = std::max(tileWidth, 1);
   request.frameSizeY = std::max(tileHeight, 1);
+  if (firstlevelCompression == "default") {
+    request.firstlevelCompression = dcmCompressionFromString(compression);
+  } else {
+    request.firstlevelCompression = dcmCompressionFromString(firstlevelCompression);
+  }
+  request.firstlevelCompression = dcmCompressionFromString(firstlevelCompression);
   request.compression = dcmCompressionFromString(compression);
   request.quality = std::max(std::min(100, compressionQuality), 0);
   request.startOnLevel = std::max(start, 0);

@@ -92,7 +92,7 @@ Frame* DICOMFileFrameRegionReader::get_frame_ptr(int64_t index) {
         return dcm_file.get_frame(index);
       }
     }
-    return NULL;
+    return nullptr;
   }
 
 bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
@@ -108,7 +108,7 @@ bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
     // Returns:
     //   true if frame memory initalized
     Frame* fptr = get_frame_ptr(index);
-    if (fptr != NULL) {
+    if (fptr != nullptr) {
         return fptr->get_raw_frame_bytes(
                 reinterpret_cast<uint8_t *>(frame_memory),
                                             frame_buffer_size_bytes) ==
@@ -145,9 +145,9 @@ bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
         int64_t frame_cursor = fx + frame_offset;  // frame memory read index
         for (int64_t column = mx; column < end_mx; ++column) {
             int64_t imageX = column + image_offset_X;
-            if (imageX >= imageWidth_ ||   // if frame memory is null or
+            if (imageX >= imageWidth_ ||   // if frame memory is nullptr or
                 imageY >= imageHeight_ ||  // outside of image bounds
-                frame_bytes == NULL) {    // set copied pixel memory ARGB to 0
+                frame_bytes == nullptr) {    // set copied pixel memory ARGB to 0
               memory[column + my_offset] = 0;
             } else {   // otherwise copy memory
               memory[column + my_offset] = frame_bytes[frame_cursor];
@@ -213,7 +213,7 @@ bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
                                                                   ++frame_xc) {
         if ((frame_xc <= framesPerRow_) && (frame_yc <= framesPerColumn_)) {
           Frame* fptr = get_frame_ptr(frame_xc + frame_yc_offset);
-          if (fptr != NULL) {
+          if (fptr != nullptr) {
             fptr->inc_read_counter();
           }
         }
@@ -292,7 +292,7 @@ bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
       for (int64_t frame_xc = first_frame_x; frame_xc <= last_frame_x;
                                                                   ++frame_xc) {
         // Get Frame memory
-        uint32_t *raw_frame_bytes = NULL;
+        uint32_t *raw_frame_bytes = nullptr;
         if ((frame_xc <= framesPerRow_) && (frame_yc <= framesPerColumn_)) {
           if (get_frame_bytes(frame_xc + frame_yc_offset, frame_mem.get(),
                               frame_mem_size_bytes)) {

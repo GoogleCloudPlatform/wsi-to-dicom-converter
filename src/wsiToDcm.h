@@ -163,6 +163,8 @@ struct WsiRequest {
   bool cropFrameToGenerateUniformPixelSpacing = false;
 
   cv::InterpolationFlags openCVInterpolationMethod = cv::INTER_LANCZOS4;
+
+  DCM_Compression firstlevelCompression = JPEG;
 };
 
 // Contains static methods for generation DICOM files

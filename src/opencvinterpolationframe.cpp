@@ -237,20 +237,20 @@ void OpenCVInterpolationFrame::sliceFrame() {
     }
   }
 
-  // Create a boot::gli view of memory in downsample_bytes
+  // Create a boot::gil view of memory in downsample_bytes
   boost::gil::rgba8c_view_t gil = boost::gil::interleaved_view(
       frameWidth_, frameHeight_,
       (const boost::gil::rgba8c_pixel_t *)raw_bytes.get(),
       frameWidth_ * sizeof(uint32_t));
 
-  // Create gli::image to copy bytes into
+  // Create gil::image to copy bytes into
   boost::gil::rgb8_image_t exp(frameWidth_, frameHeight_);
   boost::gil::rgb8_view_t rgbView = view(exp);
   boost::gil::copy_pixels(gil, rgbView);
   // Compress memory (RAW, jpeg, or jpeg2000)
   data_ = compressor_->compress(rgbView, &size_);
   if (!store_raw_bytes_) {
-    raw_compressed_bytes_ = NULL;
+    raw_compressed_bytes_ = nullptr;
     raw_compressed_bytes_size_ = 0;
   } else {
     raw_compressed_bytes_ = std::move(compress_memory(
