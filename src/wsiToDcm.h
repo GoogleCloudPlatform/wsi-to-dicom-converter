@@ -204,6 +204,7 @@ class WsiToDcm {
   // Generates tasks and handling thread pool
   int dicomizeTiff();
   void checkArguments();
+  openslide_t * openslide_ptr();
 };
 
 }  // namespace wsiToDicomConverter

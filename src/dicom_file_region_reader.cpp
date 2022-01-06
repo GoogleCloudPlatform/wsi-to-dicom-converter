@@ -34,6 +34,7 @@ DcmFileDraft * DICOMFileFrameRegionReader::get_dicom_file(size_t index) {
 void DICOMFileFrameRegionReader::set_dicom_files(
                       std::vector<std::unique_ptr<DcmFileDraft>> dcm_files) {
   // all files should have frames with same dimensions
+  clear_dicom_files();
   dcmFiles_ = std::move(dcm_files);
   if (dcmFiles_.size() <= 0) {
     clear_dicom_files();
@@ -72,9 +73,31 @@ int64_t DICOMFileFrameRegionReader::dicom_file_count() const {
   return dcmFiles_.size();
 }
 
+
+Frame* DICOMFileFrameRegionReader::get_frame_ptr(int64_t index) {
+    // Reads a frame from as set of loaded dicom files.
+    //
+    // Args:
+    //  index : index of frame to read.
+    //
+    // Returns:
+    //   pointer to frame
+    const int64_t file_count = dcmFiles_.size();
+    for (int64_t file_idx = 0; file_idx < file_count; ++file_idx) {
+      const DcmFileDraft & dcm_file = (*dcmFiles_.at(file_idx));
+      const int64_t frame_count = dcm_file.get_file_frame_count();
+      if (index >= frame_count) {
+        index -= frame_count;
+      } else {
+        return dcm_file.get_frame(index);
+      }
+    }
+    return NULL;
+  }
+
 bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
                                                  uint32_t* frame_memory,
-                                const int64_t frame_buffer_size_bytes) const {
+                                const int64_t frame_buffer_size_bytes) {
     // Reads a frame from as set of loaded dicom files.
     //
     // Args:
@@ -84,18 +107,12 @@ bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
     //
     // Returns:
     //   true if frame memory initalized
-    const int64_t file_count = dcmFiles_.size();
-    for (int64_t file_idx = 0; file_idx < file_count; ++file_idx) {
-      const DcmFileDraft & dcm_file = (*dcmFiles_.at(file_idx));
-      const int64_t frame_count = dcm_file.get_file_frame_count();
-      if (index >= frame_count) {
-        index -= frame_count;
-      } else {
-        return dcm_file.get_frame(index)->get_raw_frame_bytes(
+    Frame* fptr = get_frame_ptr(index);
+    if (fptr != NULL) {
+        return fptr->get_raw_frame_bytes(
                 reinterpret_cast<uint8_t *>(frame_memory),
                                             frame_buffer_size_bytes) ==
                                             frame_buffer_size_bytes;
-      }
     }
     return false;
   }
@@ -143,11 +160,61 @@ bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
       }
   }
 
+  bool DICOMFileFrameRegionReader::incSourceFrameReadCounter(int64_t layer_x,
+                                               int64_t layer_y,
+                                               int64_t mem_width,
+                                               int64_t mem_height) {
+    // Reads a sub region from the a set of dicom frames spread across file(s).
+    //
+    // Memory pixels in ARGB format.
+    // Memory pixel value = 0x00000000 for positions outside image dim.
+    //
+    // Args:
+    //   layer_X : upper left X coordinate in image coordinates.
+    //   layer_Y : upper left Y coordinate in image coordinates.
+    //   mem_width : Width of memory to copy into.
+    //   mem_height : Height of memory to copy into.
+    //   memory : Memory to copy into .
+    //
+    // Returns: True if has files, false if no DICOM files set.
+    if (dicom_file_count() <= 0) {
+      return false;
+    }
+    // compute first and last frames to read.
+    const int64_t first_frame_y = (layer_y / frameHeight_);
+    const int64_t first_frame_x = (layer_x / frameWidth_);
+    const int64_t last_frame_y = static_cast<int64_t>(
+                      std::ceil(static_cast<double>(layer_y + mem_height - 1) /
+                                static_cast<double>(frameHeight_)));
+    const int64_t last_frame_x = static_cast<int64_t>(
+                      std::ceil(static_cast<double>(layer_x + mem_width - 1) /
+                                static_cast<double>(frameWidth_)));
+
+    int64_t frame_yc_offset = first_frame_y * framesPerRow_;
+    // increment over frame rows
+    for (int64_t frame_yc = first_frame_y; frame_yc <= last_frame_y;
+                                                                  ++frame_yc) {
+      // iterate over frame columns.
+      for (int64_t frame_xc = first_frame_x; frame_xc <= last_frame_x;
+                                                                  ++frame_xc) {
+        if ((frame_xc <= framesPerRow_) && (frame_yc <= framesPerColumn_)) {
+          Frame* fptr = get_frame_ptr(frame_xc + frame_yc_offset);
+          if (fptr != NULL) {
+            fptr->inc_read_counter();
+          }
+        }
+      }
+      // increment row offset into frame buffer memory.
+      frame_yc_offset += framesPerRow_;
+    }
+    return true;
+  }
+
   bool DICOMFileFrameRegionReader::read_region(int64_t layer_x,
                                                int64_t layer_y,
                                                int64_t mem_width,
                                                int64_t mem_height,
-                                               uint32_t *memory) const {
+                                               uint32_t *memory) {
     // Reads a sub region from the a set of dicom frames spread across file(s).
     //
     // Memory pixels in ARGB format.

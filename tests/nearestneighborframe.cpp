@@ -28,7 +28,7 @@ TEST(NearestNeighborFrame, jpeg) {
   DICOMFileFrameRegionReader dicom_frame_reader;
   openslide_t* osr = openslide_open(tiffFileName);
   NearestNeighborFrame frame(osr, 0, 0, 0, 100, 100, 1, 100, 100, JPEG, 1,
-                             false, dicom_frame_reader);
+                             false, &dicom_frame_reader);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
   ASSERT_FALSE(frame.has_compressed_raw_bytes());
@@ -40,7 +40,7 @@ TEST(NearestNeighborFrame, jpeg2000Scaling) {
   std::vector<std::unique_ptr<DcmFileDraft>> higher_magnifcation_dicom_files;
   openslide_t* osr = openslide_open(tiffFileName);
   NearestNeighborFrame frame(osr, 0, 0, 0, 1000, 1000, 1, 100, 100, JPEG2000,
-                             1, true, dicom_frame_reader);
+                             1, true, &dicom_frame_reader);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
   ASSERT_TRUE(frame.has_compressed_raw_bytes());
@@ -52,7 +52,7 @@ TEST(NearestNeighborFrame, rawData) {
   DICOMFileFrameRegionReader dicom_frame_reader;
   openslide_t* osr = openslide_open(tiffFileName);
   NearestNeighborFrame frame(osr, 2219, 2966, 0, 100, 100, 1, 100, 100, RAW, 1,
-                             true, dicom_frame_reader);
+                             true, &dicom_frame_reader);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
   ASSERT_TRUE(frame.has_compressed_raw_bytes());

@@ -107,7 +107,7 @@ int64_t DcmFileDraft::get_file_frame_count() const {
   return framesData_.size();
 }
 
-const Frame* const DcmFileDraft::get_frame(int64_t idx) const {
+Frame* DcmFileDraft::get_frame(int64_t idx) const {
   return framesData_.at(idx).get();
 }
 

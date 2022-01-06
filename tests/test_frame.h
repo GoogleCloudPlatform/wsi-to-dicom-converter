@@ -13,6 +13,7 @@
 // limitations under the License.
 #ifndef TESTS_TEST_FRAME_H_
 #define TESTS_TEST_FRAME_H_
+#include <atomic>
 #include <memory>
 
 #include "src/frame.h"
@@ -24,18 +25,14 @@ class TestFrame : public Frame {
   TestFrame(int64_t width, int64_t height);
   TestFrame(int64_t width, int64_t height, uint32_t value);
   virtual void sliceFrame();
-  virtual bool isDone() const;
-  virtual uint8_t *get_dicom_frame_bytes();
-  virtual size_t getSize() const;
+
   virtual int64_t get_raw_frame_bytes(uint8_t *raw_memory,
-                                      int64_t memorysize) const;
-  virtual int64_t get_frame_width() const;
-  virtual int64_t get_frame_height() const;
-  virtual void clear_dicom_mem();
+                                      int64_t memorysize);
   virtual bool has_compressed_raw_bytes() const;
 
+  virtual void incSourceFrameReadCounter();
+
  private:
-  int64_t width_, height_;
   std::unique_ptr<uint32_t[]> rawValue_;
 };
 
