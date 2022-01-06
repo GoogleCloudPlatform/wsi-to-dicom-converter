@@ -27,6 +27,8 @@ DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-es
 #3
 wget -O /opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.5.4.zip > /dev/null
 unzip /opencv.zip
+pwd
+ls -l 
 mv /opencv-4.5.4 /opencv
 mkdir -p /opencv_build
 cd /opencv_build
