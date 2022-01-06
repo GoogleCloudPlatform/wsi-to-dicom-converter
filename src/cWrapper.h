@@ -39,7 +39,7 @@ int wsi2dcm(const char* inputFile, const char* outputFileMask,
             const char* imageName, const char* studyId, const char* seriesId,
             int retileLevels, int* downsamples, bool tiled, int batchLimit,
             int threads, bool debug, bool stopDownsamplingAtSingleFrame,
-            bool bilinearDownsampling, bool floorCorrectDownsampling,
+            bool useOpenCVDownsampling, bool floorCorrectDownsampling,
             bool progressiveDownsample,
             bool cropFrameToGenerateUniformPixelSpacing);
 
@@ -53,7 +53,7 @@ int wsi2dcmJson(const char* inputFile, const char* outputFileMask,
                 const char* seriesId, const char* jsonFile, int retileLevels,
                 int* downsamples, bool tiled, int batchLimit, int threads,
                 bool debug, bool stopDownsamplingAtSingleFrame,
-                bool bilinearDownsampling, bool floorCorrectDownsampling,
+                bool useOpenCVDownsampling, bool floorCorrectDownsampling,
                 bool progressiveDownsample,
                 bool cropFrameToGenerateUniformPixelSpacing);
 #ifdef __cplusplus

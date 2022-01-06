@@ -31,12 +31,12 @@
 #include <utility>
 #include <vector>
 
-#include "src/bilinearinterpolationframe.h"
 #include "src/dcmFileDraft.h"
 #include "src/dcmTags.h"
 #include "src/dicom_file_region_reader.h"
 #include "src/geometryUtils.h"
 #include "src/nearestneighborframe.h"
+#include "src/opencvinterpolationframe.h"
 
 namespace wsiToDicomConverter {
 
@@ -619,14 +619,14 @@ int WsiToDcm::dicomizeTiff() {
       int64_t x = initialX_;
       while (x < levelWidth - cropSourceLevelWidth) {
         std::unique_ptr<Frame> frameData;
-        if (wsiRequest_->useBilinearDownsampling) {
-          frameData = std::make_unique<BilinearInterpolationFrame>(
+        if (wsiRequest_->useOpenCVDownsampling) {
+          frameData = std::make_unique<OpenCVInterpolationFrame>(
               osr_, x, y, levelToGet, frameWidthDownsampled,
               frameHeightDownsampled, levelFrameWidth, levelFrameHeight,
-              levelCompression, wsiRequest_->quality, levelWidthDownsampled,
-              levelHeightDownsampled, levelWidth, levelHeight,
+              levelCompression, wsiRequest_->quality, levelWidth, levelHeight,
               largestSlideLevelWidth_, largestSlideLevelHeight_,
-              saveCompressedRaw, &higherMagnifcationDicomFiles);
+              saveCompressedRaw, &higherMagnifcationDicomFiles,
+              wsiRequest_->openCVInterpolationMethod);
         } else {
           frameData = std::make_unique<NearestNeighborFrame>(
               osr_, x, y, levelToGet, frameWidthDownsampled,

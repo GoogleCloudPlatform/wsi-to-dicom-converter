@@ -18,30 +18,32 @@
 #include <string>
 #include <vector>
 
-#include "src/bilinearinterpolationframe.h"
+#include "src/opencvinterpolationframe.h"
 #include "src/dicom_file_region_reader.h"
 #include "tests/testUtils.h"
 
 namespace wsiToDicomConverter {
 
-TEST(BilinearInterpolationFrame, jpeg) {
+TEST(OpenCVInterpolationFrame, jpeg) {
   DICOMFileFrameRegionReader dicom_frame_reader;
   openslide_t* osr = openslide_open(tiffFileName);
-  BilinearInterpolationFrame frame(osr, 0, 0, 0, 100, 100, 100, 100, JPEG, 1,
-                                   500, 500, 1000, 1000, 2000, 2000,
-                                   false, &dicom_frame_reader);
+  OpenCVInterpolationFrame frame(osr, 0, 0, 0, 100, 100, 100, 100, JPEG, 1,
+                                   1000, 1000, 2000, 2000,
+                                   false, &dicom_frame_reader,
+                                   cv::INTER_LANCZOS4);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
   ASSERT_FALSE(frame.has_compressed_raw_bytes());
   ASSERT_GE(frame.getSize(), 0);
 }
 
-TEST(BilinearInterpolationFrame, jpeg2000Scaling) {
+TEST(OpenCVInterpolationFrame, jpeg2000Scaling) {
   DICOMFileFrameRegionReader dicom_frame_reader;
   openslide_t* osr = openslide_open(tiffFileName);
-  BilinearInterpolationFrame frame(osr, 0, 0, 0, 1000, 1000, 100, 100, JPEG2000,
-                                   1, 500, 500, 1000, 1000, 2000, 2000,
-                                   true, &dicom_frame_reader);
+  OpenCVInterpolationFrame frame(osr, 0, 0, 0, 1000, 1000, 100, 100, JPEG2000,
+                                   1, 1000, 1000, 2000, 2000,
+                                   true, &dicom_frame_reader,
+                                   cv::INTER_LANCZOS4);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
   ASSERT_TRUE(frame.has_compressed_raw_bytes());

@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
   std::string seriesDescription;
   std::string seriesId;
   std::string studyId;
+  std::string downsamplingAlgorithm;
   int tileHeight;
   int tileWidth;
   int levels;
@@ -44,7 +45,6 @@ int main(int argc, char *argv[]) {
   bool debug;
   bool dropFirstRowAndColumn;
   bool stopDownsamplingAtSingleFrame;
-  bool useBilinearDownsampling;
   bool floorCorrectDownsampling;
   bool preferProgressiveDownsampling;
   bool cropFrameToGenerateUniformPixelSpacing;
@@ -116,11 +116,6 @@ int main(int argc, char *argv[]) {
         &stopDownsamplingAtSingleFrame)->default_value(false),
         "Stop image downsampling if image dimensions < "
         "frame dimensions.")
-        ("bilinearDownsampling",
-        programOptions::bool_switch(
-        &useBilinearDownsampling)->default_value(false),
-        "Use bilinear interpolation to downsample images instead of"
-        " nearest neighbor interpolation to improve downsample image quality.")
         ("floorCorrectOpenslideLevelDownsamples",
         programOptions::bool_switch(
         &floorCorrectDownsampling)->default_value(false),
@@ -148,7 +143,14 @@ int main(int argc, char *argv[]) {
         "Crop imaging to generate downsampled images with unifrom pixel "
         "spacing. Not compatiable with dropFirstRowAndColumn. Recommended, "
         "use uniformPixelSpacing in combination with both "
-        "--stopDownsamplingAtSingleFrame --progressiveDownsample");
+        "--stopDownsamplingAtSingleFrame --progressiveDownsample")
+        ("opencvDownsampling",
+        programOptions::value<std::string>(
+        &downsamplingAlgorithm)->default_value("NONE"),
+        "OpenCV downsampling algorithm, supported: LANCZOS4, CUBIC, AREA, "
+        "LINEAR, LINEAR_EXACT, NEAREST, NEAREST_EXACT. Default value "
+        "'NONE' uses non-opencv boost::gli nearestneighbor downsampling.");
+
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
     positionalOptions.add("outFolder", 1);
@@ -208,11 +210,34 @@ int main(int argc, char *argv[]) {
   request.threads = std::max(threads, -1);
   request.dropFirstRowAndColumn = dropFirstRowAndColumn;
   request.stopDownsamplingAtSingleFrame = stopDownsamplingAtSingleFrame;
-  request.useBilinearDownsampling = useBilinearDownsampling;
   request.floorCorrectDownsampling = floorCorrectDownsampling;
   request.preferProgressiveDownsampling = preferProgressiveDownsampling;
   request.cropFrameToGenerateUniformPixelSpacing =
                                       cropFrameToGenerateUniformPixelSpacing;
+
+  request.useOpenCVDownsampling = true;
+  if (downsamplingAlgorithm == "LANCZOS4") {
+    request.openCVInterpolationMethod = cv::INTER_LANCZOS4;
+  } else if (downsamplingAlgorithm == "CUBIC") {
+    request.openCVInterpolationMethod = cv::INTER_CUBIC;
+  } else if (downsamplingAlgorithm == "AREA") {
+    request.openCVInterpolationMethod = cv::INTER_AREA;
+  } else if (downsamplingAlgorithm == "LINEAR") {
+    request.openCVInterpolationMethod = cv::INTER_LINEAR;
+  } else if (downsamplingAlgorithm == "LINEAR_EXACT") {
+    request.openCVInterpolationMethod = cv::INTER_LINEAR_EXACT;
+  } else if (downsamplingAlgorithm == "NEAREST") {
+    request.openCVInterpolationMethod = cv::INTER_NEAREST;
+  } else if (downsamplingAlgorithm == "NEAREST_EXACT") {
+    request.openCVInterpolationMethod = cv::INTER_NEAREST_EXACT;
+  } else if (downsamplingAlgorithm == "NONE") {
+    request.openCVInterpolationMethod = cv::INTER_LANCZOS4;
+    request.useOpenCVDownsampling = false;
+  } else {
+    std::cerr << "Unrecognized OpenCVDownsamplingAlgorithm: " <<
+                 downsamplingAlgorithm;
+    return 1;
+  }
   request.debug = debug;
   wsiToDicomConverter::WsiToDcm converter(&request);
   return converter.wsi2dcm();

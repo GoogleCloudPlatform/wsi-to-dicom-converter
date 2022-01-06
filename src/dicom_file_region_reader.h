@@ -115,6 +115,12 @@ class DICOMFileFrameRegionReader {
                                int64_t memory_width, int64_t mx, int64_t my)
                                const;
 
+  void getXYFrameSpan(int64_t layer_x, int64_t layer_y, int64_t mem_width,
+                      int64_t mem_height, int64_t *first_frame_x,
+                      int64_t *first_frame_y, int64_t *last_frame_x,
+                      int64_t *last_frame_y);
+
+
   std::vector<std::unique_ptr<DcmFileDraft>> dcmFiles_;
 
   // Dimensions of single frame

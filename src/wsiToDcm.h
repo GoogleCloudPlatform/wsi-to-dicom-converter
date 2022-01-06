@@ -16,6 +16,7 @@
 #define SRC_WSITODCM_H_
 #include <boost/cstdint.hpp>
 #include <openslide.h>
+#include <opencv2/opencv.hpp>
 
 #include <iostream>
 #include <memory>
@@ -148,9 +149,9 @@ struct WsiRequest {
   // stop downsampling if total layer dimensions < 1 frame
   bool stopDownsamplingAtSingleFrame = false;
 
-  // use bilinear interpolation instead of nearest neighbor
+  // use opencv interpolation instead of boost nearest neighbor
   // interpolation
-  bool useBilinearDownsampling = false;
+  bool useOpenCVDownsampling = false;
 
   // floor correct reported openslide downsampling.
   bool floorCorrectDownsampling = false;
@@ -160,6 +161,8 @@ struct WsiRequest {
 
   // crop frame so downsampleing generates uniform pixel spacing.
   bool cropFrameToGenerateUniformPixelSpacing = false;
+
+  cv::InterpolationFlags openCVInterpolationMethod = cv::INTER_LANCZOS4;
 };
 
 // Contains static methods for generation DICOM files
