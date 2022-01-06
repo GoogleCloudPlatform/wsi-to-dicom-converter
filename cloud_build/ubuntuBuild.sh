@@ -27,14 +27,12 @@ DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-es
 #3
 wget -O /opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.5.4.zip > /dev/null
 unzip /opencv.zip  > /dev/null
-pwd
-ls -l
 mkdir -p opencv_build
 cd opencv_build
 cmake ../opencv-4.5.4 -DBUILD_LIST=core,imgproc
 make -j12
 make install
-cd /
+cd ..
 #4
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
