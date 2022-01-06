@@ -147,7 +147,7 @@ bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
             int64_t imageX = column + image_offset_X;
             if (imageX >= imageWidth_ ||   // if frame memory is nullptr or
                 imageY >= imageHeight_ ||  // outside of image bounds
-                frame_bytes == nullptr) {    // set copied pixel memory ARGB to 0
+                frame_bytes == nullptr) {  // set copied pixel memory ARGB to 0
               memory[column + my_offset] = 0;
             } else {   // otherwise copy memory
               memory[column + my_offset] = frame_bytes[frame_cursor];

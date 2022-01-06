@@ -380,7 +380,7 @@ std::unique_ptr<SlideLevelDim>  WsiToDcm::getSmallestSlideDim(
            (wsiRequest_->stopOnLevel < wsiRequest_->startOnLevel ||
                                  level <= wsiRequest_->stopOnLevel); level++) {
       std::unique_ptr<SlideLevelDim> tempSlideLevelDim =
-              std::move(getSlideLevelDim(level, smallestSlideDim.get(), nullptr));
+           std::move(getSlideLevelDim(level, smallestSlideDim.get(), nullptr));
       if (tempSlideLevelDim->levelWidthDownsampled == 0 ||
           tempSlideLevelDim->levelHeightDownsampled == 0) {
         // frame is being downsampled to nothing skip file.
@@ -504,7 +504,7 @@ int WsiToDcm::dicomizeTiff() {
     // passing -1 in forces getSlideLevelDim to return non-downsampled
     // image dimensions a.k.a. largest image from openslide.
     std::unique_ptr<SlideLevelDim> largestDimensions =
-                  std::move(getSlideLevelDim(-1, nullptr, smallestSlideDim.get()));
+              std::move(getSlideLevelDim(-1, nullptr, smallestSlideDim.get()));
     largestSlideWidthCrop = largestDimensions->cropSourceLevelWidth;
     largestSlideHeightCrop = largestDimensions->cropSourceLevelHeight;
   } else {
@@ -633,7 +633,7 @@ int WsiToDcm::dicomizeTiff() {
         }
         if (higherMagnifcationDicomFiles.dicom_file_count() != 0) {
           frameData->incSourceFrameReadCounter();
-        }        
+        }
         framesInitalizationData.push_back(std::move(frameData));
         x += frameWidthDownsampled;
       }

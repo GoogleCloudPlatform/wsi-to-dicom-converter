@@ -196,9 +196,9 @@ int main(int argc, char *argv[]) {
   if (firstlevelCompression == "default") {
     request.firstlevelCompression = dcmCompressionFromString(compression);
   } else {
-    request.firstlevelCompression = dcmCompressionFromString(firstlevelCompression);
+    request.firstlevelCompression =
+                              dcmCompressionFromString(firstlevelCompression);
   }
-  request.firstlevelCompression = dcmCompressionFromString(firstlevelCompression);
   request.compression = dcmCompressionFromString(compression);
   request.quality = std::max(std::min(100, compressionQuality), 0);
   request.startOnLevel = std::max(start, 0);
