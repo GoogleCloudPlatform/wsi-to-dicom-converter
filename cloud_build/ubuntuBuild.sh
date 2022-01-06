@@ -26,7 +26,7 @@ apt-get update
 DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-essential libjsoncpp-dev libjpeg8-dev libgdk-pixbuf2.0-dev libcairo2-dev libsqlite3-dev cmake libglib2.0-dev libxml2-dev libopenjp2-7-dev g++-8 libgtest-dev -y
 #3
 wget -O /opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.5.4.zip > /dev/null
-unzip /opencv.zip > /dev/null
+unzip /opencv.zip
 mv /opencv-4.5.4 /opencv
 mkdir -p /opencv_build
 cd /opencv_build
