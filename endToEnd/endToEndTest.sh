@@ -127,12 +127,12 @@ compare ./endToEnd/test12Generated.json ./endToEnd/test12Expected.json
 
 #test - jpg compression quality 50
 echo "Test 13"
-./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test13  --levels 6 --tileHeight 100  --tileWidth 100 --progressiveDownsample --compressionQuality 50
+./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test13  --levels 6 --tileHeight 100  --tileWidth 100 --progressiveDownsample --jpegCompressionQuality 50
 dcmj2pnm +cl ./endToEnd/level-5-frames-0-1.dcm ./endToEnd/test13GeneratedImage.ppm
 diff ./endToEnd/test13GeneratedImage.ppm ./endToEnd/test13ExpectedImage.ppm
 
 #test - jpg compression quality 95
 echo "Test 14"
-./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test14  --levels 6 --tileHeight 100  --tileWidth 100 --progressiveDownsample --compressionQuality 95
+./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test14  --levels 6 --tileHeight 100  --tileWidth 100 --progressiveDownsample --jpegCompressionQuality 95
 dcmj2pnm +cl ./endToEnd/level-5-frames-0-1.dcm ./endToEnd/test14GeneratedImage.ppm
 diff ./endToEnd/test14GeneratedImage.ppm ./endToEnd/test14ExpectedImage.ppm

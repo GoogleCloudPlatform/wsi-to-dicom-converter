@@ -2,7 +2,7 @@
   "00080008": {
     "vr": "CS",
     "Value": [
-      "DERIVED",
+      "ORIGINAL",
       "PRIMARY",
       "VOLUME",
       "NONE"
@@ -132,7 +132,7 @@
   "00280004": {
     "vr": "CS",
     "Value": [
-      "RGB"
+      "YBR_FULL_422"
     ]
   },
   "00280006": {
