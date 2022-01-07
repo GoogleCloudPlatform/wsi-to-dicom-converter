@@ -163,6 +163,8 @@ struct WsiRequest {
   bool cropFrameToGenerateUniformPixelSpacing = false;
 
   cv::InterpolationFlags openCVInterpolationMethod = cv::INTER_LANCZOS4;
+
+  DCM_Compression firstlevelCompression = JPEG;
 };
 
 // Contains static methods for generation DICOM files
@@ -188,8 +190,6 @@ class WsiToDcm {
                                       bool enableProgressiveDownsample = true);
 
   double  getDownsampledLevelDimensionMM(const int64_t adjustedFirstLevelDim,
-                                         const int64_t levelDimDownsampled,
-                                         const double downsample,
                                          const char* openSlideLevelDimProperty);
 
   int32_t getOpenslideLevelForDownsample(int64_t downsample);

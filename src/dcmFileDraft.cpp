@@ -140,24 +140,25 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
       frame->clear_dicom_mem();
     }
   }
-
   switch (compression_) {
     case JPEG:
       imgInfo.transSyn = EXS_JPEGProcess1;
+      imgInfo.photoMetrInt = "YBR_FULL_422";
       pixelData->putOriginalRepresentation(imgInfo.transSyn, nullptr,
                                            compressedPixelSequence.release());
       break;
     case JPEG2000:
       imgInfo.transSyn = EXS_JPEG2000LosslessOnly;
+      imgInfo.photoMetrInt = "RGB";
       pixelData->putOriginalRepresentation(imgInfo.transSyn, nullptr,
                                            compressedPixelSequence.release());
       break;
     default:
       imgInfo.transSyn = EXS_LittleEndianExplicit;
+      imgInfo.photoMetrInt = "RGB";
       pixelData->putUint8Array(&frames[0], frames.size());
   }
   imgInfo.samplesPerPixel = 3;
-  imgInfo.photoMetrInt = "RGB";
   imgInfo.planConf = 0;
   imgInfo.rows = frameHeight_;
   imgInfo.cols = frameWidth_;

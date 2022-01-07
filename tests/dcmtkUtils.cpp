@@ -65,7 +65,7 @@ TEST(insertStaticTagsTest, correctInsert_Level0) {
   ASSERT_EQ("SM", std::string(stringValue));
 
   findElement(dataSet.get(), DCM_ImageType)->getString(stringValue);
-  ASSERT_EQ("DERIVED\\PRIMARY\\VOLUME\\NONE", std::string(stringValue));
+  ASSERT_EQ("ORIGINAL\\PRIMARY\\VOLUME\\NONE", std::string(stringValue));
 
   findElement(dataSet.get(), DCM_ImageOrientationSlide)->getString(stringValue);
   ASSERT_EQ("0\\-1\\0\\-1\\0\\0", std::string(stringValue));

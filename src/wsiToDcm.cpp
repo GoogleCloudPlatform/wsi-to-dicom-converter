@@ -71,7 +71,7 @@ inline DCM_Compression compressionFromString(std::string compressionStr) {
 }
 
 openslide_t * WsiToDcm::openslide_ptr() {
-  if (osr_ == NULL) {
+  if (osr_ == nullptr) {
     const char *slideFile = wsiRequest_->inputFile.c_str();
     osr_ = openslide_open(slideFile);
     BOOST_LOG_TRIVIAL(debug) << "OpenSlide opened";
@@ -95,13 +95,13 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
   const char *slideFile = wsiRequest_->inputFile.c_str();
   if (!openslide_detect_vendor(slideFile)) {
     BOOST_LOG_TRIVIAL(error) << "file format is not supported by openslide";
-    osr_ = NULL;
+    osr_ = nullptr;
     return;
   }
   osr_ = openslide_open(slideFile);
   if (openslide_get_error(osr_)) {
     BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
-    osr_ = NULL;
+    osr_ = nullptr;
     return;
   }
   svsLevelCount_ = openslide_get_level_count(osr_);
@@ -138,18 +138,18 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
 }
 
 WsiToDcm::~WsiToDcm() {
-  if (osr_ != NULL) {
+  if (osr_ != nullptr) {
     openslide_close(osr_);
-    osr_ = NULL;
+    osr_ = nullptr;
   }
 }
 
 void WsiToDcm::checkArguments() {
-  if (osr_ == NULL) {
+  if (osr_ == nullptr) {
     // Openslide did not intialize
     throw 1;
   }
-  if (wsiRequest_ == NULL) {
+  if (wsiRequest_ == nullptr) {
     BOOST_LOG_TRIVIAL(error) << "request not initalized.";
     throw 1;
   }
@@ -218,7 +218,7 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int32_t level,
      // if -1 passed in load largest level using openslide.
      level = 0;
      enableProgressiveDownsample = false;
-     priorLevel = NULL;
+     priorLevel = nullptr;
   } else if (retile_) {
     if (wsiRequest_->downsamples.size() > level &&
         wsiRequest_->downsamples[level] >= 1) {
@@ -249,7 +249,7 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int32_t level,
   // ProgressiveDownsampling
   if (wsiRequest_->preferProgressiveDownsampling &&
                                                  enableProgressiveDownsample) {
-    if (priorLevel != NULL) {
+    if (priorLevel != nullptr) {
       multiplicator = static_cast<double>(priorLevel->downsample);
       downsampleOfLevel = static_cast<double>(downsample) / multiplicator;
       // check that downsampling is going from higher to lower magnification
@@ -282,7 +282,7 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int32_t level,
   // new starting position.
   int64_t cropSourceLevelWidth = 0;
   int64_t cropSourceLevelHeight = 0;
-  if (smallestSlideDim != NULL) {
+  if (smallestSlideDim != nullptr) {
     const int64_t upsampleFactor = smallestSlideDim->downsample /
                                                                 multiplicator;
     cropSourceLevelWidth = (levelWidth - initialX_) - (upsampleFactor *
@@ -296,7 +296,13 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int32_t level,
   int64_t levelHeightDownsampled;
   int64_t levelFrameWidth;
   int64_t levelFrameHeight;
-  DCM_Compression levelCompression = wsiRequest_->compression;
+  DCM_Compression levelCompression;
+  if (level <= 0) {
+    levelCompression = wsiRequest_->firstlevelCompression;
+  } else {
+    levelCompression = wsiRequest_->compression;
+  }
+
   dimensionDownsampling(wsiRequest_->frameSizeX, wsiRequest_->frameSizeY,
                         levelWidth - cropSourceLevelWidth - initialX_,
                         levelHeight - cropSourceLevelHeight - initialY_,
@@ -333,8 +339,6 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int32_t level,
 
 double  WsiToDcm::getDownsampledLevelDimensionMM(
                                            const int64_t adjustedFirstLevelDim,
-                                           const int64_t levelDimDownsampled,
-                                           const double downsample,
                                        const char* openSlideLevelDimProperty) {
   double firstLevelMpp = 0.0;
   const char *openslideFirstLevelMpp =
@@ -342,11 +346,7 @@ double  WsiToDcm::getDownsampledLevelDimensionMM(
   if (openslideFirstLevelMpp != nullptr) {
     firstLevelMpp = std::stod(openslideFirstLevelMpp);
   }
-  const int64_t dimAdjustment = (levelDimDownsampled * downsample) -
-                                                  adjustedFirstLevelDim;
-  const double levelDim = static_cast<double>(adjustedFirstLevelDim +
-                                                 dimAdjustment);
-  return levelDim * firstLevelMpp / 1000;
+  return static_cast<double>(adjustedFirstLevelDim) * firstLevelMpp / 1000;
 }
 
 bool downsample_order(const std::tuple<int32_t, int64_t> &i,
@@ -365,7 +365,7 @@ bool downsample_order(const std::tuple<int32_t, int64_t> &i,
 
 std::unique_ptr<SlideLevelDim>  WsiToDcm::getSmallestSlideDim(
                                           std::vector<int32_t> *slideLevels) {
-  std::unique_ptr<SlideLevelDim> smallestSlideDim = NULL;
+  std::unique_ptr<SlideLevelDim> smallestSlideDim = nullptr;
   int32_t levels;
   if (retile_) {
     levels = wsiRequest_->retileLevels;
@@ -380,7 +380,7 @@ std::unique_ptr<SlideLevelDim>  WsiToDcm::getSmallestSlideDim(
            (wsiRequest_->stopOnLevel < wsiRequest_->startOnLevel ||
                                  level <= wsiRequest_->stopOnLevel); level++) {
       std::unique_ptr<SlideLevelDim> tempSlideLevelDim =
-              std::move(getSlideLevelDim(level, smallestSlideDim.get(), NULL));
+           std::move(getSlideLevelDim(level, smallestSlideDim.get(), nullptr));
       if (tempSlideLevelDim->levelWidthDownsampled == 0 ||
           tempSlideLevelDim->levelHeightDownsampled == 0) {
         // frame is being downsampled to nothing skip file.
@@ -405,7 +405,7 @@ std::unique_ptr<SlideLevelDim>  WsiToDcm::getSmallestSlideDim(
                                    ", " <<
                                    tempSlideLevelDim->levelHeightDownsampled;
       bool setSmallestSlice = false;
-      if (smallestSlideDim == NULL) {
+      if (smallestSlideDim == nullptr) {
         // if (smallest slice level not initalized)
         setSmallestSlice = true;
       } else if (tempDownsample > smallestDownsample &&
@@ -439,7 +439,7 @@ std::unique_ptr<SlideLevelDim>  WsiToDcm::getSmallestSlideDim(
       }
     }
     // Process process levels in order of area largest to smallest.
-    if (smallestSlideDim != NULL) {
+    if (smallestSlideDim != nullptr) {
       std::sort(levelProcessOrder.begin(),
                 levelProcessOrder.end(), downsample_order);
 
@@ -504,13 +504,13 @@ int WsiToDcm::dicomizeTiff() {
     // passing -1 in forces getSlideLevelDim to return non-downsampled
     // image dimensions a.k.a. largest image from openslide.
     std::unique_ptr<SlideLevelDim> largestDimensions =
-                  std::move(getSlideLevelDim(-1, NULL, smallestSlideDim.get()));
+              std::move(getSlideLevelDim(-1, nullptr, smallestSlideDim.get()));
     largestSlideWidthCrop = largestDimensions->cropSourceLevelWidth;
     largestSlideHeightCrop = largestDimensions->cropSourceLevelHeight;
   } else {
     largestSlideWidthCrop = 0;
     largestSlideHeightCrop = 0;
-    smallestSlideDim = NULL;
+    smallestSlideDim = nullptr;
   }
 
   BOOST_LOG_TRIVIAL(debug) << "Cropping source image: " <<
@@ -520,7 +520,13 @@ int WsiToDcm::dicomizeTiff() {
 
   DICOMFileFrameRegionReader higherMagnifcationDicomFiles;
   std::vector<std::unique_ptr<DcmFileDraft>> generatedDicomFiles;
-  std::unique_ptr<SlideLevelDim> slideLevelDim = NULL;
+  std::unique_ptr<SlideLevelDim> slideLevelDim = nullptr;
+  const double levelWidthMM = getDownsampledLevelDimensionMM(
+                          largestSlideLevelWidth_ - largestSlideWidthCrop -
+                          initialX_, "openslide.mpp-x");
+  const double levelHeightMM = getDownsampledLevelDimensionMM(
+                        largestSlideLevelHeight_ - largestSlideHeightCrop -
+                        initialY_, "openslide.mpp-y");
   for (const int32_t &level : slideLevels) {
     // only progressive downsample if have higher mag buffer filled.
     slideLevelDim = std::move(getSlideLevelDim(level,
@@ -555,15 +561,6 @@ int WsiToDcm::dicomizeTiff() {
     BOOST_LOG_TRIVIAL(debug) << "Starting Level " << level;
     BOOST_LOG_TRIVIAL(debug) << "level size: " << levelWidth << ' '
                              << levelHeight << ' ' << multiplicator;
-    const double levelWidthMM = getDownsampledLevelDimensionMM(
-                          largestSlideLevelWidth_ - largestSlideWidthCrop -
-                          initialX_, levelWidthDownsampled, downsample,
-                          "openslide.mpp-x");
-    const double levelHeightMM = getDownsampledLevelDimensionMM(
-                          largestSlideLevelHeight_ - largestSlideHeightCrop -
-                          initialY_, levelHeightDownsampled, downsample,
-                          "openslide.mpp-y");
-
     BOOST_LOG_TRIVIAL(debug) << "multiplicator: " << multiplicator;
     BOOST_LOG_TRIVIAL(debug) << "levelToGet: " << levelToGet;
     BOOST_LOG_TRIVIAL(debug) << "downsample: " << downsample;
@@ -595,9 +592,9 @@ int WsiToDcm::dicomizeTiff() {
       // prior level if progressiveDownsample is enabled.
       higherMagnifcationDicomFiles.clear_dicom_files();
     } else {
-      if (osr_ != NULL) {
+      if (osr_ != nullptr) {
         openslide_close(osr_);
-        osr_ = NULL;
+        osr_ = nullptr;
         BOOST_LOG_TRIVIAL(debug) << "OpenSlide Closed";
       }
     }
@@ -637,7 +634,6 @@ int WsiToDcm::dicomizeTiff() {
         if (higherMagnifcationDicomFiles.dicom_file_count() != 0) {
           frameData->incSourceFrameReadCounter();
         }
-        // frameData->incSourceFrameReadCounter();
         framesInitalizationData.push_back(std::move(frameData));
         x += frameWidthDownsampled;
       }

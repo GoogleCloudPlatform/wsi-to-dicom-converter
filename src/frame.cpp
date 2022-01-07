@@ -73,7 +73,7 @@ bool Frame::isDone() const {
 }
 
 void Frame::clear_dicom_mem() {
-  data_ = NULL;
+  data_ = nullptr;
 }
 
 int64_t Frame::get_raw_frame_bytes(uint8_t *raw_memory,
@@ -92,10 +92,8 @@ int64_t Frame::get_raw_frame_bytes(uint8_t *raw_memory,
 }
 
 void Frame::clear_raw_mem() {
-  if (raw_compressed_bytes_ != NULL) {
-    // BOOST_LOG_TRIVIAL(debug) << "Clearing raw frame mem: " <<
-    //                            raw_compressed_bytes_size_ / 1024 << "kb";
-    raw_compressed_bytes_ = NULL;
+  if (raw_compressed_bytes_ != nullptr) {
+    raw_compressed_bytes_ = nullptr;
     raw_compressed_bytes_size_ = 0;
   }
 }
@@ -107,7 +105,7 @@ uint8_t *Frame::get_dicom_frame_bytes() {
 size_t Frame::getSize() const { return size_; }
 
 bool Frame::has_compressed_raw_bytes() const {
-  return (raw_compressed_bytes_ != NULL && raw_compressed_bytes_size_ > 0);
+  return (raw_compressed_bytes_ != nullptr && raw_compressed_bytes_size_ > 0);
 }
 
 }  // namespace wsiToDicomConverter
