@@ -17,6 +17,7 @@
 #include <boost/thread/mutex.hpp>
 
 #include <atomic>
+#include <string>
 #include <memory>
 
 #include "src/enums.h"
@@ -38,6 +39,7 @@ class Frame {
   virtual uint8_t *get_dicom_frame_bytes();
   virtual size_t getSize() const;
   virtual void inc_read_counter();
+  virtual void dec_read_counter();
   virtual int64_t get_raw_frame_bytes(uint8_t *raw_memory,
                                       int64_t memorysize);
   virtual int64_t get_frame_width() const;
@@ -48,6 +50,7 @@ class Frame {
   virtual void incSourceFrameReadCounter() = 0;
   virtual int64_t getLocationX() const;
   virtual int64_t getLocationY() const;
+  virtual std::string getPhotoMetrInt() const;
 
  protected:
   std::atomic_bool done_;

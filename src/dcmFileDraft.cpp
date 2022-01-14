@@ -122,6 +122,8 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
   compressedPixelSequence->insert(offsetTable.release());
   DcmtkImgDataInfo imgInfo;
   std::vector<uint8_t> frames;
+  std::string framePhotoMetrIntrp;
+  int64_t imaging_size_bytes = 0;
   for (size_t frameNumber = 0; frameNumber < framesData_.size();
        frameNumber++) {
     while (!framesData_[frameNumber]->isDone()) {
@@ -129,7 +131,9 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
     }
     {
       Frame *frame = framesData_[frameNumber].get();
-
+      if (frameNumber == 0) {
+        framePhotoMetrIntrp = frame->getPhotoMetrInt();
+      }
       if (compression_ == JPEG || compression_ == JPEG2000) {
         compressedPixelSequence->storeCompressedFrame(
             offsetList, frame->get_dicom_frame_bytes(), frame->getSize(), 0U);
@@ -137,25 +141,40 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
         frames.insert(frames.end(), frame->get_dicom_frame_bytes(),
                       frame->get_dicom_frame_bytes() + frame->getSize());
       }
+      imaging_size_bytes += frame->getSize();
       frame->clear_dicom_mem();
     }
   }
+  if (imaging_size_bytes > 0) {
+    const double uncompressed = static_cast<double>(3.0 * imageHeight_ *
+                                                                  imageWidth_);
+    const double storedImageSize = static_cast<double>(imaging_size_bytes);
+    const double compression_ratio = uncompressed / storedImageSize;
+    imgInfo.compressionRatio = std::to_string(compression_ratio);
+  } else {
+    imgInfo.compressionRatio = "";
+  }
+
   switch (compression_) {
     case JPEG:
       imgInfo.transSyn = EXS_JPEGProcess1;
-      imgInfo.photoMetrInt = "YBR_FULL_422";
+
+      imgInfo.photoMetrInt = (framePhotoMetrIntrp.length() > 0) ?
+                                  framePhotoMetrIntrp.c_str() : "YBR_FULL_422";
       pixelData->putOriginalRepresentation(imgInfo.transSyn, nullptr,
                                            compressedPixelSequence.release());
       break;
     case JPEG2000:
       imgInfo.transSyn = EXS_JPEG2000LosslessOnly;
-      imgInfo.photoMetrInt = "RGB";
+      imgInfo.photoMetrInt = (framePhotoMetrIntrp.length() > 0) ?
+                                           framePhotoMetrIntrp.c_str() : "RGB";
       pixelData->putOriginalRepresentation(imgInfo.transSyn, nullptr,
                                            compressedPixelSequence.release());
       break;
     default:
       imgInfo.transSyn = EXS_LittleEndianExplicit;
-      imgInfo.photoMetrInt = "RGB";
+      imgInfo.photoMetrInt = (framePhotoMetrIntrp.length() > 0) ?
+                                           framePhotoMetrIntrp.c_str() : "RGB";
       pixelData->putUint8Array(&frames[0], frames.size());
   }
   imgInfo.samplesPerPixel = 3;

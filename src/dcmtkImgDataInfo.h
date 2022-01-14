@@ -19,6 +19,8 @@
 #include <dcmtk/dcmdata/libi2d/i2doutpl.h>
 #include <dcmtk/dcmdata/libi2d/i2dplsc.h>
 
+#include <string>
+
 // Structure for image metadata
 struct DcmtkImgDataInfo {
   Uint16 rows;
@@ -33,15 +35,18 @@ struct DcmtkImgDataInfo {
   Uint16 pixAspectH;
   Uint16 pixAspectV;
   E_TransferSyntax transSyn;
+  std::string compressionRatio;
 
   OFBool operator==(const DcmtkImgDataInfo &other) {
     return (rows == other.rows) && (cols == other.cols) &&
            (samplesPerPixel == other.samplesPerPixel) &&
            (photoMetrInt == other.photoMetrInt) &&
-           (bitsAlloc == other.bitsAlloc) && (bitsStored == other.bitsStored) &&
+           (bitsAlloc == other.bitsAlloc) &&
+           (bitsStored == other.bitsStored) &&
            (highBit == other.highBit) && (pixelRepr == other.pixelRepr) &&
            (planConf == other.planConf) && (pixAspectH == other.pixAspectH) &&
-           (pixAspectV == other.pixAspectV) && (transSyn == other.transSyn);
+           (pixAspectV == other.pixAspectV) && (transSyn == other.transSyn) &&
+           (compressionRatio == other.compressionRatio);
   }
 
   OFBool operator!=(const DcmtkImgDataInfo &other) {

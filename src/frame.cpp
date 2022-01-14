@@ -15,6 +15,7 @@
 #include <boost/thread.hpp>
 
 #include <atomic>
+#include <string>
 
 #include "src/enums.h"
 #include "src/frame.h"
@@ -35,6 +36,9 @@ Frame::Frame(int64_t locationX, int64_t locationY, int64_t frameWidth,
     done_ = false;
     readCounter_ = 0;
     size_ = 0;
+    raw_compressed_bytes_ = nullptr;
+    raw_compressed_bytes_size_ = 0;
+    data_ = nullptr;
     switch (compression) {
         case JPEG:
             compressor_ = std::make_unique<JpegCompression>(quality);
@@ -42,10 +46,17 @@ Frame::Frame(int64_t locationX, int64_t locationY, int64_t frameWidth,
         case JPEG2000:
             compressor_ = std::make_unique<Jpeg2000Compression>();
         break;
+        case NONE:
+          compressor_ = nullptr;
+        break;
         default:
             compressor_ = std::make_unique<RawCompression>();
         break;
     }
+}
+
+std::string Frame::getPhotoMetrInt() const {
+  return "";
 }
 
 int64_t Frame::get_frame_width() const {
@@ -76,18 +87,20 @@ void Frame::clear_dicom_mem() {
   data_ = nullptr;
 }
 
-int64_t Frame::get_raw_frame_bytes(uint8_t *raw_memory,
-                                                    int64_t memorysize) {
-  int64_t memsize =  decompress_memory(raw_compressed_bytes_.get(),
-                           raw_compressed_bytes_size_,
-                           raw_memory, memorysize);
-  {
+void Frame::dec_read_counter() {
     boost::lock_guard<boost::mutex> guard(readCounterMutex_);
     readCounter_ -= 1;
     if (readCounter_ <= 0) {
       clear_raw_mem();
     }
   }
+
+int64_t Frame::get_raw_frame_bytes(uint8_t *raw_memory,
+                                                    int64_t memorysize) {
+  int64_t memsize =  decompress_memory(raw_compressed_bytes_.get(),
+                           raw_compressed_bytes_size_,
+                           raw_memory, memorysize);
+  dec_read_counter();
   return memsize;
 }
 

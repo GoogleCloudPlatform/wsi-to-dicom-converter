@@ -49,6 +49,8 @@ int main(int argc, char *argv[]) {
   bool floorCorrectDownsampling;
   bool preferProgressiveDownsampling;
   bool cropFrameToGenerateUniformPixelSpacing;
+  bool SVSImportPreferScannerTileingForLargestLevel;
+  bool SVSImportPreferScannerTileingForAllLevels;
   int compressionQuality;
   std::vector<int> downsamples;
   downsamples.resize(1, 0);
@@ -155,7 +157,25 @@ int main(int argc, char *argv[]) {
         &downsamplingAlgorithm)->default_value("NONE"),
         "OpenCV downsampling algorithm, supported: LANCZOS4, CUBIC, AREA, "
         "LINEAR, LINEAR_EXACT, NEAREST, NEAREST_EXACT. Default value "
-        "'NONE' uses non-opencv boost::gli nearestneighbor downsampling.");
+        "'NONE' uses non-opencv boost::gli nearestneighbor downsampling.")
+        ("SVSImportPreferScannerTileingForLargestLevel",
+        programOptions::bool_switch(
+        &SVSImportPreferScannerTileingForLargestLevel)->default_value(false),
+        "Optimization for DICOM generation from jpeg encoded SVS, generates "
+        " highest magification DICOM using svs encoded jpeg images "
+        "directly without decompression to avoid recompression artifacts."
+        " First slice compression and tile dimensions command line parameters "
+        " apply only DICOM generation from non-jpeg "
+        " encoded svs imaging and non-svs imaging. Does not support "
+        "re-tiling of jpeg encoded svs.  Not compatiable with "
+        "row/column-dropping or cropping commandline settings options.")
+        ("SVSImportPreferScannerTileingForAllLevels",
+        programOptions::bool_switch(
+        &SVSImportPreferScannerTileingForAllLevels)->default_value(false),
+        "Optimization for jpeg encoded SVS. Use jpeg images encoded in SVS at "
+        "all levels preferentially. Same limitations as "
+        "SVSImportPreferScannerTileingForLargestLevel. Compression settings "
+        "apply to generated levels only.");
 
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
@@ -186,6 +206,15 @@ int main(int argc, char *argv[]) {
   if (cropFrameToGenerateUniformPixelSpacing && dropFirstRowAndColumn) {
      std::cerr << "Options: uniformPixelSpacing and dropFirstRowAndColumn are"
               << " not compatible." << std::endl;
+      return 1;
+  }
+  if ((cropFrameToGenerateUniformPixelSpacing || dropFirstRowAndColumn) &&
+     (SVSImportPreferScannerTileingForLargestLevel ||
+      SVSImportPreferScannerTileingForAllLevels)) {
+     std::cerr << "Options: uniformPixelSpacing and dropFirstRowAndColumn are"
+              << " not compatible with Options: " <<
+              "SVSImportPreferScannerTileingForLargestLevel and " <<
+              "SVSImportPreferScannerTileingForAllLevels." << std::endl;
       return 1;
   }
   wsiToDicomConverter::WsiRequest request;
@@ -226,7 +255,10 @@ int main(int argc, char *argv[]) {
   request.preferProgressiveDownsampling = preferProgressiveDownsampling;
   request.cropFrameToGenerateUniformPixelSpacing =
                                       cropFrameToGenerateUniformPixelSpacing;
-
+  request.SVSImportPreferScannerTileingForLargestLevel =
+          SVSImportPreferScannerTileingForLargestLevel;
+  request.SVSImportPreferScannerTileingForAllLevels =
+          SVSImportPreferScannerTileingForAllLevels;
   request.useOpenCVDownsampling = true;
   if (downsamplingAlgorithm == "LANCZOS4") {
     request.openCVInterpolationMethod = cv::INTER_LANCZOS4;

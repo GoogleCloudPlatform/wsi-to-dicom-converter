@@ -181,6 +181,10 @@ OFCondition insertPixelMetadata(DcmDataset* dataset,
 
     cond = dataset->putAndInsertString(DCM_FrameIncrementPointer, "");
     if (cond.bad()) return cond;
+
+    cond = dataset->putAndInsertString(DCM_LossyImageCompressionRatio,
+                                       imgInfo.compressionRatio.c_str());
+    if (cond.bad()) return cond;
   }
 
   return dataset->putAndInsertUint16(DCM_PixelRepresentation,
@@ -219,9 +223,10 @@ OFCondition generateDcmDataset(I2DOutputPlug* outPlug, DcmDataset* resultDset,
 }
 
 OFCondition DcmtkUtils::populateDataSet(
-    const int64_t imageHeight, const int64_t imageWidth, const uint32_t rowSize,
-    const std::string& studyId, const std::string& seriesId,
-    const std::string& imageName, std::unique_ptr<DcmPixelData> pixelData,
+    const int64_t imageHeight, const int64_t imageWidth,
+    const uint32_t rowSize, const std::string& studyId,
+    const std::string& seriesId, const std::string& imageName,
+    std::unique_ptr<DcmPixelData> pixelData,
     const DcmtkImgDataInfo& imgInfo, const uint32_t numberOfFrames,
     const uint32_t row, const uint32_t column, const int level,
     const int batchNumber, const uint32_t offset,
