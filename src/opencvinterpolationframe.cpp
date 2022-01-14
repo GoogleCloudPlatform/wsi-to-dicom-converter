@@ -32,7 +32,7 @@
 namespace wsiToDicomConverter {
 
 OpenCVInterpolationFrame::OpenCVInterpolationFrame(
-    openslide_t *osr, int64_t locationX, int64_t locationY, int32_t level,
+    OpenSlidePtr *osptr, int64_t locationX, int64_t locationY, int32_t level,
     int64_t frameWidthDownsampled, int64_t frameHeightDownsampled,
     int64_t frameWidth, int64_t frameHeight, DCM_Compression compression,
     int quality, int64_t levelWidth, int64_t levelHeight, int64_t level0Width,
@@ -44,7 +44,7 @@ OpenCVInterpolationFrame::OpenCVInterpolationFrame(
                                                                frameHeight,
                                                       compression, quality,
                                                            store_raw_bytes) {
-  osr_ = osr;
+  osptr_ = osptr;
   level_ = level;
   frameWidthDownsampled_ = frameWidthDownsampled;
   frameHeightDownsampled_ = frameHeightDownsampled;
@@ -144,12 +144,12 @@ void OpenCVInterpolationFrame::sliceFrame() {
     // Open slide read region returns ARGB formated pixels
     // Values are pre-multiplied with alpha
     // https://github.com/openslide/openslide/wiki/PremultipliedARGB
-    openslide_read_region(osr_, buf_bytes.get(), Level0_x,
+    openslide_read_region(osptr_->osr, buf_bytes.get(), Level0_x,
                           Level0_y, level_,
                           frameWidthDownsampled_ + padWidth_,
                            frameHeightDownsampled_ + padHeight_);
-    if (openslide_get_error(osr_)) {
-       BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
+    if (openslide_get_error(osptr_->osr)) {
+       BOOST_LOG_TRIVIAL(error) << openslide_get_error(osptr_->osr);
        throw 1;
     }
     // Uncommon, openslide C++ API premults RGB by alpha.

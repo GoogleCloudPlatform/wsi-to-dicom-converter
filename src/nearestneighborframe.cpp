@@ -31,7 +31,7 @@
 namespace wsiToDicomConverter {
 
 NearestNeighborFrame::NearestNeighborFrame(
-    openslide_t *osr, int64_t locationX, int64_t locationY, int64_t level,
+    OpenSlidePtr *osptr, int64_t locationX, int64_t locationY, int64_t level,
     int64_t frameWidthDownsampled, int64_t frameHeightDownsampled,
     double multiplicator, int64_t frameWidth, int64_t frameHeight,
     DCM_Compression compression, int quality, bool store_raw_bytes,
@@ -41,7 +41,7 @@ NearestNeighborFrame::NearestNeighborFrame(
                                                              frameHeight,
                                                         compression, quality,
                                                         store_raw_bytes) {
-  osr_ = osr;
+  osptr_ = osptr;
   level_ = level;
   frameWidthDownsampled_ = frameWidthDownsampled;
   frameHeightDownsampled_ = frameHeightDownsampled;
@@ -81,13 +81,13 @@ void NearestNeighborFrame::sliceFrame() {
                           std::make_unique<uint32_t[]>(frameWidthDownsampled_ *
                                                       frameHeightDownsampled_);
   if (dcmFrameRegionReader_->dicom_file_count() == 0) {
-    openslide_read_region(osr_, buf.get(), static_cast<int64_t>(locationX_ *
-                                                          multiplicator_),
+    openslide_read_region(osptr_->osr, buf.get(),
+                          static_cast<int64_t>(locationX_ * multiplicator_),
                           static_cast<int64_t>(locationY_ * multiplicator_),
                           level_, frameWidthDownsampled_,
                           frameHeightDownsampled_);
-    if (openslide_get_error(osr_)) {
-      BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
+    if (openslide_get_error(osptr_->osr)) {
+      BOOST_LOG_TRIVIAL(error) << openslide_get_error(osptr_->osr);
       throw 1;
     }
   } else {

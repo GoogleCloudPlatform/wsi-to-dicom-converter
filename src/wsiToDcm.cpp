@@ -701,8 +701,6 @@ int WsiToDcm::dicomizeTiff() {
     //  Method in Frame::sliceFrame () downsamples the imaging.
     //
     //  DcmFileDraft Joins threads and combines results and writes dcm file.
-    openslide_t *osr = (slideLevelDim->osptr != nullptr) ?
-                           slideLevelDim->osptr->osr : nullptr;
     while (y < levelHeight - cropSourceLevelHeight) {
       int64_t x = initialX_;
       while (x < levelWidth - cropSourceLevelWidth) {
@@ -712,17 +710,19 @@ int WsiToDcm::dicomizeTiff() {
               x, y, levelToGet, levelFrameWidth, levelFrameHeight);
         } else if (wsiRequest_->useOpenCVDownsampling) {
           frameData = std::make_unique<OpenCVInterpolationFrame>(
-              osr, x, y, levelToGet, frameWidthDownsampled,
-              frameHeightDownsampled, levelFrameWidth, levelFrameHeight,
-              levelCompression, wsiRequest_->quality, levelWidth, levelHeight,
-              largestSlideLevelWidth_, largestSlideLevelHeight_,
-              saveCompressedRaw, &higherMagnifcationDicomFiles,
+              slideLevelDim->osptr.get(), x, y, levelToGet,
+              frameWidthDownsampled, frameHeightDownsampled, levelFrameWidth,
+              levelFrameHeight, levelCompression, wsiRequest_->quality,
+              levelWidth, levelHeight, largestSlideLevelWidth_,
+              largestSlideLevelHeight_, saveCompressedRaw,
+              &higherMagnifcationDicomFiles,
               wsiRequest_->openCVInterpolationMethod);
         } else {
           frameData = std::make_unique<NearestNeighborFrame>(
-              osr, x, y, levelToGet, frameWidthDownsampled,
-              frameHeightDownsampled, multiplicator, levelFrameWidth,
-              levelFrameHeight, levelCompression, wsiRequest_->quality,
+              slideLevelDim->osptr.get(), x, y, levelToGet,
+              frameWidthDownsampled, frameHeightDownsampled,
+              multiplicator, levelFrameWidth, levelFrameHeight,
+              levelCompression, wsiRequest_->quality,
               saveCompressedRaw, &higherMagnifcationDicomFiles);
         }
         if (higherMagnifcationDicomFiles.dicom_file_count() != 0) {
