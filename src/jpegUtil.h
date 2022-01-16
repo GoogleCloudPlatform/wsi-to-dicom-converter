@@ -29,7 +29,7 @@ std::unique_ptr<uint8_t[]> decodedJpeg(const int64_t width,
                                        const uint64_t rawBufferSize,
                                        uint64_t *decodedImageSizeBytes,
                                        uint8_t *returnMemoryBuffer = nullptr,
-                                       const int64_t returnMemoryBufferSize = 0);
+                                     const int64_t returnMemoryBufferSize = 0);
 
 }  // namespace jpegUtil
 

@@ -36,14 +36,14 @@ OpenCVInterpolationFrame::OpenCVInterpolationFrame(
     int64_t frameWidthDownsampled, int64_t frameHeightDownsampled,
     int64_t frameWidth, int64_t frameHeight, DCM_Compression compression,
     int quality, int64_t levelWidth, int64_t levelHeight, int64_t level0Width,
-    int64_t level0Height, bool store_raw_bytes,
+    int64_t level0Height, bool storeRawBytes,
     DICOMFileFrameRegionReader *frame_region_reader,
     const cv::InterpolationFlags openCVInterpolationMethod) : Frame(locationX,
                                                                 locationY,
                                                                 frameWidth,
                                                                frameHeight,
                                                       compression, quality,
-                                                           store_raw_bytes) {
+                                                           storeRawBytes) {
   osptr_ = osptr;
   level_ = level;
   frameWidthDownsampled_ = frameWidthDownsampled;
@@ -105,7 +105,7 @@ void OpenCVInterpolationFrame::scalefactorNormPadding(int *padding,
 }
 
 void OpenCVInterpolationFrame::incSourceFrameReadCounter() {
-  if (dcmFrameRegionReader_->dicom_file_count() != 0) {
+  if (dcmFrameRegionReader_->dicomFileCount() != 0) {
     // Computes frames which downsample region will access from and increments
     // source frame counter.
     dcmFrameRegionReader_->incSourceFrameReadCounter(locationX_ - padLeft_,
@@ -132,7 +132,7 @@ void OpenCVInterpolationFrame::sliceFrame() {
   // downsampled or progressive downsampling is not being used. If this is
   // the case the image is retrieved using openslide.
   const bool dcmFrameRegionReaderNotInitalized =
-                                dcmFrameRegionReader_->dicom_file_count() == 0;
+                                dcmFrameRegionReader_->dicomFileCount() == 0;
   if (dcmFrameRegionReaderNotInitalized) {
     // Open slide API samples using xy coordinages from level 0 image.
     // upsample coordinates to level 0 to compute sampleing site.
@@ -182,11 +182,11 @@ void OpenCVInterpolationFrame::sliceFrame() {
       yoffset += frameWidthDownsampled_ + padWidth_;
     }
   } else {
-    dcmFrameRegionReader_->read_region(locationX_ - padLeft_,
-                                       locationY_ - padTop_,
-                                       frameWidthDownsampled_ + padWidth_,
-                                       frameHeightDownsampled_ + padHeight_,
-                                       buf_bytes.get());
+    dcmFrameRegionReader_->readRegion(locationX_ - padLeft_,
+                                      locationY_ - padTop_,
+                                      frameWidthDownsampled_ + padWidth_,
+                                      frameHeightDownsampled_ + padHeight_,
+                                      buf_bytes.get());
   }
   const size_t frame_mem_size = static_cast<size_t>(frameWidth_ * frameHeight_);
   std::unique_ptr<uint32_t[]> raw_bytes;

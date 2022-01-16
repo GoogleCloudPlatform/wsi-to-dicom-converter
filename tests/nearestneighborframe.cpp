@@ -31,8 +31,8 @@ TEST(NearestNeighborFrame, jpeg) {
                              false, &dicom_frame_reader);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
-  ASSERT_FALSE(frame.has_compressed_raw_bytes());
-  ASSERT_GE(frame.getSize(), 0);
+  ASSERT_FALSE(frame.hasRawABGRFrameBytes());
+  ASSERT_GE(frame.dicomFrameBytesSize(), 0);
 }
 
 TEST(NearestNeighborFrame, jpeg2000Scaling) {
@@ -43,8 +43,8 @@ TEST(NearestNeighborFrame, jpeg2000Scaling) {
                              1, true, &dicom_frame_reader);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
-  ASSERT_TRUE(frame.has_compressed_raw_bytes());
-  ASSERT_GE(frame.getSize(), 0);
+  ASSERT_TRUE(frame.hasRawABGRFrameBytes());
+  ASSERT_GE(frame.dicomFrameBytesSize(), 0);
 }
 
 TEST(NearestNeighborFrame, rawData) {
@@ -55,12 +55,12 @@ TEST(NearestNeighborFrame, rawData) {
                              RAW, 1, true, &dicom_frame_reader);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
-  ASSERT_TRUE(frame.has_compressed_raw_bytes());
+  ASSERT_TRUE(frame.hasRawABGRFrameBytes());
   for (size_t i = 0; i < 3; i++) {
-    ASSERT_EQ(248, frame.get_dicom_frame_bytes()[i]);
+    ASSERT_EQ(248, frame.dicomFrameBytes()[i]);
   }
-  for (size_t i = 3; i < frame.getSize(); i++) {
-    ASSERT_EQ(frame.get_dicom_frame_bytes()[i], 0);
+  for (size_t i = 3; i < frame.dicomFrameBytesSize(); i++) {
+    ASSERT_EQ(frame.dicomFrameBytes()[i], 0);
   }
 }
 

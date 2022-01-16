@@ -126,7 +126,6 @@ std::unique_ptr<uint8_t[]> decodedJpeg(const int64_t width,
     returnMemoryBuffer[destCounter+3] = 0xff;  // alpha
     destCounter += 4;
   }
-
   if (abgrBuffer != nullptr) {
     return std::move(abgrBuffer);
   }
@@ -135,10 +134,10 @@ std::unique_ptr<uint8_t[]> decodedJpeg(const int64_t width,
 
 bool canDecodeJpeg(const int64_t width, const int64_t height,
                    const J_COLOR_SPACE colorSpace,
-                   uint8_t* rawBuffer,const uint64_t rawBufferSize) {
+                   uint8_t* rawBuffer, const uint64_t rawBufferSize) {
   uint64_t bufferSize;
-  if (decodedJpeg(width, height, colorSpace, rawBuffer, rawBufferSize, &bufferSize) !=
-      nullptr) {
+  if (decodedJpeg(width, height, colorSpace, rawBuffer, rawBufferSize,
+                  &bufferSize) != nullptr) {
     return true;
   }
   return false;

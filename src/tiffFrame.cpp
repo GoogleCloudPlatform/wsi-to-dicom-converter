@@ -36,7 +36,7 @@ class TiffFrameJpgBytes {
   int64_t width() const;
   int64_t height() const;
 
-  void getJpegMemory(std::unique_ptr<uint8_t []>*data, uint64_t *size);
+  void getJpegMemory(std::unique_ptr<uint8_t[]>*data, uint64_t *size);
 
  private:
   std::unique_ptr<TiffTile> tile_;
@@ -66,8 +66,8 @@ TiffFrameJpgBytes::TiffFrameJpgBytes(TiffFrame * framePtr) {
   }
 }
 
-void TiffFrameJpgBytes::getJpegMemory(std::unique_ptr<uint8_t []>*data,
-                                        uint64_t *size) {
+void TiffFrameJpgBytes::getJpegMemory(std::unique_ptr<uint8_t[]>*data,
+                                      uint64_t *size) {
   if (constructJpegMem_ != nullptr) {
     *data = std::move(constructJpegMem_);
   } else {
@@ -96,19 +96,26 @@ int64_t TiffFrameJpgBytes::height() const {
 std::unique_ptr<TiffTile> TiffFrameJpgBytes::getTiffTileData(int64_t *tileWidth,
                                                      int64_t *tileHeight) {
   const TiffDirectory *dir = tiffDirectory();
-  const uint64_t tileIndex = ((framePtr_->getLocationY() / dir->tileHeight()) *
+  const uint64_t tileIndex = ((framePtr_->locationY() / dir->tileHeight()) *
                               dir->tilesPerRow()) +
-                              (framePtr_->getLocationX() /  dir->tileWidth());
+                              (framePtr_->locationX() /  dir->tileWidth());
   *tileWidth = dir->tileWidth();
   *tileHeight = dir->tileHeight();
-  return std::move(framePtr_->tiffFile()->tile(framePtr_->tiffFileLevel(), tileIndex));
+  return std::move(framePtr_->tiffFile()->tile(framePtr_->tiffFileLevel(),
+                                               tileIndex));
 }
 
-void setShortBigEndian(uint8_t* APPO, int firstbyte, uint16_t val) {
+void setShortBigEndian(uint8_t* byteArray, int firstbyte, uint16_t val) {
   val = htons(val);
   uint8_t* mem = reinterpret_cast<uint8_t*>(&val);
-  APPO[firstbyte] = mem[0];
-  APPO[firstbyte + 1] = mem[1];
+  byteArray[firstbyte] = mem[0];
+  byteArray[firstbyte + 1] = mem[1];
+}
+
+void writeMem(uint8_t * writeBuffer, const uint8_t *data, const uint64_t size,
+              uint64_t *bytesWritten) {
+  memcpy(&(writeBuffer[*bytesWritten]), data, size);
+  *bytesWritten += size;
 }
 
 void TiffFrameJpgBytes::constructJpeg(TiffTile *tile) {
@@ -134,28 +141,63 @@ void TiffFrameJpgBytes::constructJpeg(TiffTile *tile) {
   const TiffDirectory *dir = tiffDirectory();
   const int64_t tableDatasize = dir->jpegTableDataSize();
   const uint8_t *tableData = dir->jpegTableData();
-  uint8_t APPO[] = {
+  uint8_t APP0[] = {
                   0xff, 0xd8,  // start of image marker
-                  0xff, 0xe0,  // appo marker
-                  0x00, 0x00,  // placeholder for length excluding appo marker
+                  0xff, 0xe0,  // APP0 marker
+                  0x00, 0x00,  // placeholder for length excluding APP0 marker
                   0x4A, 0x46, 0x49, 0x46, 0x00,  // "JFIF" in ascii with null
                   0x00,  // density unit; 0 = no unit
-                  0x00, 0x00,  // image width place holder
-                  0x00, 0x00,  // image height place holder
+                  0x00, 0x00,  // pixel horizontal aspect ratio
+                  0x00, 0x00,  // pixel vertical aspect ratio place holder
                   0x00,  // thumbnail pixel horizontal; no thumbnail
                   0x00};  // thumbnail pixel vertical; no thumbnail
 
-  // exclude start of image and appo markers
-  setShortBigEndian(APPO, 4, sizeof(APPO) -4);
-  setShortBigEndian(APPO, 12, dir->tileWidth());
-  setShortBigEndian(APPO, 14, dir->tileHeight());
-  // -6 exclude start and end markers in table data, and start maker in raw buffer.
-  constructJpegMemSize_ = tableDatasize + rawBufferSize - 6 + sizeof(APPO);
+  // exclude start of image and APP0 markers
+  setShortBigEndian(APP0, 4, sizeof(APP0) -4);
+  setShortBigEndian(APP0, 12, 1);
+  setShortBigEndian(APP0, 14, 1);
 
+  uint8_t APP14[] = {
+    /*
+    * Length of APP14 block	(2 bytes)
+    * Block ID			(5 bytes - ASCII "Adobe")
+    * Version Number		(2 bytes - currently 100)
+    * Flags0			(2 bytes - currently 0)
+    * Flags1			(2 bytes - currently 0)
+    * Color transform		(1 byte)
+    *
+    * Although Adobe TN 5116 mentions Version = 101, all the Adobe files
+    * now in circulation seem to use Version = 100, so that's what we write.
+    *
+    * We write the color transform byte as 1 if the JPEG color space is
+    * YCbCr, 2 if it's YCCK, 0 otherwise.  Adobe's definition has to do with
+    * whether the encoder performed a transformation.
+    */
+    0xff, 0xee,
+    0x00, 0x00,  // Length Placeholder
+    0x41, 0x64, 0x6F, 0x62, 0x65,  // Identifier: ASCII "Adobe"
+    0x00, 0x00,  // version place holder
+    0x00, 0x00,  // flag 1
+    0x00, 0x00,  // flag 2
+    0x00};  // color transform. 0 = RGB; 1 =YCBRCR
+
+  setShortBigEndian(APP14, 2, sizeof(APP14) -2);
+  setShortBigEndian(APP14, 9, 100);
+  if (dir->isPhotoMetricYCBCR()) {
+    APP14[15] = 1;
+  }
+
+  // -6 exclude start and end markers in table data, and
+  // start maker in raw buffer.
+  constructJpegMemSize_ = tableDatasize + rawBufferSize - 6 + sizeof(APP0) +
+                          sizeof(APP14);
   constructJpegMem_ = std::make_unique<uint8_t[]>(constructJpegMemSize_);
-  memcpy(constructJpegMem_.get(), APPO, sizeof(APPO));
-  memcpy(&(constructJpegMem_[sizeof(APPO)]), &(tableData[2]), tableDatasize - 4);
-  memcpy(&(constructJpegMem_[sizeof(APPO) + tableDatasize - 4]), &(data[2]), rawBufferSize -2);
+  uint8_t * writeBuffer = constructJpegMem_.get();
+  uint64_t bytesWritten = 0;
+  writeMem(writeBuffer, APP0, sizeof(APP0), &bytesWritten);
+  writeMem(writeBuffer, APP14, sizeof(APP14), &bytesWritten);
+  writeMem(writeBuffer, &(tableData[2]), tableDatasize - 4, &bytesWritten);
+  writeMem(writeBuffer, &(data[2]), rawBufferSize - 2, &bytesWritten);
 }
 
 TiffDirectory * TiffFrameJpgBytes::tiffDirectory() const {
@@ -182,13 +224,13 @@ int64_t TiffFrame::tiffFileLevel() const {
   return level_;
 }
 
-TiffDirectory * TiffFrame::tiffDirectory () const {
+TiffDirectory * TiffFrame::tiffDirectory() const {
   return tiffFile()->directory(tiffFileLevel());
 }
 
 TiffFrame::~TiffFrame() {}
 
-const J_COLOR_SPACE TiffFrame::jpegDecodeColorSpace () const {
+const J_COLOR_SPACE TiffFrame::jpegDecodeColorSpace() const {
   return tiffDirectory()->isPhotoMetricRGB() ? JCS_RGB : JCS_YCbCr;
 }
 
@@ -210,7 +252,7 @@ bool TiffFrame::canDecodeJpeg() {
   return false;
 }
 
-std::string TiffFrame::getPhotoMetrInt() const {
+std::string TiffFrame::photoMetrInt() const {
   if (tiffDirectory()->isPhotoMetricRGB()) {
       return "RGB";
   } else {
@@ -218,9 +260,8 @@ std::string TiffFrame::getPhotoMetrInt() const {
   }
 }
 
-bool TiffFrame::has_compressed_raw_bytes() const {
+bool TiffFrame::hasRawABGRFrameBytes() const {
   return true;
-  //return data_ != nullptr;
 }
 
 void TiffFrame::clearRawABGRMem() {
@@ -235,15 +276,15 @@ void TiffFrame::incSourceFrameReadCounter() {
   // Reads from Tiff no source frame counter to increment.
 }
 
-void TiffFrame::clear_dicom_mem() {
+void TiffFrame::clearDicomMem() {
   // DICOM memory and compressed memory are same thing.
   // For TiffFrames.  Data in native form is already compressed.
   // Compressed memory is cleared after dicom memory.
   data_ = nullptr;
 }
 
-int64_t TiffFrame::rawABGRFrameBytes(uint8_t *raw_memory,
-                                      int64_t memorysize) {
+int64_t TiffFrame::rawABGRFrameBytes(uint8_t *rawMemory,
+                                      int64_t memorySize) {
   // For tiff frame data in native format is jpeg encoded.
   // to work with just uncompress and return.
   TiffFrameJpgBytes jpegBytes(this);
@@ -252,10 +293,10 @@ int64_t TiffFrame::rawABGRFrameBytes(uint8_t *raw_memory,
   jpegBytes.getJpegMemory(&data, &size);
 
   uint64_t abgrBufferSizeRead;
-  jpegUtil::decodedJpeg(get_frame_width(), get_frame_height(),
+  jpegUtil::decodedJpeg(frameWidth(), frameHeight(),
                         jpegDecodeColorSpace(), data.get(), size,
-                        &abgrBufferSizeRead, raw_memory, memorysize);
-  //dec_read_counter(); unessary no memory to clear.
+                        &abgrBufferSizeRead, rawMemory, memorySize);
+  // decReadCounter(); unessary no memory to clear.
   return abgrBufferSizeRead;
 }
 

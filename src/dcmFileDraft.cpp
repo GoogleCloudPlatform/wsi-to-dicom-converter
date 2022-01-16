@@ -55,8 +55,7 @@ DcmFileDraft::DcmFileDraft(
   } else {
     batchNumber_ =  prior_frame_batches->size();
     for (size_t idx = 0; idx < batchNumber_; ++idx) {
-      prior_batch_frames_ += prior_frame_batches->at(idx)->
-                                                       get_file_frame_count();
+      prior_batch_frames_ += prior_frame_batches->at(idx)->fileFrameCount();
     }
   }
 
@@ -66,8 +65,8 @@ DcmFileDraft::DcmFileDraft(
     frameWidth_ = 0;
     frameHeight_ = 0;
   } else {
-    frameWidth_ = framesData_.at(0)->get_frame_width();
-    frameHeight_ = framesData_.at(0)->get_frame_height();
+    frameWidth_ = framesData_.at(0)->frameWidth();
+    frameHeight_ = framesData_.at(0)->frameHeight();
   }
 
   studyId_ = studyId;
@@ -83,31 +82,31 @@ DcmFileDraft::DcmFileDraft(
 
 DcmFileDraft::~DcmFileDraft() {}
 
-int64_t DcmFileDraft::get_downsample() const {
+int64_t DcmFileDraft::downsample() const {
   return downsample_;
 }
 
-int64_t DcmFileDraft::get_frame_width() const {
+int64_t DcmFileDraft::frameWidth() const {
   return frameWidth_;
 }
 
-int64_t DcmFileDraft::get_frame_height() const {
+int64_t DcmFileDraft::frameHeight() const {
   return frameHeight_;
 }
 
-int64_t DcmFileDraft::get_image_width() const {
+int64_t DcmFileDraft::imageWidth() const {
   return imageWidth_;
 }
 
-int64_t DcmFileDraft::get_image_height() const {
+int64_t DcmFileDraft::imageHeight() const {
   return imageHeight_;
 }
 
-int64_t DcmFileDraft::get_file_frame_count() const {
+int64_t DcmFileDraft::fileFrameCount() const {
   return framesData_.size();
 }
 
-Frame* DcmFileDraft::get_frame(int64_t idx) const {
+Frame* DcmFileDraft::frame(int64_t idx) const {
   return framesData_.at(idx).get();
 }
 
@@ -132,17 +131,18 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
     {
       Frame *frame = framesData_[frameNumber].get();
       if (frameNumber == 0) {
-        framePhotoMetrIntrp = frame->getPhotoMetrInt();
+        framePhotoMetrIntrp = frame->photoMetrInt();
       }
       if (compression_ == JPEG || compression_ == JPEG2000) {
         compressedPixelSequence->storeCompressedFrame(
-            offsetList, frame->get_dicom_frame_bytes(), frame->getSize(), 0U);
+            offsetList, frame->dicomFrameBytes(),
+            frame->dicomFrameBytesSize(), 0U);
       } else {
-        frames.insert(frames.end(), frame->get_dicom_frame_bytes(),
-                      frame->get_dicom_frame_bytes() + frame->getSize());
+        frames.insert(frames.end(), frame->dicomFrameBytes(),
+                      frame->dicomFrameBytes() + frame->dicomFrameBytesSize());
       }
-      imaging_size_bytes += frame->getSize();
-      frame->clear_dicom_mem();
+      imaging_size_bytes += frame->dicomFrameBytesSize();
+      frame->clearDicomMem();
     }
   }
   if (imaging_size_bytes > 0) {
@@ -185,7 +185,7 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
   imgInfo.bitsStored = 8;
   imgInfo.highBit = 7;
   imgInfo.pixelRepr = 0;
-  const int64_t batchSize = get_file_frame_count();
+  const int64_t batchSize = fileFrameCount();
   const int64_t numberOfFrames = batchSize + prior_batch_frames_;
   uint32_t rowSize = 1 + ((imageWidth_ - 1) / frameWidth_);
   uint32_t totalNumberOfFrames =
@@ -198,7 +198,7 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
 }
 
 void DcmFileDraft::saveFile() {
-  const int64_t batchSize = get_file_frame_count();
+  const int64_t batchSize = fileFrameCount();
   const int64_t numberOfFrames = batchSize + prior_batch_frames_;
   OFString fileName =
       OFString((outputFileMask_ + "/level-" + std::to_string(level_) +

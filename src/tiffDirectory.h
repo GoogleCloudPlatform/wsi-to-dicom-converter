@@ -18,6 +18,7 @@
 #include <boost/thread/mutex.hpp>
 #include <tiffio.h>
 
+#include <memory>
 #include <string>
 
 namespace wsiToDicomConverter {
@@ -95,7 +96,7 @@ class TiffDirectory {
   int64_t tileCount_;
   bool isTiled_;
   int64_t jpegTableDataSize_;
-  std::unique_ptr<uint8_t []> jpegTableData_;
+  std::unique_ptr<uint8_t[]> jpegTableData_;
   int64_t jpegQuality_;
   int64_t jpegColorMode_;
   int64_t jpegTableMode_;
@@ -106,7 +107,7 @@ class TiffDirectory {
   void _getTiffField_f(TIFF *tiff, ttag_t tag, double *val) const;
   bool _hasICCProfile(TIFF *tiff) const;
   void _getTiffField_jpegTables(TIFF *tiff, int64_t *jpegTableDataSize,
-                                std::unique_ptr<uint8_t []> *jpegTableData) const;
+                              std::unique_ptr<uint8_t[]> *jpegTableData) const;
 };
 
 }  // namespace wsiToDicomConverter

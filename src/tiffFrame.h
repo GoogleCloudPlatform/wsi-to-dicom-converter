@@ -34,15 +34,15 @@ class TiffFrame : public Frame {
     int64_t frameWidth, int64_t frameHeight);
 
   bool canDecodeJpeg();
-  TiffDirectory *tiffDirectory () const;
+  TiffDirectory *tiffDirectory() const;
 
   virtual ~TiffFrame();
   // Gets frame by openslide library, performs scaling it and compressing
   virtual void sliceFrame();
-  virtual std::string getPhotoMetrInt() const;
+  virtual std::string photoMetrInt() const;
   virtual int64_t rawABGRFrameBytes(uint8_t *raw_memory, int64_t memorysize);
-  virtual bool has_compressed_raw_bytes() const;
-  virtual void clear_dicom_mem();
+  virtual bool hasRawABGRFrameBytes() const;
+  virtual void clearDicomMem();
   virtual void clearRawABGRMem();
   virtual void incSourceFrameReadCounter();
   TiffFile *tiffFile() const;
@@ -51,7 +51,7 @@ class TiffFrame : public Frame {
  private:
   TiffFile *tiffFile_;
   int64_t level_;
-  const J_COLOR_SPACE jpegDecodeColorSpace () const;
+  const J_COLOR_SPACE jpegDecodeColorSpace() const;
 };
 
 }  // namespace wsiToDicomConverter

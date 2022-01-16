@@ -30,27 +30,26 @@ class Frame {
  public:
   Frame(int64_t locationX, int64_t locationY, int64_t frameWidth,
         int64_t frameHeight, DCM_Compression compression, int quality,
-        bool store_raw_bytes);
+        bool storeRawBytes);
   virtual ~Frame() {}
 
   // Gets frame by openslide library, performs scaling it and compressing
   virtual void sliceFrame() = 0;
   virtual bool isDone() const;
-  virtual uint8_t *get_dicom_frame_bytes();
-  virtual size_t getSize() const;
-  virtual void inc_read_counter();
-  virtual void dec_read_counter();
-  virtual int64_t rawABGRFrameBytes(uint8_t *raw_memory,
-                                      int64_t memorysize);
-  virtual int64_t get_frame_width() const;
-  virtual int64_t get_frame_height() const;
-  virtual void clear_dicom_mem();
+  virtual uint8_t *dicomFrameBytes();
+  virtual size_t dicomFrameBytesSize() const;
+  virtual void incReadCounter();
+  virtual void decReadCounter();
+  virtual int64_t rawABGRFrameBytes(uint8_t *rawMemory, int64_t memorySize);
+  virtual int64_t frameWidth() const;
+  virtual int64_t frameHeight() const;
+  virtual void clearDicomMem();
   virtual void clearRawABGRMem();
-  virtual bool has_compressed_raw_bytes() const;
+  virtual bool hasRawABGRFrameBytes() const;
   virtual void incSourceFrameReadCounter() = 0;
-  virtual int64_t getLocationX() const;
-  virtual int64_t getLocationY() const;
-  virtual std::string getPhotoMetrInt() const;
+  virtual int64_t locationX() const;
+  virtual int64_t locationY() const;
+  virtual std::string photoMetrInt() const;
 
  protected:
   std::atomic_bool done_;

@@ -28,11 +28,11 @@ namespace wsiToDicomConverter {
 
 Frame::Frame(int64_t locationX, int64_t locationY, int64_t frameWidth,
              int64_t frameHeight, DCM_Compression compression,
-             int quality, bool store_raw_bytes) : locationX_(locationX),
+             int quality, bool storeRawBytes) : locationX_(locationX),
                                                   locationY_(locationY),
                                                   frameWidth_(frameWidth),
                                                   frameHeight_(frameHeight),
-                                            storeRawBytes_(store_raw_bytes) {
+                                            storeRawBytes_(storeRawBytes) {
     done_ = false;
     readCounter_ = 0;
     size_ = 0;
@@ -55,27 +55,27 @@ Frame::Frame(int64_t locationX, int64_t locationY, int64_t frameWidth,
     }
 }
 
-std::string Frame::getPhotoMetrInt() const {
+std::string Frame::photoMetrInt() const {
   return "";
 }
 
-int64_t Frame::get_frame_width() const {
+int64_t Frame::frameWidth() const {
   return frameWidth_;
 }
 
-int64_t Frame::get_frame_height() const {
+int64_t Frame::frameHeight() const {
   return frameHeight_;
 }
 
-int64_t Frame::getLocationX() const {
+int64_t Frame::locationX() const {
     return locationX_;
 }
 
-int64_t Frame::getLocationY() const {
+int64_t Frame::locationY() const {
     return locationY_;
 }
 
-void Frame::inc_read_counter() {
+void Frame::incReadCounter() {
     readCounter_ += 1;
 }
 
@@ -83,11 +83,11 @@ bool Frame::isDone() const {
     return done_;
 }
 
-void Frame::clear_dicom_mem() {
+void Frame::clearDicomMem() {
   data_ = nullptr;
 }
 
-void Frame::dec_read_counter() {
+void Frame::decReadCounter() {
     boost::lock_guard<boost::mutex> guard(readCounterMutex_);
     readCounter_ -= 1;
     if (readCounter_ <= 0) {
@@ -95,13 +95,12 @@ void Frame::dec_read_counter() {
     }
   }
 
-int64_t Frame::rawABGRFrameBytes(uint8_t *raw_memory,
-                                                    int64_t memorysize) {
-  int64_t memsize =  decompress_memory(rawCompressedBytes_.get(),
+int64_t Frame::rawABGRFrameBytes(uint8_t *rawMemory, int64_t memorySize) {
+  int64_t memSize =  decompress_memory(rawCompressedBytes_.get(),
                            rawCompressedBytesSize_,
-                           raw_memory, memorysize);
-  dec_read_counter();
-  return memsize;
+                           rawMemory, memorySize);
+  decReadCounter();
+  return memSize;
 }
 
 void Frame::clearRawABGRMem() {
@@ -111,13 +110,13 @@ void Frame::clearRawABGRMem() {
   }
 }
 
-uint8_t *Frame::get_dicom_frame_bytes() {
+uint8_t *Frame::dicomFrameBytes() {
   return data_.get();
 }
 
-size_t Frame::getSize() const { return size_; }
+size_t Frame::dicomFrameBytesSize() const { return size_; }
 
-bool Frame::has_compressed_raw_bytes() const {
+bool Frame::hasRawABGRFrameBytes() const {
   return (rawCompressedBytes_ != nullptr && rawCompressedBytesSize_ > 0);
 }
 

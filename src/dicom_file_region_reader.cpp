@@ -20,35 +20,35 @@
 namespace wsiToDicomConverter {
 
 DICOMFileFrameRegionReader::DICOMFileFrameRegionReader() {
-    clear_dicom_files();
+    clearDicomFiles();
 }
 
 DICOMFileFrameRegionReader::~DICOMFileFrameRegionReader() {
-  clear_dicom_files();
+  clearDicomFiles();
 }
 
-DcmFileDraft * DICOMFileFrameRegionReader::get_dicom_file(size_t index) {
+DcmFileDraft * DICOMFileFrameRegionReader::dicomFile(size_t index) {
   return dcmFiles_.at(index).get();
 }
 
-void DICOMFileFrameRegionReader::set_dicom_files(
-                      std::vector<std::unique_ptr<DcmFileDraft>> dcm_files) {
+void DICOMFileFrameRegionReader::setDicomFiles(
+                      std::vector<std::unique_ptr<DcmFileDraft>> dcmFiles) {
   // all files should have frames with same dimensions
-  clear_dicom_files();
-  dcmFiles_ = std::move(dcm_files);
+  clearDicomFiles();
+  dcmFiles_ = std::move(dcmFiles);
   if (dcmFiles_.size() <= 0) {
-    clear_dicom_files();
+    clearDicomFiles();
     return;
   }
   const DcmFileDraft & first_dcm_file = (*dcmFiles_.at(0));
-  if (!first_dcm_file.get_frame(0)->has_compressed_raw_bytes()) {
-    clear_dicom_files();
+  if (!first_dcm_file.frame(0)->hasRawABGRFrameBytes()) {
+    clearDicomFiles();
     return;
   }
-  frameWidth_ = first_dcm_file.get_frame_width();
-  frameHeight_ = first_dcm_file.get_frame_height();
-  imageWidth_ = first_dcm_file.get_image_width();
-  imageHeight_ = first_dcm_file.get_image_height();
+  frameWidth_ = first_dcm_file.frameWidth();
+  frameHeight_ = first_dcm_file.frameHeight();
+  imageWidth_ = first_dcm_file.imageWidth();
+  imageHeight_ = first_dcm_file.imageHeight();
   // compute frames per row and column.  Not final frames may
   // not be used completely.
   framesPerRow_ = static_cast<int64_t>(
@@ -59,7 +59,7 @@ void DICOMFileFrameRegionReader::set_dicom_files(
                                   static_cast<double>(frameHeight_)));
 }
 
-void DICOMFileFrameRegionReader::clear_dicom_files() {
+void DICOMFileFrameRegionReader::clearDicomFiles() {
   dcmFiles_.clear();
   frameWidth_ = 0;
   frameHeight_ = 0;
@@ -69,12 +69,11 @@ void DICOMFileFrameRegionReader::clear_dicom_files() {
   framesPerColumn_ = 0;
 }
 
-int64_t DICOMFileFrameRegionReader::dicom_file_count() const {
+int64_t DICOMFileFrameRegionReader::dicomFileCount() const {
   return dcmFiles_.size();
 }
 
-
-Frame* DICOMFileFrameRegionReader::get_frame_ptr(int64_t index) {
+Frame* DICOMFileFrameRegionReader::framePtr(int64_t index) {
     // Reads a frame from as set of loaded dicom files.
     //
     // Args:
@@ -82,246 +81,242 @@ Frame* DICOMFileFrameRegionReader::get_frame_ptr(int64_t index) {
     //
     // Returns:
     //   pointer to frame
-    const int64_t file_count = dcmFiles_.size();
-    for (int64_t file_idx = 0; file_idx < file_count; ++file_idx) {
-      const DcmFileDraft & dcm_file = (*dcmFiles_.at(file_idx));
-      const int64_t frame_count = dcm_file.get_file_frame_count();
-      if (index >= frame_count) {
-        index -= frame_count;
+    const int64_t fileCount = dcmFiles_.size();
+    for (int64_t fileIdx = 0; fileIdx < fileCount; ++fileIdx) {
+      const DcmFileDraft & dcmFile = (*dcmFiles_.at(fileIdx));
+      const int64_t frameCount = dcmFile.fileFrameCount();
+      if (index >= frameCount) {
+        index -= frameCount;
       } else {
-        return dcm_file.get_frame(index);
+        return dcmFile.frame(index);
       }
     }
     return nullptr;
   }
 
-bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
-                                                 uint32_t* frame_memory,
-                                const int64_t frame_buffer_size_bytes) {
+bool DICOMFileFrameRegionReader::frameBytes(int64_t index,
+                                            uint32_t* frameMemory,
+                                const int64_t frameBufferSizeBytes) {
     // Reads a frame from as set of loaded dicom files.
     //
     // Args:
     //  index : index of frame to read.
-    //  frame_memory : memory buffer to read frame into
-    //  frame_buffer_size_bytes : size of buffer in bytes
+    //  frameMemory : memory buffer to read frame into
+    //  frameBufferSizeBytes : size of buffer in bytes
     //
     // Returns:
     //   true if frame memory initalized
-    Frame* fptr = get_frame_ptr(index);
+    Frame* fptr = framePtr(index);
     if (fptr != nullptr) {
         return fptr->rawABGRFrameBytes(
-                reinterpret_cast<uint8_t *>(frame_memory),
-                                            frame_buffer_size_bytes) ==
-                                            frame_buffer_size_bytes;
+                reinterpret_cast<uint8_t *>(frameMemory),
+                                            frameBufferSizeBytes) ==
+                                            frameBufferSizeBytes;
     }
     return false;
   }
 
-  void DICOMFileFrameRegionReader::copy_region_from_frames(
-                    int64_t image_offset_X, int64_t image_offset_Y,
-                    const uint32_t * const frame_bytes, int64_t fx, int64_t fy,
-                    int64_t copy_width, int64_t copy_height, uint32_t *memory,
-                    int64_t memory_width, int64_t mx, int64_t my) const {
+  void DICOMFileFrameRegionReader::copyRegionFromFrames(
+                    int64_t imageOffsetX, int64_t imageOffsetY,
+                    const uint32_t * const frameBytes, int64_t fx, int64_t fy,
+                    int64_t copyWidth, int64_t copyHeight, uint32_t *memory,
+                    int64_t memoryWidth, int64_t mx, int64_t my) const {
       // Copies a memory region from a frame memory to memory buffer.
       //
       // Args:
-      //   image_offset_X : global upper left coordinate in image
-      //   image_offset_Y : global upper left coordinate in image
-      //   frame_bytes: frame pixel memory
+      //   imageOffsetX : global upper left coordinate in image
+      //   imageOffsetY : global upper left coordinate in image
+      //   frameBytes: frame pixel memory
       //   fx : upper left coordinate of frame
       //   fy : upper left coordinate of frame
-      //   copy_width : width to copy from frame
-      //   copy_height : height to copy frome frame
+      //   copyWidth : width to copy from frame
+      //   copyHeight : height to copy frome frame
       //   memory : pixel memory to copy frame data to.
-      //   memory_width : total width of memory block.
+      //   memoryWidth : total width of memory block.
       //   mx : upper left coordinate in memory to read from
       //   my : upper left coordinate in memory to read from
 
-      const int64_t end_mx = mx + copy_width;  // end position to copy to
-      int64_t my_offset = my * memory_width;   // y offset to start writing to
-      int64_t frame_offset = fy * frameWidth_;  // y offset to read from.
-      int64_t imageY = image_offset_Y;         // global position in image
-      for (int64_t row = 0; row < copy_height; ++row) {
-        int64_t frame_cursor = fx + frame_offset;  // frame memory read index
-        for (int64_t column = mx; column < end_mx; ++column) {
-            int64_t imageX = column + image_offset_X;
+      const int64_t endMX = mx + copyWidth;  // end position to copy to
+      int64_t myOffset = my * memoryWidth;   // y offset to start writing to
+      int64_t frameOffset = fy * frameWidth_;  // y offset to read from.
+      int64_t imageY = imageOffsetY;         // global position in image
+      for (int64_t row = 0; row < copyHeight; ++row) {
+        int64_t frameCursor = fx + frameOffset;  // frame memory read index
+        for (int64_t column = mx; column < endMX; ++column) {
+            int64_t imageX = column + imageOffsetX;
             if (imageX >= imageWidth_ ||   // if frame memory is nullptr or
                 imageY >= imageHeight_ ||  // outside of image bounds
-                frame_bytes == nullptr) {  // set copied pixel memory ARGB to 0
-              memory[column + my_offset] = 0;
+                frameBytes == nullptr) {  // set copied pixel memory ARGB to 0
+              memory[column + myOffset] = 0;
             } else {   // otherwise copy memory
-              memory[column + my_offset] = frame_bytes[frame_cursor];
+              memory[column + myOffset] = frameBytes[frameCursor];
             }
-            frame_cursor += 1;  // increment frame read index
+            frameCursor += 1;  // increment frame read index
         }
-        my_offset += memory_width;  // increment row offsets
-        frame_offset += frameWidth_;
+        myOffset += memoryWidth;  // increment row offsets
+        frameOffset += frameWidth_;
         imageY  += 1;
       }
   }
 
-  void DICOMFileFrameRegionReader::getXYFrameSpan(int64_t layer_x,
-                                                int64_t layer_y,
-                                                int64_t mem_width,
-                                                int64_t mem_height,
-                                                int64_t *first_frame_x,
-                                                int64_t *first_frame_y,
-                                                int64_t *last_frame_x,
-                                                int64_t *last_frame_y) {
+  void DICOMFileFrameRegionReader::xyFrameSpan(int64_t layerX,
+                                               int64_t layerY,
+                                               int64_t memWidth,
+                                               int64_t memHeight,
+                                               int64_t *firstFrameX,
+                                               int64_t *firstFrameY,
+                                               int64_t *lastFrameX,
+                                               int64_t *lastFrameY) {
     // compute first and last frames to read.
-    *first_frame_y = (layer_y / frameHeight_);
-    *first_frame_x = (layer_x / frameWidth_);
-    *last_frame_y = static_cast<int64_t>(static_cast<double>(
-          std::min<int64_t>(layer_y + mem_height - 1, imageHeight_)) /
+    *firstFrameY = (layerY / frameHeight_);
+    *firstFrameX = (layerX / frameWidth_);
+    *lastFrameY = static_cast<int64_t>(static_cast<double>(
+          std::min<int64_t>(layerY + memHeight - 1, imageHeight_)) /
           static_cast<double>(frameHeight_));
-    *last_frame_x = static_cast<int64_t>(static_cast<double>(
-          std::min<int64_t>(layer_x + mem_width - 1, imageWidth_)) /
+    *lastFrameX = static_cast<int64_t>(static_cast<double>(
+          std::min<int64_t>(layerX + memWidth - 1, imageWidth_)) /
           static_cast<double>(frameWidth_));
   }
 
-  bool DICOMFileFrameRegionReader::incSourceFrameReadCounter(int64_t layer_x,
-                                               int64_t layer_y,
-                                               int64_t mem_width,
-                                               int64_t mem_height) {
+  bool DICOMFileFrameRegionReader::incSourceFrameReadCounter(int64_t layerX,
+                                               int64_t layerY,
+                                               int64_t memWidth,
+                                               int64_t memHeight) {
     // Reads a sub region from the a set of dicom frames spread across file(s).
     //
     // Memory pixels in ARGB format.
     // Memory pixel value = 0x00000000 for positions outside image dim.
     //
     // Args:
-    //   layer_X : upper left X coordinate in image coordinates.
-    //   layer_Y : upper left Y coordinate in image coordinates.
-    //   mem_width : Width of memory to copy into.
-    //   mem_height : Height of memory to copy into.
+    //   layerX : upper left X coordinate in image coordinates.
+    //   layerY : upper left Y coordinate in image coordinates.
+    //   memWidth : Width of memory to copy into.
+    //   memHeight : Height of memory to copy into.
     //   memory : Memory to copy into .
     //
     // Returns: True if has files, false if no DICOM files set.
-    if (dicom_file_count() <= 0) {
+    if (dicomFileCount() <= 0) {
       return false;
     }
     // compute first and last frames to read.
-    int64_t first_frame_x, first_frame_y, last_frame_x, last_frame_y;
-    getXYFrameSpan(layer_x, layer_y, mem_width, mem_height, &first_frame_x,
-                   &first_frame_y, &last_frame_x, &last_frame_y);
+    int64_t firstFrameX, firstFrameY, lastFrameX, lastFrameY;
+    xyFrameSpan(layerX, layerY, memWidth, memHeight, &firstFrameX,
+                &firstFrameY, &lastFrameX, &lastFrameY);
 
-    int64_t frame_yc_offset = first_frame_y * framesPerRow_;
+    int64_t frameYCOffset = firstFrameY * framesPerRow_;
     // increment over frame rows
-    for (int64_t frame_yc = first_frame_y; frame_yc <= last_frame_y;
-                                                                  ++frame_yc) {
+    for (int64_t frameYC = firstFrameY; frameYC <= lastFrameY; ++frameYC) {
       // iterate over frame columns.
-      for (int64_t frame_xc = first_frame_x; frame_xc <= last_frame_x;
-                                                                  ++frame_xc) {
-        if ((frame_xc <= framesPerRow_) && (frame_yc <= framesPerColumn_)) {
-          Frame* fptr = get_frame_ptr(frame_xc + frame_yc_offset);
+      for (int64_t frameXC = firstFrameX; frameXC <= lastFrameX; ++frameXC) {
+        if ((frameXC <= framesPerRow_) && (frameYC <= framesPerColumn_)) {
+          Frame* fptr = framePtr(frameXC + frameYCOffset);
           if (fptr != nullptr) {
-            fptr->inc_read_counter();
+            fptr->incReadCounter();
           }
         }
       }
       // increment row offset into frame buffer memory.
-      frame_yc_offset += framesPerRow_;
+      frameYCOffset += framesPerRow_;
     }
     return true;
   }
 
-  bool DICOMFileFrameRegionReader::read_region(int64_t layer_x,
-                                               int64_t layer_y,
-                                               int64_t mem_width,
-                                               int64_t mem_height,
-                                               uint32_t *memory) {
+  bool DICOMFileFrameRegionReader::readRegion(int64_t layerX,
+                                              int64_t layerY,
+                                              int64_t memWidth,
+                                              int64_t memHeight,
+                                              uint32_t *memory) {
     // Reads a sub region from the a set of dicom frames spread across file(s).
     //
     // Memory pixels in ARGB format.
     // Memory pixel value = 0x00000000 for positions outside image dim.
     //
     // Args:
-    //   layer_X : upper left X coordinate in image coordinates.
-    //   layer_Y : upper left Y coordinate in image coordinates.
-    //   mem_width : Width of memory to copy into.
-    //   mem_height : Height of memory to copy into.
+    //   layerX : upper left X coordinate in image coordinates.
+    //   layerY : upper left Y coordinate in image coordinates.
+    //   memWidth : Width of memory to copy into.
+    //   memHeight : Height of memory to copy into.
     //   memory : Memory to copy into .
     //
     // Returns: True if has files, false if no DICOM files set.
-    if (dicom_file_count() <= 0) {
+    if (dicomFileCount() <= 0) {
       return false;
     }
-    const uint64_t frame_mem_size_bytes = frameWidth_ * frameHeight_ *
+    const uint64_t frameMemSizeBytes = frameWidth_ * frameHeight_ *
                                                        sizeof(uint32_t);
-    std::unique_ptr<uint32_t[]> frame_mem = std::make_unique<uint32_t[]>(
+    std::unique_ptr<uint32_t[]> frameMem = std::make_unique<uint32_t[]>(
                                                     frameWidth_ * frameHeight_);
     // compute first and last frames to read.
-    int64_t first_frame_x, first_frame_y, last_frame_x, last_frame_y;
-    getXYFrameSpan(layer_x, layer_y, mem_width, mem_height, &first_frame_x,
-                   &first_frame_y, &last_frame_x, &last_frame_y);
+    int64_t firstFrameX, firstFrameY, lastFrameX, lastFrameY;
+    xyFrameSpan(layerX, layerY, memWidth, memHeight, &firstFrameX,
+                &firstFrameY, &lastFrameX, &lastFrameY);
 
-    /*BOOST_LOG_TRIVIAL(debug) << "DICOMFileFrameRegionReader::read_region" <<
-                                "\n" << "layer_x, layer_y: " << layer_x <<
-                                ", " << layer_y << "\n" <<
-                                "mem_width, height: " << mem_width <<
-                                ", " << mem_height << "\n" <<
+    /*BOOST_LOG_TRIVIAL(debug) << "DICOMFileFrameRegionReader::readRegion" <<
+                                "\n" << "layerX, layerY: " << layerX <<
+                                ", " << layerY << "\n" <<
+                                "memWidth, height: " << memWidth <<
+                                ", " << memHeight << "\n" <<
                                 "frameWidth, frameHeight: " << frameWidth_ <<
                                 ", " << frameHeight_ << "\n" <<
                                 "imageWidth, imageHeight: " << imageWidth_ <<
                                 ", " << imageHeight_ << "\n" <<
                                 "framesPerRow: " << framesPerRow_ << "\n" <<
-                                "first_frame_x, first_frame_y: " <<
-                                first_frame_x << ", " << first_frame_y  <<
-                                "\n" << "last_frame_x, last_frame_y: " <<
-                                last_frame_x << ", " << last_frame_y;*/
+                                "firstFrameX, firstFrameY: " <<
+                                firstFrameX << ", " << firstFrameY  <<
+                                "\n" << "lastFrameX, lastFrameY: " <<
+                                lastFrameX << ", " << lastFrameY;*/
 
     // read offset in first frame.
-    const int64_t frame_start_x_init = layer_x % frameWidth_;
-    int64_t frame_start_y = layer_y % frameHeight_;
-    int64_t frame_yc_offset = first_frame_y * framesPerRow_;
+    const int64_t frameStartXInit = layerX % frameWidth_;
+    int64_t frameStartY = layerY % frameHeight_;
+    int64_t frameYCOffset = firstFrameY * framesPerRow_;
 
     // write position in memory buffer
-    int64_t my_start = 0;
+    int64_t myStart = 0;
     // increment over frame rows
-    for (int64_t frame_yc = first_frame_y; frame_yc <= last_frame_y;
-                                                                  ++frame_yc) {
+    for (int64_t frameYC = firstFrameY; frameYC <= lastFrameY; ++frameYC) {
       // init starting position to read from in frame and write to in mem.
-      int64_t frame_start_x = frame_start_x_init;
-      int64_t mx_start = 0;
+      int64_t frameStartX = frameStartXInit;
+      int64_t mxStart = 0;
 
       // height to copy from frame to mem buffer.  clip to data in frame
       // or remaining in memory buffer.  Which ever is smaller.
-      const int64_t height_copied =
-        std::min<int64_t>(frameHeight_ - frame_start_y, mem_height - my_start);
+      const int64_t heightCopied =
+        std::min<int64_t>(frameHeight_ - frameStartY, memHeight - myStart);
 
       // iterate over frame columns.
-      for (int64_t frame_xc = first_frame_x; frame_xc <= last_frame_x;
-                                                                  ++frame_xc) {
+      for (int64_t frameXC = firstFrameX; frameXC <= lastFrameX; ++frameXC) {
         // Get Frame memory
-        uint32_t *raw_frame_bytes = nullptr;
-        if ((frame_xc <= framesPerRow_) && (frame_yc <= framesPerColumn_)) {
-          if (get_frame_bytes(frame_xc + frame_yc_offset, frame_mem.get(),
-                              frame_mem_size_bytes)) {
-            raw_frame_bytes = frame_mem.get();
+        uint32_t *rawFrameBytes = nullptr;
+        if ((frameXC <= framesPerRow_) && (frameYC <= framesPerColumn_)) {
+          if (frameBytes(frameXC + frameYCOffset, frameMem.get(),
+                         frameMemSizeBytes)) {
+            rawFrameBytes = frameMem.get();
           }
         }
         // width to copy from frame to mem buffer.  clip to data in frame
         // or remaining in memory buffer.  Which ever is smaller.
-        const int64_t width_copeid =
-          std::min<int64_t>(frameWidth_ - frame_start_x, mem_width - mx_start);
+        const int64_t widthCopeid =
+          std::min<int64_t>(frameWidth_ - frameStartX, memWidth - mxStart);
 
         // copy frame memory to buffer mem.
-        copy_region_from_frames(layer_x, layer_y, raw_frame_bytes,
-                                frame_start_x, frame_start_y, width_copeid,
-                                height_copied, memory, mem_width, mx_start,
-                                my_start);
+        copyRegionFromFrames(layerX, layerY, rawFrameBytes,
+                             frameStartX, frameStartY, widthCopeid,
+                             heightCopied, memory, memWidth, mxStart,
+                             myStart);
 
         // increment write cusor X position
-        mx_start += width_copeid;
+        mxStart += widthCopeid;
 
         // set next frame to start reading at the begining frame column
-        frame_start_x = 0;
+        frameStartX = 0;
       }
       // increment write cusor Y position
-      my_start += height_copied;
+      myStart += heightCopied;
       // set next frame to start reading at the begining frame row
-      frame_start_y = 0;
+      frameStartY = 0;
       // increment row offset into frame buffer memory.
-      frame_yc_offset += framesPerRow_;
+      frameYCOffset += framesPerRow_;
     }
     return true;
   }

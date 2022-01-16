@@ -48,7 +48,7 @@ class OpenCVInterpolationFrame : public Frame {
                        int quality, int64_t levelWidth,
                        int64_t levelHeight, int64_t level0Width,
                        int64_t level0Height,
-                       bool store_raw_bytes,
+                       bool storeRawBytes,
                        DICOMFileFrameRegionReader* frame_region_reader,
                        const cv::InterpolationFlags openCVInterpolationMethod);
 

@@ -98,15 +98,15 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
     initialX_ = 1;
     initialY_ = 1;
   }
-  const int64_t downsample_size = wsiRequest_->downsamples.size();
-  if (downsample_size > 0) {
+  const int64_t downsampleSize = wsiRequest_->downsamples.size();
+  if (downsampleSize > 0) {
     if (wsiRequest_->retileLevels > 0 &&
-        wsiRequest_->retileLevels+1 != downsample_size) {
+        wsiRequest_->retileLevels+1 != downsampleSize) {
       BOOST_LOG_TRIVIAL(info) << "--levels command line parameter is " <<
                                  "unnecessary levels initialized to " <<
-                                 downsample_size << " from --downsamples.";
+                                 downsampleSize << " from --downsamples.";
     }
-    wsiRequest_->retileLevels = downsample_size;
+    wsiRequest_->retileLevels = downsampleSize;
   }
   retile_ = wsiRequest_->retileLevels > 0;
   if (!retile_ && wsiRequest_->cropFrameToGenerateUniformPixelSpacing) {
@@ -118,7 +118,7 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
     throw 1;
   }
   customDownSampleFactorsDefined_ = false;
-  for (const int ds: wsiRequest_->downsamples) {
+  for (const int ds : wsiRequest_->downsamples) {
     if (ds != 0) {
       customDownSampleFactorsDefined_ = true;
       break;
@@ -172,14 +172,14 @@ std::unique_ptr<OpenSlidePtr> WsiToDcm::initOpenslide() {
       wsiRequest_->SVSImportPreferScannerTileingForLargestLevel) {
     bool useSVSTileing = false;
     if (boost::algorithm::iends_with(wsiRequest_->inputFile, ".svs")) {
-      tiffFile_ =std::make_unique<TiffFile>(wsiRequest_->inputFile);
+      tiffFile_ = std::make_unique<TiffFile>(wsiRequest_->inputFile);
       if (tiffFile_->isLoaded()) {
           int32_t level = tiffFile_->getDirectoryIndexMatchingImageDimensions(
                             largestSlideLevelWidth_, largestSlideLevelHeight_);
           if (level != -1) {
             TiffDirectory * tiffDir = tiffFile_->directory(level);
-            TiffFrame tiffFrame(tiffFile_.get(), 0, 0, level, tiffDir->tileWidth(),
-                                tiffDir->tileHeight());
+            TiffFrame tiffFrame(tiffFile_.get(), 0, 0, level,
+                                tiffDir->tileWidth(), tiffDir->tileHeight());
             if (tiffFrame.canDecodeJpeg()) {
               BOOST_LOG_TRIVIAL(info) << "Reading JPEG tiles from SVS with "
                                          "out decoding.";
@@ -562,7 +562,8 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSmallestSlideDim(
                    (0 == getOpenslideLevelForDownsample(osptr,
                     std::get<1>(levelProcessOrder[idx+1])))) {
           // Memory optimization, if processing an image without downsampling &
-          // openslide is being used to read the imaging (!std::get<2>(levelProcessOrder[idx])
+          // openslide is being used to read the imaging
+          // (!std::get<2>(levelProcessOrder[idx])
           // no downsamples and reading downsample at level will also read the
           // highest resolution image.  Do not save compressed raw versions of
           // the highest resolution.  Start progressive downsampling from
@@ -638,7 +639,7 @@ int WsiToDcm::dicomizeTiff() {
     slideLevelDim = std::move(getSlideLevelDim(level,
                                                slideLevelDim.get(),
                                                smallestSlideDim.get(),
-                        higherMagnifcationDicomFiles.dicom_file_count() > 0));
+                        higherMagnifcationDicomFiles.dicomFileCount() > 0));
 
     const int64_t downsample = slideLevelDim->downsample;
     const int32_t levelToGet  = slideLevelDim->levelToGet;
@@ -687,13 +688,13 @@ int WsiToDcm::dicomizeTiff() {
       // clear higherMagnifcationDicomFiles so
       // level is downsampled from openslide and not
       // prior level if progressiveDownsample is enabled.
-      higherMagnifcationDicomFiles.clear_dicom_files();
+      higherMagnifcationDicomFiles.clearDicomFiles();
     }
     if (slideLevelDim->readFromTiff) {
       levelCompression = JPEG;
     }
     BOOST_LOG_TRIVIAL(debug) << "higherMagnifcationDicomFiles " <<
-                          higherMagnifcationDicomFiles.dicom_file_count();
+                          higherMagnifcationDicomFiles.dicomFileCount();
     int64_t y = initialY_;
     std::vector<std::unique_ptr<Frame>> framesInitalizationData;
     // Preallocate vector space for frames
@@ -731,7 +732,7 @@ int WsiToDcm::dicomizeTiff() {
               levelCompression, wsiRequest_->quality,
               saveCompressedRaw, &higherMagnifcationDicomFiles);
         }
-        if (higherMagnifcationDicomFiles.dicom_file_count() != 0) {
+        if (higherMagnifcationDicomFiles.dicomFileCount() != 0) {
           frameData->incSourceFrameReadCounter();
         }
         framesInitalizationData.push_back(std::move(frameData));
@@ -756,8 +757,8 @@ int WsiToDcm::dicomizeTiff() {
     for (std::vector<std::unique_ptr<Frame>>::iterator frameData =
                                              framesInitalizationData.begin();
                     frameData != framesInitalizationData.end(); ++frameData) {
-      const int64_t  frameXPos = (*frameData)->getLocationX();
-      const int64_t  frameYPos = (*frameData)->getLocationY();
+      const int64_t  frameXPos = (*frameData)->locationX();
+      const int64_t  frameYPos = (*frameData)->locationY();
       boost::asio::post(
           pool, [frameData = frameData->get()]() { frameData->sliceFrame(); });
       framesData.push_back(std::move(*frameData));
@@ -799,8 +800,7 @@ int WsiToDcm::dicomizeTiff() {
     if  (!saveCompressedRaw) {
       generatedDicomFiles.clear();
     }
-    higherMagnifcationDicomFiles.set_dicom_files(
-                                           std::move(generatedDicomFiles));
+    higherMagnifcationDicomFiles.setDicomFiles(std::move(generatedDicomFiles));
     // The combination of cropFrameToGenerateUniformPixelSpacing &
     // stopDownsamplingAtSingleFrame can result in cropping images
     // which would otherwise span multiple frames to one frame.

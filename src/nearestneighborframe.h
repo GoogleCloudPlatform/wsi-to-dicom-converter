@@ -37,7 +37,7 @@ class NearestNeighborFrame : public Frame {
   // frameWidth, frameHeight_ - size frame needs to be scaled to
   // compression - type of compression
   // quality - compression quality setting
-  // store_raw_bytes - store raw version of frame pixels in frame in addition
+  // storeRawBytes - store raw version of frame pixels in frame in addition
   //                   to compressed pixel bytes. Required for progressive
   //                   downsampling.
   // frame_region_reader - frame reader for raw frame data from prior level.
@@ -49,7 +49,7 @@ class NearestNeighborFrame : public Frame {
                        int64_t frameHeightDownsampled, double multiplicator,
                        int64_t frameWidth, int64_t frameHeight,
                        DCM_Compression compression, int quality,
-                       bool store_raw_bytes,
+                       bool storeRawBytes,
                        DICOMFileFrameRegionReader *frame_region_reader);
 
   virtual ~NearestNeighborFrame();

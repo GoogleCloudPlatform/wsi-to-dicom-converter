@@ -23,7 +23,7 @@
 namespace wsiToDicomConverter {
 
 /*
-DICOMFileFrameRegionReader provides an mechanism similar to OpenSlide 
+DICOMFileFrameRegionReader provides an mechanism similar to OpenSlide
 openslide_read_region to extract an aribrary two dimensional patch of
 memory from an an array of DICOMFrame objects.
 
@@ -34,7 +34,7 @@ frames flow as if they were a continous block of memory.
 
 Frame 1, 2, 3
       4, 5, 6  = [1, 2, 3, 4, 5, 6, 7 ,8 , 9]
-      7, 8, 9 
+      7, 8, 9
 */
 class DICOMFileFrameRegionReader {
  public :
@@ -43,20 +43,20 @@ class DICOMFileFrameRegionReader {
 
   // Number of DICOM files loaded in current instance of
   // DICOMFileFrameRegionReader.
-  int64_t dicom_file_count() const;
+  int64_t dicomFileCount() const;
 
   // Returns pointer to specified DICOM file.
-  DcmFileDraft * get_dicom_file(size_t index);
+  DcmFileDraft * dicomFile(size_t index);
 
   // Set DICOM list of files to be used by frame region reader.
   // Should be the complete set for given level.
   // All DICOM files must describe the same overall image, have
   // same global image width, height, and have frames which have same
   // dimensions.
-  void set_dicom_files(std::vector<std::unique_ptr<DcmFileDraft>> dcm_files_);
+  void setDicomFiles(std::vector<std::unique_ptr<DcmFileDraft>> dcmFiles);
 
   // Clears the list of dicm files.
-  void clear_dicom_files();
+  void clearDicomFiles();
 
   // Reads a sub region from the a set of DICOM frames spread across file(s).
   //
@@ -64,61 +64,58 @@ class DICOMFileFrameRegionReader {
   // Memory pixel value = 0x00000000 for positions outside image dim.
   //
   // Args:
-  //   layer_X : upper left X coordinate in image coordinates.
-  //   layer_Y : upper left Y coordinate in image coordinates.
-  //   mem_width : Width of memory to copy into.
-  //   mem_height : Height of memory to copy into.
+  //   layerX : upper left X coordinate in image coordinates.
+  //   layerY : upper left Y coordinate in image coordinates.
+  //   memWidth : Width of memory to copy into.
+  //   memHeight : Height of memory to copy into.
   //   memory : Memory to copy into .
   //
   // Returns: True if has files, false if no DICOM files set.
-  bool read_region(int64_t layer_x, int64_t layer_y, int64_t mem_width,
-                   int64_t mem_height, uint32_t *memory);
+  bool readRegion(int64_t layerX, int64_t layerY, int64_t memWidth,
+                  int64_t memHeight, uint32_t *memory);
 
-  bool incSourceFrameReadCounter(int64_t layer_x,
-                                               int64_t layer_y,
-                                               int64_t mem_width,
-                                               int64_t mem_height);
+  bool incSourceFrameReadCounter(int64_t layerX, int64_t layerY,
+                                 int64_t memWidth, int64_t memHeight);
 
  private:
   // Reads a frame from as set of loaded DICOM files.
   //
   // Args:
   //  index : index of frame to read.
-  //  frame_memory : memory buffer to read frame into
-  //  frame_buffer_size_bytes : size of buffer in bytes
+  //  frameMemory : memory buffer to read frame into
+  //  frameBufferSizeBytes : size of buffer in bytes
   //
   // Returns:
   //   true if frame memory initalized
-  bool get_frame_bytes(int64_t index, uint32_t* frame_memory,
-                       const int64_t frame_buffer_size_bytes);
+  bool frameBytes(int64_t index, uint32_t* frameMemory,
+                  const int64_t frameBufferSizeBytes);
 
-  Frame* get_frame_ptr(int64_t index);
+  Frame* framePtr(int64_t index);
 
   // Copies a memory region from a frame memory to memory buffer.
   //
   // Args:
-  //   image_offset_X : global upper left coordinate in image
-  //   image_offset_Y : global upper left coordinate in image
-  //   frame_bytes: frame pixel memory
+  //   imageOffsetX : global upper left coordinate in image
+  //   imageOffsetY : global upper left coordinate in image
+  //   frameBytes: frame pixel memory
   //   fx : upper left coordinate of frame
   //   fy : upper left coordinate of frame
-  //   copy_width : width to copy from frame
-  //   copy_height : height to copy frome frame
+  //   copyWidth : width to copy from frame
+  //   copyHeight : height to copy frome frame
   //   memory : pixel memory to copy frame data to.
-  //   memory_width : total width of memory block.
+  //   memoryWidth : total width of memory block.
   //   mx : upper left coordinate in memory to read from
   //   my : upper left coordinate in memory to read from
-  void copy_region_from_frames(int64_t image_offset_X, int64_t image_offset_Y,
-                               const uint32_t * const frame_bytes, int64_t fx,
-                               int64_t fy, int64_t copy_width,
-                               int64_t copy_height, uint32_t *memory,
-                               int64_t memory_width, int64_t mx, int64_t my)
-                               const;
+  void copyRegionFromFrames(int64_t imageOffsetX, int64_t imageOffsetY,
+                            const uint32_t * const frameBytes, int64_t fx,
+                            int64_t fy, int64_t copyWidth,
+                            int64_t copyHeight, uint32_t *memory,
+                            int64_t memoryWidth, int64_t mx, int64_t my) const;
 
-  void getXYFrameSpan(int64_t layer_x, int64_t layer_y, int64_t mem_width,
-                      int64_t mem_height, int64_t *first_frame_x,
-                      int64_t *first_frame_y, int64_t *last_frame_x,
-                      int64_t *last_frame_y);
+  void xyFrameSpan(int64_t layerX, int64_t layerY, int64_t memWidth,
+                   int64_t memHeight, int64_t *firstFrameX,
+                   int64_t *firstFrameY, int64_t *lastFrameX,
+                   int64_t *lastFrameY);
 
 
   std::vector<std::unique_ptr<DcmFileDraft>> dcmFiles_;

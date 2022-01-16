@@ -13,6 +13,7 @@
 // limitations under the License.
 #include <boost/log/trivial.hpp>
 
+#include <memory>
 #include <string>
 
 #include "src/tiffDirectory.h"
@@ -68,12 +69,18 @@ int64_t TiffDirectory::compression() const { return compression_; }  // 259
 int64_t TiffDirectory::photometric() const { return photoMetric_; }  // 262
 
 int64_t TiffDirectory::jpegQuality() const { return jpegQuality_; }
+
 int64_t TiffDirectory::jpegColorMode() const { return jpegColorMode_; }
+
 int64_t TiffDirectory::jpegTableMode() const { return jpegTableMode_; }
+
 int64_t TiffDirectory::jpegTableDataSize() const { return jpegTableDataSize_; }
+
 uint8_t* TiffDirectory::jpegTableData() const { return jpegTableData_.get(); }
-bool TiffDirectory::hasJpegTableData() const { return ((jpegTableData_ != nullptr) &&
-                                                 (jpegTableDataSize_ > 0)); }
+
+bool TiffDirectory::hasJpegTableData() const {
+  return ((jpegTableData_ != nullptr) && (jpegTableDataSize_ > 0));
+}
 
 std::string TiffDirectory::imageDescription() const {  // 270
   return imageDescription_;
@@ -81,11 +88,15 @@ std::string TiffDirectory::imageDescription() const {  // 270
 
 int64_t TiffDirectory::orientation() const { return orientation_; }   // 274
 
-int64_t TiffDirectory::samplesPerPixel() const { return samplePerPixel_; }  // 277
+int64_t TiffDirectory::samplesPerPixel() const {
+  return samplePerPixel_;  // 277
+}
 
 int64_t TiffDirectory::RowsPerStrip() const { return rowsPerStrip_; }  // 278
 
-int64_t TiffDirectory::planarConfiguration() const { return planarConfig_; }  // 284
+int64_t TiffDirectory::planarConfiguration() const {
+  return planarConfig_;  // 284
+}
 
 int64_t TiffDirectory::tileWidth() const { return tileWidth_; }  // 322
 
@@ -185,7 +196,8 @@ bool TiffDirectory::isExtractablePyramidImage() const {
            (tilesPerRow() * tilesPerColumn() == tileCount())));
 }
 
-bool TiffDirectory::doImageDimensionsMatch(int64_t width, int64_t height) const {
+bool TiffDirectory::doImageDimensionsMatch(int64_t width,
+                                           int64_t height) const {
   return (imageWidth_ == width && imageHeight_ == height);
 }
 
@@ -195,7 +207,8 @@ bool TiffDirectory::isSet (double val) const { return val != -1.0; }
 
 bool TiffDirectory::isSet (std::string val) const { return val != ""; }
 
-void TiffDirectory::_getTiffField_ui32(TIFF *tiff, ttag_t tag, int64_t *val) const {
+void TiffDirectory::_getTiffField_ui32(TIFF *tiff, ttag_t tag,
+                                                   int64_t *val) const {
   *val = -1;
   uint32_t normalint = 0;
   int result = TIFFGetField(tiff, tag, &normalint);
@@ -206,7 +219,8 @@ void TiffDirectory::_getTiffField_ui32(TIFF *tiff, ttag_t tag, int64_t *val) con
   }
 }
 
-void TiffDirectory::_getTiffField_ui16(TIFF *tiff, ttag_t tag, int64_t *val) const {
+void TiffDirectory::_getTiffField_ui16(TIFF *tiff, ttag_t tag,
+                                                   int64_t *val) const {
   *val = -1;
   uint16_t normalint = 0;
   int result = TIFFGetField(tiff, tag, &normalint);
@@ -217,7 +231,8 @@ void TiffDirectory::_getTiffField_ui16(TIFF *tiff, ttag_t tag, int64_t *val) con
   }
 }
 
-void TiffDirectory::_getTiffField_f(TIFF *tiff, ttag_t tag, double *val) const {
+void TiffDirectory::_getTiffField_f(TIFF *tiff, ttag_t tag,
+                                                double *val) const {
   float flt;
   int result = TIFFGetField(tiff, tag, &flt);
   if (result != 1) {
@@ -240,13 +255,13 @@ void TiffDirectory::_getTiffField_str(TIFF *tiff, ttag_t tag,
 
 void TiffDirectory::_getTiffField_jpegTables(TIFF *tiff,
                                              int64_t* jpegTableDataSize,
-                                             std::unique_ptr<uint8_t []> *jpegTableData) const {
+                            std::unique_ptr<uint8_t[]> *jpegTableData) const {
   uint16_t size = 0;
   void *tableData;
   *jpegTableDataSize = -1;
   *jpegTableData = nullptr;
   int result = TIFFGetField(tiff, TIFFTAG_JPEGTABLES, &size, &tableData);
-  if (result==1) {
+  if (result == 1) {
     *jpegTableDataSize = static_cast<int64_t>(size);
     if (*jpegTableDataSize > 0) {
       *jpegTableData = std::make_unique<uint8_t[]>(size);

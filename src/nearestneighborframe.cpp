@@ -34,13 +34,13 @@ NearestNeighborFrame::NearestNeighborFrame(
     OpenSlidePtr *osptr, int64_t locationX, int64_t locationY, int64_t level,
     int64_t frameWidthDownsampled, int64_t frameHeightDownsampled,
     double multiplicator, int64_t frameWidth, int64_t frameHeight,
-    DCM_Compression compression, int quality, bool store_raw_bytes,
+    DCM_Compression compression, int quality, bool storeRawBytes,
     DICOMFileFrameRegionReader *frame_region_reader): Frame(locationX,
                                                             locationY,
                                                             frameWidth,
                                                              frameHeight,
                                                         compression, quality,
-                                                        store_raw_bytes) {
+                                                        storeRawBytes) {
   osptr_ = osptr;
   level_ = level;
   frameWidthDownsampled_ = frameWidthDownsampled;
@@ -69,7 +69,7 @@ class convert_rgba_to_rgb {
 };
 
 void NearestNeighborFrame::incSourceFrameReadCounter() {
-  if (dcmFrameRegionReader_->dicom_file_count() != 0) {
+  if (dcmFrameRegionReader_->dicomFileCount() != 0) {
     dcmFrameRegionReader_->incSourceFrameReadCounter(locationX_, locationY_,
                                         frameWidthDownsampled_,
                                         frameHeightDownsampled_);
@@ -80,7 +80,7 @@ void NearestNeighborFrame::sliceFrame() {
   std::unique_ptr<uint32_t[]>buf =
                           std::make_unique<uint32_t[]>(frameWidthDownsampled_ *
                                                       frameHeightDownsampled_);
-  if (dcmFrameRegionReader_->dicom_file_count() == 0) {
+  if (dcmFrameRegionReader_->dicomFileCount() == 0) {
     openslide_read_region(osptr_->osr, buf.get(),
                           static_cast<int64_t>(locationX_ * multiplicator_),
                           static_cast<int64_t>(locationY_ * multiplicator_),
@@ -91,10 +91,10 @@ void NearestNeighborFrame::sliceFrame() {
       throw 1;
     }
   } else {
-    dcmFrameRegionReader_->read_region(locationX_, locationY_,
-                                        frameWidthDownsampled_,
-                                        frameHeightDownsampled_,
-                                        buf.get());
+    dcmFrameRegionReader_->readRegion(locationX_, locationY_,
+                                       frameWidthDownsampled_,
+                                       frameHeightDownsampled_,
+                                       buf.get());
   }
   boost::gil::rgba8c_view_t gil = boost::gil::interleaved_view(
               frameWidthDownsampled_,

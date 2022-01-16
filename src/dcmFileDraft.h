@@ -71,13 +71,13 @@ class DcmFileDraft {
   void saveFile();
   void write(DcmOutputStream* outStream);
 
-  int64_t get_frame_width() const;
-  int64_t get_frame_height() const;
-  int64_t get_image_width() const;
-  int64_t get_image_height() const;
-  int64_t get_file_frame_count() const;
-  int64_t get_downsample() const;
-  Frame* get_frame(int64_t idx) const;
+  int64_t frameWidth() const;
+  int64_t frameHeight() const;
+  int64_t imageWidth() const;
+  int64_t imageHeight() const;
+  int64_t fileFrameCount() const;
+  int64_t downsample() const;
+  Frame* frame(int64_t idx) const;
 
  private:
   std::vector<std::unique_ptr<Frame> > framesData_;
