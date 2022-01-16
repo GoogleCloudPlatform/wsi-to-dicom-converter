@@ -249,16 +249,16 @@ void OpenCVInterpolationFrame::sliceFrame() {
   boost::gil::copy_pixels(gil, rgbView);
   // Compress memory (RAW, jpeg, or jpeg2000)
   data_ = compressor_->compress(rgbView, &size_);
-  if (!store_raw_bytes_) {
-    raw_compressed_bytes_ = nullptr;
-    raw_compressed_bytes_size_ = 0;
+  if (!storeRawBytes_) {
+    rawCompressedBytes_ = nullptr;
+    rawCompressedBytesSize_ = 0;
   } else {
-    raw_compressed_bytes_ = std::move(compress_memory(
+    rawCompressedBytes_ = std::move(compress_memory(
                                    reinterpret_cast<uint8_t*>(raw_bytes.get()),
                                    frame_mem_size * sizeof(uint32_t),
-                                   &raw_compressed_bytes_size_));
+                                   &rawCompressedBytesSize_));
     BOOST_LOG_TRIVIAL(debug) << " compressed raw frame size: " <<
-                                raw_compressed_bytes_size_ / 1024 << "kb";
+                                rawCompressedBytesSize_ / 1024 << "kb";
   }
   BOOST_LOG_TRIVIAL(debug) << " frame size: " << size_ / 1024 << "kb";
   done_ = true;

@@ -14,6 +14,7 @@
 
 #ifndef SRC_TIFFFRAME_H_
 #define SRC_TIFFFRAME_H_
+#include <jpeglib.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -31,24 +32,26 @@ class TiffFrame : public Frame {
   TiffFrame(
     TiffFile *tiffFile, int64_t locationX, int64_t locationY, int64_t level,
     int64_t frameWidth, int64_t frameHeight);
+
   bool canDecodeJpeg();
+  TiffDirectory *tiffDirectory () const;
 
   virtual ~TiffFrame();
   // Gets frame by openslide library, performs scaling it and compressing
   virtual void sliceFrame();
   virtual std::string getPhotoMetrInt() const;
-  virtual int64_t get_raw_frame_bytes(uint8_t *raw_memory, int64_t memorysize);
+  virtual int64_t rawABGRFrameBytes(uint8_t *raw_memory, int64_t memorysize);
   virtual bool has_compressed_raw_bytes() const;
   virtual void clear_dicom_mem();
-  virtual void clear_raw_mem();
+  virtual void clearRawABGRMem();
   virtual void incSourceFrameReadCounter();
+  TiffFile *tiffFile() const;
+  int64_t tiffFileLevel() const;
 
  private:
   TiffFile *tiffFile_;
   int64_t level_;
-
-  std::unique_ptr<TiffTile> getTiffTileData(int64_t *tileWidth,
-                                            int64_t *tileHeight);
+  const J_COLOR_SPACE jpegDecodeColorSpace () const;
 };
 
 }  // namespace wsiToDicomConverter

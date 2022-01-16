@@ -117,6 +117,13 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
                                 " parameter.";
     throw 1;
   }
+  customDownSampleFactorsDefined_ = false;
+  for (const int ds: wsiRequest_->downsamples) {
+    if (ds != 0) {
+      customDownSampleFactorsDefined_ = true;
+      break;
+    }
+  }
 }
 
 WsiToDcm::~WsiToDcm() {
@@ -160,17 +167,18 @@ std::unique_ptr<OpenSlidePtr> WsiToDcm::initOpenslide() {
   openslide_get_level_dimensions(osptr->osr, 0,
                                  &largestSlideLevelWidth_,
                                  &largestSlideLevelHeight_);
+  tiffFile_ = nullptr;
   if (wsiRequest_->SVSImportPreferScannerTileingForAllLevels ||
       wsiRequest_->SVSImportPreferScannerTileingForLargestLevel) {
     bool useSVSTileing = false;
     if (boost::algorithm::iends_with(wsiRequest_->inputFile, ".svs")) {
-      TiffFile tiffFile(wsiRequest_->inputFile);
-      if (tiffFile.isLoaded()) {
-          int32_t level = tiffFile.getDirectoryIndexMatchingImageDimensions(
+      tiffFile_ =std::make_unique<TiffFile>(wsiRequest_->inputFile);
+      if (tiffFile_->isLoaded()) {
+          int32_t level = tiffFile_->getDirectoryIndexMatchingImageDimensions(
                             largestSlideLevelWidth_, largestSlideLevelHeight_);
           if (level != -1) {
-            TiffDirectory * tiffDir = tiffFile.directory(level);
-            TiffFrame tiffFrame(&tiffFile, 0, 0, level, tiffDir->tileWidth(),
+            TiffDirectory * tiffDir = tiffFile_->directory(level);
+            TiffFrame tiffFrame(tiffFile_.get(), 0, 0, level, tiffDir->tileWidth(),
                                 tiffDir->tileHeight());
             if (tiffFrame.canDecodeJpeg()) {
               BOOST_LOG_TRIVIAL(info) << "Reading JPEG tiles from SVS with "
@@ -276,24 +284,21 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int32_t level,
   int64_t levelWidth;
   int64_t levelHeight;
   bool generateUsingOpenSlide = true;
-  std::unique_ptr<TiffFile> tiffFile = nullptr;
   bool readFromTiff = false;
 
-  if ((levelToGet == 0 &&
-       wsiRequest_->SVSImportPreferScannerTileingForLargestLevel) ||
-      wsiRequest_->SVSImportPreferScannerTileingForAllLevels) {
-    tiffFile = std::make_unique<TiffFile>(wsiRequest_->inputFile);
-    if (tiffFile->isLoaded()) {
-      levelWidth = largestSlideLevelWidth_ / downsample;
-      levelHeight = largestSlideLevelHeight_ / downsample;
-      levelToGet = tiffFile->getDirectoryIndexMatchingImageDimensions(
-                                                      levelWidth, levelHeight);
-      if (levelToGet != -1) {
-        multiplicator = static_cast<double>(downsample);
-        downsampleOfLevel = 1.0;
-        generateUsingOpenSlide = false;
-        readFromTiff = true;
-      }
+  if ((tiffFile_ != nullptr && tiffFile_->isLoaded()) &&
+      ((levelToGet == 0 &&
+        wsiRequest_->SVSImportPreferScannerTileingForLargestLevel) ||
+       wsiRequest_->SVSImportPreferScannerTileingForAllLevels)) {
+    levelWidth = largestSlideLevelWidth_ / downsample;
+    levelHeight = largestSlideLevelHeight_ / downsample;
+    levelToGet = tiffFile_->getDirectoryIndexMatchingImageDimensions(
+                                                    levelWidth, levelHeight);
+    if (levelToGet != -1) {
+      multiplicator = static_cast<double>(downsample);
+      downsampleOfLevel = 1.0;
+      generateUsingOpenSlide = false;
+      readFromTiff = true;
     }
   }
   // ProgressiveDownsampling
@@ -369,7 +374,6 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int32_t level,
                         &levelCompression);
   slideLevelDim->level = level;
   slideLevelDim->readFromTiff = readFromTiff;
-  slideLevelDim->tiffFile = std::move(tiffFile);
   slideLevelDim->levelToGet = levelToGet;
   slideLevelDim->downsample = downsample;
   slideLevelDim->multiplicator = multiplicator;
@@ -504,9 +508,10 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSmallestSlideDim(
       }
       if (wsiRequest_->stopDownsamplingAtSingleFrame && frameCount <= 1) {
         smallestLevelIsSingleFrame = true;
-        if (!wsiRequest_->customDownSampleFactorsDefined) {
+        if (!customDownSampleFactorsDefined_) {
           // If not generating downsamples from a user supplied list of
           // downsamples. testing additional levels is no longer necessary.
+          BOOST_LOG_TRIVIAL(debug) << "stop searching for smallest frame";
           break;
         }
       }
@@ -553,10 +558,11 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSmallestSlideDim(
           // if next slice reads from tiff do save raw
           saveLevelCompressedRaw->push_back(false);
         } else if ((slideLevels->size() == 1) &&
-                   (0 ==
-                    getOpenslideLevelForDownsample(osptr,
+                   !std::get<2>(levelProcessOrder[idx]) &&
+                   (0 == getOpenslideLevelForDownsample(osptr,
                     std::get<1>(levelProcessOrder[idx+1])))) {
-          // Memory optimization, if processing highest resolution image with
+          // Memory optimization, if processing an image without downsampling &
+          // openslide is being used to read the imaging (!std::get<2>(levelProcessOrder[idx])
           // no downsamples and reading downsample at level will also read the
           // highest resolution image.  Do not save compressed raw versions of
           // the highest resolution.  Start progressive downsampling from
@@ -706,7 +712,7 @@ int WsiToDcm::dicomizeTiff() {
       while (x < levelWidth - cropSourceLevelWidth) {
         std::unique_ptr<Frame> frameData;
         if (slideLevelDim->readFromTiff) {
-          frameData = std::make_unique<TiffFrame>(slideLevelDim->tiffFile.get(),
+          frameData = std::make_unique<TiffFrame>(tiffFile_.get(),
               x, y, levelToGet, levelFrameWidth, levelFrameHeight);
         } else if (wsiRequest_->useOpenCVDownsampling) {
           frameData = std::make_unique<OpenCVInterpolationFrame>(

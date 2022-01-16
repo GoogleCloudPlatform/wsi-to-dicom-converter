@@ -32,12 +32,12 @@ Frame::Frame(int64_t locationX, int64_t locationY, int64_t frameWidth,
                                                   locationY_(locationY),
                                                   frameWidth_(frameWidth),
                                                   frameHeight_(frameHeight),
-                                            store_raw_bytes_(store_raw_bytes) {
+                                            storeRawBytes_(store_raw_bytes) {
     done_ = false;
     readCounter_ = 0;
     size_ = 0;
-    raw_compressed_bytes_ = nullptr;
-    raw_compressed_bytes_size_ = 0;
+    rawCompressedBytes_ = nullptr;
+    rawCompressedBytesSize_ = 0;
     data_ = nullptr;
     switch (compression) {
         case JPEG:
@@ -91,23 +91,23 @@ void Frame::dec_read_counter() {
     boost::lock_guard<boost::mutex> guard(readCounterMutex_);
     readCounter_ -= 1;
     if (readCounter_ <= 0) {
-      clear_raw_mem();
+      clearRawABGRMem();
     }
   }
 
-int64_t Frame::get_raw_frame_bytes(uint8_t *raw_memory,
+int64_t Frame::rawABGRFrameBytes(uint8_t *raw_memory,
                                                     int64_t memorysize) {
-  int64_t memsize =  decompress_memory(raw_compressed_bytes_.get(),
-                           raw_compressed_bytes_size_,
+  int64_t memsize =  decompress_memory(rawCompressedBytes_.get(),
+                           rawCompressedBytesSize_,
                            raw_memory, memorysize);
   dec_read_counter();
   return memsize;
 }
 
-void Frame::clear_raw_mem() {
-  if (raw_compressed_bytes_ != nullptr) {
-    raw_compressed_bytes_ = nullptr;
-    raw_compressed_bytes_size_ = 0;
+void Frame::clearRawABGRMem() {
+  if (rawCompressedBytes_ != nullptr) {
+    rawCompressedBytes_ = nullptr;
+    rawCompressedBytesSize_ = 0;
   }
 }
 
@@ -118,7 +118,7 @@ uint8_t *Frame::get_dicom_frame_bytes() {
 size_t Frame::getSize() const { return size_; }
 
 bool Frame::has_compressed_raw_bytes() const {
-  return (raw_compressed_bytes_ != nullptr && raw_compressed_bytes_size_ > 0);
+  return (rawCompressedBytes_ != nullptr && rawCompressedBytesSize_ > 0);
 }
 
 }  // namespace wsiToDicomConverter

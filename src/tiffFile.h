@@ -43,6 +43,7 @@ class TiffFile{
 
  private:
   TIFF * tiffFile_;
+  std::string tiffFilePath_;
   std::vector<std::unique_ptr<TiffDirectory>> tiffDir_;
   boost::mutex tiffReadMutex_;
 
@@ -50,6 +51,7 @@ class TiffFile{
   tsize_t tileReadBufSize_;
   tdata_t tileReadBuffer_;
 };
+
 
 }  // namespace wsiToDicomConverter
 

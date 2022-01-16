@@ -54,7 +54,7 @@ void TestFrame::incSourceFrameReadCounter() {
 
 void TestFrame::sliceFrame() {}
 
-int64_t TestFrame::get_raw_frame_bytes(uint8_t *raw_memory,
+int64_t TestFrame::rawABGRFrameBytes(uint8_t *raw_memory,
                                        int64_t memorysize) {
   const int64_t expected_memsize = frameWidth_ *
                                    frameHeight_ *

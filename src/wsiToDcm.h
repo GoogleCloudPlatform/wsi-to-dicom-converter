@@ -84,8 +84,6 @@ class SlideLevelDim {
   bool readOpenslide;
 
   bool readFromTiff = false;
-
-  std::unique_ptr<TiffFile> tiffFile;
 };
 
 // Structure for wsi2dcm settings
@@ -132,7 +130,6 @@ struct WsiRequest {
   // level1 50x50
   // level2 10x10
   std::vector<int> downsamples;
-  bool customDownSampleFactorsDefined;
 
   // frame organization type
   // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.17.3.html
@@ -225,6 +222,8 @@ class WsiToDcm {
   int32_t svsLevelCount_;
   double openslideMPP_X_;
   double openslideMPP_Y_;
+  bool customDownSampleFactorsDefined_;
+  std::unique_ptr<TiffFile> tiffFile_;
 };
 
 }  // namespace wsiToDicomConverter

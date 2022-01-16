@@ -27,46 +27,53 @@ class TiffDirectory {
   explicit TiffDirectory(TIFF *tiff);
   virtual ~TiffDirectory();
 
-  tdir_t directoryIndex();
+  tdir_t directoryIndex() const;
                                  // comment # is tiff tag number
-  bool hasICCProfile();         // 34675
-  int64_t subfileType();         // 254
-  int64_t imageWidth();          // 256
-  int64_t imageHeight();         // 257
-  int64_t imageDepth();          // 32997
-  int64_t bitsPerSample();       // 258
-  int64_t compression();         // 259
-  int64_t photometric();         // 262
-  std::string imageDescription();  // 270
-  int64_t orientation();         // 274
-  int64_t samplesPerPixel();     // 277
-  int64_t RowsPerStrip();        // 278
-  int64_t planarConfiguration();   // 284
-  int64_t tileWidth();           // 322
-  int64_t tileHeight();          // 323
-  int64_t tileDepth();           // 32998
-  double xResolution();          // 282
-  double yResolution();          // 283
+  bool hasICCProfile() const;         // 34675
+  int64_t subfileType() const;         // 254
+  int64_t imageWidth() const;          // 256
+  int64_t imageHeight() const;         // 257
+  int64_t imageDepth() const;          // 32997
+  int64_t bitsPerSample() const;       // 258
+  int64_t compression() const;         // 259
+  int64_t photometric() const;         // 262
+  std::string imageDescription() const;  // 270
+  int64_t orientation() const;         // 274
+  int64_t samplesPerPixel() const;     // 277
+  int64_t RowsPerStrip() const;        // 278
+  int64_t planarConfiguration() const;   // 284
+  int64_t tileWidth() const;           // 322
+  int64_t tileHeight() const;          // 323
+  int64_t tileDepth() const;           // 32998
+  double xResolution() const;          // 282
+  double yResolution() const;          // 283
 
-  int64_t tilesPerRow();
-  int64_t tilesPerColumn();
-  int64_t tileCount();
+  int64_t jpegQuality() const;
+  int64_t jpegColorMode() const;
+  int64_t jpegTableMode() const;
+  int64_t jpegTableDataSize() const;
+  uint8_t* jpegTableData() const;
+  bool hasJpegTableData() const;
 
-  bool isTiled();
-  bool isPyramidImage();
-  bool isThumbnailImage();
-  bool isMacroImage();
-  bool isLabelImage();
-  bool isJpegCompressed();
-  bool isPhotoMetricRGB();
-  bool isPhotoMetricYCBCR();
-  bool isExtractablePyramidImage();
-  bool doImageDimensionsMatch(int64_t width, int64_t height);
+  int64_t tilesPerRow() const;
+  int64_t tilesPerColumn() const;
+  int64_t tileCount() const;
 
-  bool isSet(int64_t val);
-  bool isSet(double val);
-  bool isSet(std::string val);
-  void log();
+  bool isTiled() const;
+  bool isPyramidImage() const;
+  bool isThumbnailImage() const;
+  bool isMacroImage() const;
+  bool isLabelImage() const;
+  bool isJpegCompressed() const;
+  bool isPhotoMetricRGB() const;
+  bool isPhotoMetricYCBCR() const;
+  bool isExtractablePyramidImage() const;
+  bool doImageDimensionsMatch(int64_t width, int64_t height) const;
+
+  bool isSet(int64_t val) const;
+  bool isSet(double val) const;
+  bool isSet(std::string val) const;
+  void log() const;
 
  private:
   tdir_t directoryIndex_;
@@ -87,12 +94,19 @@ class TiffDirectory {
   double  xResolution_, yResolution_;  // 282, 283
   int64_t tileCount_;
   bool isTiled_;
+  int64_t jpegTableDataSize_;
+  std::unique_ptr<uint8_t []> jpegTableData_;
+  int64_t jpegQuality_;
+  int64_t jpegColorMode_;
+  int64_t jpegTableMode_;
 
-  void _getTiffField_ui32(TIFF *tiff, ttag_t tag, int64_t *val);
-  void _getTiffField_ui16(TIFF *tiff, ttag_t tag, int64_t *val);
-  void _getTiffField_str(TIFF *tiff, ttag_t tag, std::string *val);
-  void _getTiffField_f(TIFF *tiff, ttag_t tag, double *val);
-  bool _hasICCProfile(TIFF *tiff);
+  void _getTiffField_ui32(TIFF *tiff, ttag_t tag, int64_t *val) const;
+  void _getTiffField_ui16(TIFF *tiff, ttag_t tag, int64_t *val) const;
+  void _getTiffField_str(TIFF *tiff, ttag_t tag, std::string *val) const;
+  void _getTiffField_f(TIFF *tiff, ttag_t tag, double *val) const;
+  bool _hasICCProfile(TIFF *tiff) const;
+  void _getTiffField_jpegTables(TIFF *tiff, int64_t *jpegTableDataSize,
+                                std::unique_ptr<uint8_t []> *jpegTableData) const;
 };
 
 }  // namespace wsiToDicomConverter

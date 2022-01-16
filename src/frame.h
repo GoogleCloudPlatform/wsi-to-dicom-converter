@@ -40,12 +40,12 @@ class Frame {
   virtual size_t getSize() const;
   virtual void inc_read_counter();
   virtual void dec_read_counter();
-  virtual int64_t get_raw_frame_bytes(uint8_t *raw_memory,
+  virtual int64_t rawABGRFrameBytes(uint8_t *raw_memory,
                                       int64_t memorysize);
   virtual int64_t get_frame_width() const;
   virtual int64_t get_frame_height() const;
   virtual void clear_dicom_mem();
-  virtual void clear_raw_mem();
+  virtual void clearRawABGRMem();
   virtual bool has_compressed_raw_bytes() const;
   virtual void incSourceFrameReadCounter() = 0;
   virtual int64_t getLocationX() const;
@@ -67,10 +67,10 @@ class Frame {
 
   // flag indicates if raw frame bytes should be retained.
   // required for to enable progressive downsampling.
-  const bool store_raw_bytes_;
+  const bool storeRawBytes_;
 
-  std::unique_ptr<uint8_t[]> raw_compressed_bytes_;
-  int64_t raw_compressed_bytes_size_;
+  std::unique_ptr<uint8_t[]> rawCompressedBytes_;
+  int64_t rawCompressedBytesSize_;
 };
 
 }  // namespace wsiToDicomConverter

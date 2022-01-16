@@ -41,51 +41,63 @@ TiffDirectory::TiffDirectory(TIFF *tiff) {      // comment # is tiff tag number
   _getTiffField_ui32(tiff, TIFFTAG_TILEDEPTH, &tileDepth_);  // 32998
   tileCount_ = TIFFNumberOfTiles(tiff);  // tiles_x * tiles_y * tiles_z
   isTiled_ = TIFFIsTiled(tiff);
+  _getTiffField_jpegTables(tiff, &jpegTableDataSize_, &jpegTableData_);
+  _getTiffField_ui32(tiff, TIFFTAG_JPEGQUALITY, &jpegQuality_);
+  _getTiffField_ui32(tiff, TIFFTAG_JPEGCOLORMODE, &jpegColorMode_);
+  _getTiffField_ui32(tiff, TIFFTAG_JPEGTABLESMODE, &jpegTableMode_);
 }
 
 TiffDirectory::~TiffDirectory() {}
 
-tdir_t TiffDirectory::directoryIndex() { return directoryIndex_; }
+tdir_t TiffDirectory::directoryIndex() const { return directoryIndex_; }
 
-bool TiffDirectory::hasICCProfile() { return hasIccProfile_; }  // 34675
+bool TiffDirectory::hasICCProfile() const { return hasIccProfile_; }  // 34675
 
-int64_t TiffDirectory::subfileType() { return subfileType_; }    // 254
+int64_t TiffDirectory::subfileType() const { return subfileType_; }    // 254
 
-int64_t TiffDirectory::imageWidth()  { return imageWidth_; }     // 256
+int64_t TiffDirectory::imageWidth() const { return imageWidth_; }     // 256
 
-int64_t TiffDirectory::imageHeight() { return imageHeight_; }    // 257
+int64_t TiffDirectory::imageHeight() const { return imageHeight_; }    // 257
 
-int64_t TiffDirectory::imageDepth()  { return imageDepth_; }     // 32997
+int64_t TiffDirectory::imageDepth() const { return imageDepth_; }     // 32997
 
-int64_t TiffDirectory::bitsPerSample() { return bitsPerSample_; }  // 258
+int64_t TiffDirectory::bitsPerSample() const { return bitsPerSample_; }  // 258
 
-int64_t TiffDirectory::compression() { return compression_; }  // 259
+int64_t TiffDirectory::compression() const { return compression_; }  // 259
 
-int64_t TiffDirectory::photometric() { return photoMetric_; }  // 262
+int64_t TiffDirectory::photometric() const { return photoMetric_; }  // 262
 
-std::string TiffDirectory::imageDescription() {  // 270
+int64_t TiffDirectory::jpegQuality() const { return jpegQuality_; }
+int64_t TiffDirectory::jpegColorMode() const { return jpegColorMode_; }
+int64_t TiffDirectory::jpegTableMode() const { return jpegTableMode_; }
+int64_t TiffDirectory::jpegTableDataSize() const { return jpegTableDataSize_; }
+uint8_t* TiffDirectory::jpegTableData() const { return jpegTableData_.get(); }
+bool TiffDirectory::hasJpegTableData() const { return ((jpegTableData_ != nullptr) &&
+                                                 (jpegTableDataSize_ > 0)); }
+
+std::string TiffDirectory::imageDescription() const {  // 270
   return imageDescription_;
 }
 
-int64_t TiffDirectory::orientation() { return orientation_; }   // 274
+int64_t TiffDirectory::orientation() const { return orientation_; }   // 274
 
-int64_t TiffDirectory::samplesPerPixel() { return samplePerPixel_; }  // 277
+int64_t TiffDirectory::samplesPerPixel() const { return samplePerPixel_; }  // 277
 
-int64_t TiffDirectory::RowsPerStrip() { return rowsPerStrip_; }  // 278
+int64_t TiffDirectory::RowsPerStrip() const { return rowsPerStrip_; }  // 278
 
-int64_t TiffDirectory::planarConfiguration() { return planarConfig_; }  // 284
+int64_t TiffDirectory::planarConfiguration() const { return planarConfig_; }  // 284
 
-int64_t TiffDirectory::tileWidth() { return tileWidth_; }  // 322
+int64_t TiffDirectory::tileWidth() const { return tileWidth_; }  // 322
 
-int64_t TiffDirectory::tileHeight()  { return tileHeight_; }  // 323
+int64_t TiffDirectory::tileHeight() const { return tileHeight_; }  // 323
 
-int64_t TiffDirectory::tileDepth()  { return tileDepth_; }   // 32998
+int64_t TiffDirectory::tileDepth() const { return tileDepth_; }   // 32998
 
-double TiffDirectory::xResolution()  { return xResolution_; }  // 282
+double TiffDirectory::xResolution() const { return xResolution_; }  // 282
 
-double TiffDirectory::yResolution()  { return yResolution_; }   // 283
+double TiffDirectory::yResolution() const { return yResolution_; }   // 283
 
-int64_t TiffDirectory::tilesPerRow() {
+int64_t TiffDirectory::tilesPerRow() const {
   if ((imageWidth_ == -1) || (tileWidth_ <= 0)) {
     return -1;
   }
@@ -95,7 +107,7 @@ int64_t TiffDirectory::tilesPerRow() {
 }
 
 
-int64_t TiffDirectory::tilesPerColumn()  {
+int64_t TiffDirectory::tilesPerColumn() const {
   if ((imageHeight_ == -1) || (tileHeight_ <= 0)) {
     return -1;
   }
@@ -104,43 +116,43 @@ int64_t TiffDirectory::tilesPerColumn()  {
   return static_cast<int64_t>(std::ceil(tilesPerColumn));
 }
 
-int64_t TiffDirectory::tileCount() {
+int64_t TiffDirectory::tileCount() const {
   return tileCount_;
 }
 
-bool TiffDirectory::isTiled() {
+bool TiffDirectory::isTiled() const {
   return isTiled_ && tileCount_ > 0;
 }
 
-bool TiffDirectory::isPyramidImage() {
+bool TiffDirectory::isPyramidImage() const {
   return isTiled_ && subfileType_ == 0;
 }
 
-bool TiffDirectory::isThumbnailImage() {
+bool TiffDirectory::isThumbnailImage() const {
   return !isTiled_  && subfileType_ == 0;
 }
 
-bool TiffDirectory::isMacroImage() {
+bool TiffDirectory::isMacroImage() const {
   return !isTiled_ && subfileType_ == 0x9;
 }
 
-bool TiffDirectory::isLabelImage() {
+bool TiffDirectory::isLabelImage() const {
   return !isTiled_ && subfileType_ == 0x1;
 }
 
-bool TiffDirectory::isJpegCompressed() {
+bool TiffDirectory::isJpegCompressed() const {
   return (compression_  == COMPRESSION_JPEG);
 }
 
-bool TiffDirectory::isPhotoMetricRGB() {
+bool TiffDirectory::isPhotoMetricRGB() const {
   return (photoMetric_  == PHOTOMETRIC_RGB);
 }
 
-bool TiffDirectory::isPhotoMetricYCBCR() {
+bool TiffDirectory::isPhotoMetricYCBCR() const {
   return (photoMetric_  == PHOTOMETRIC_YCBCR);
 }
 
-void TiffDirectory::log() {
+void TiffDirectory::log() const {
   BOOST_LOG_TRIVIAL(info) << "Tiff File Directory\n" <<
     "----------------------\n" <<
     " isJpegCompressed: " << isJpegCompressed() << "\n" <<
@@ -155,10 +167,16 @@ void TiffDirectory::log() {
     " tilesPerColumn: " << tilesPerColumn() << "\n" <<
     " tileCount: " << tileCount() << "\n" <<
     " photoMetric_: " <<  photoMetric_ << "\n" <<
+    "----------------------\n" <<
+    " hasJpegTableData: " <<  hasJpegTableData() << "\n" <<
+    " jpegTableDataSize: " <<  jpegTableDataSize() << "\n" <<
+    " jpegTableMode: " <<  jpegTableMode() << "\n" <<
+    " jpegColorMode: " <<  jpegColorMode() << "\n" <<
+    " jpegQuality: " <<  jpegQuality() << "\n" <<
     "----------------------\n";
 }
 
-bool TiffDirectory::isExtractablePyramidImage() {
+bool TiffDirectory::isExtractablePyramidImage() const {
   return (isJpegCompressed() && isPyramidImage() &&
           (isPhotoMetricYCBCR() || isPhotoMetricRGB()) &&
           (tileCount() > 0) && (tileWidth() > 0) && (tileHeight() > 0) &&
@@ -167,17 +185,17 @@ bool TiffDirectory::isExtractablePyramidImage() {
            (tilesPerRow() * tilesPerColumn() == tileCount())));
 }
 
-bool TiffDirectory::doImageDimensionsMatch(int64_t width, int64_t height) {
+bool TiffDirectory::doImageDimensionsMatch(int64_t width, int64_t height) const {
   return (imageWidth_ == width && imageHeight_ == height);
 }
 
-bool TiffDirectory::isSet (int64_t val) { return val != -1; }
+bool TiffDirectory::isSet (int64_t val) const { return val != -1; }
 
-bool TiffDirectory::isSet (double val) { return val != -1.0; }
+bool TiffDirectory::isSet (double val) const { return val != -1.0; }
 
-bool TiffDirectory::isSet (std::string val) { return val != ""; }
+bool TiffDirectory::isSet (std::string val) const { return val != ""; }
 
-void TiffDirectory::_getTiffField_ui32(TIFF *tiff, ttag_t tag, int64_t *val) {
+void TiffDirectory::_getTiffField_ui32(TIFF *tiff, ttag_t tag, int64_t *val) const {
   *val = -1;
   uint32_t normalint = 0;
   int result = TIFFGetField(tiff, tag, &normalint);
@@ -188,7 +206,7 @@ void TiffDirectory::_getTiffField_ui32(TIFF *tiff, ttag_t tag, int64_t *val) {
   }
 }
 
-void TiffDirectory::_getTiffField_ui16(TIFF *tiff, ttag_t tag, int64_t *val) {
+void TiffDirectory::_getTiffField_ui16(TIFF *tiff, ttag_t tag, int64_t *val) const {
   *val = -1;
   uint16_t normalint = 0;
   int result = TIFFGetField(tiff, tag, &normalint);
@@ -199,7 +217,7 @@ void TiffDirectory::_getTiffField_ui16(TIFF *tiff, ttag_t tag, int64_t *val) {
   }
 }
 
-void TiffDirectory::_getTiffField_f(TIFF *tiff, ttag_t tag, double *val) {
+void TiffDirectory::_getTiffField_f(TIFF *tiff, ttag_t tag, double *val) const {
   float flt;
   int result = TIFFGetField(tiff, tag, &flt);
   if (result != 1) {
@@ -210,7 +228,7 @@ void TiffDirectory::_getTiffField_f(TIFF *tiff, ttag_t tag, double *val) {
 }
 
 void TiffDirectory::_getTiffField_str(TIFF *tiff, ttag_t tag,
-                                      std::string *val) {
+                                      std::string *val) const {
   char *str;
   int result = TIFFGetField(tiff, tag, &str);
   if (result == 1) {
@@ -220,7 +238,24 @@ void TiffDirectory::_getTiffField_str(TIFF *tiff, ttag_t tag,
   }
 }
 
-bool TiffDirectory::_hasICCProfile(TIFF *tiff) {
+void TiffDirectory::_getTiffField_jpegTables(TIFF *tiff,
+                                             int64_t* jpegTableDataSize,
+                                             std::unique_ptr<uint8_t []> *jpegTableData) const {
+  uint16_t size = 0;
+  void *tableData;
+  *jpegTableDataSize = -1;
+  *jpegTableData = nullptr;
+  int result = TIFFGetField(tiff, TIFFTAG_JPEGTABLES, &size, &tableData);
+  if (result==1) {
+    *jpegTableDataSize = static_cast<int64_t>(size);
+    if (*jpegTableDataSize > 0) {
+      *jpegTableData = std::make_unique<uint8_t[]>(size);
+      memcpy((*jpegTableData).get(), tableData, size);
+    }
+  }
+}
+
+bool TiffDirectory::_hasICCProfile(TIFF *tiff) const {
   uint32_t temp;
   void *ptr;
   return (1 == TIFFGetField(tiff, TIFFTAG_ICCPROFILE, &temp, &ptr));

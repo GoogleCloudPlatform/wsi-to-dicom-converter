@@ -45,11 +45,12 @@ void jpegErrorExit(j_common_ptr cinfo) {
 
 std::unique_ptr<uint8_t[]> decodedJpeg(const int64_t width,
                                        const int64_t height,
+                                       const J_COLOR_SPACE colorSpace,
                                        uint8_t* rawBuffer,
-                                       uint64_t rawBufferSize,
+                                       const uint64_t rawBufferSize,
                                        uint64_t *decodedImageSizeBytes,
                                        uint8_t *returnMemoryBuffer,
-                                       int64_t returnMemoryBufferSize) {
+                                       const int64_t returnMemoryBufferSize) {
   struct jpeg_decompress_struct cinfo;
   jpegErrorManager jerr;
   *decodedImageSizeBytes = 0;
@@ -58,7 +59,8 @@ std::unique_ptr<uint8_t[]> decodedJpeg(const int64_t width,
   // Establish the setjmp return context for my_error_exit to use.
   if (setjmp(jerr.setjmp_buffer)) {
     // If we get here, the JPEG code has signaled an error.
-    BOOST_LOG_TRIVIAL(error) <<  "Error occured decompressing jpeg.";
+    BOOST_LOG_TRIVIAL(error) <<  "Error occured decompressing jpeg: " <<
+                                  jpegLastErrorMsg;
     jpeg_destroy_decompress(&cinfo);
     return nullptr;
   }
@@ -66,6 +68,7 @@ std::unique_ptr<uint8_t[]> decodedJpeg(const int64_t width,
   jpeg_create_decompress(&cinfo);
   jpeg_mem_src(&cinfo, rawBuffer, rawBufferSize);
   int rc = jpeg_read_header(&cinfo, TRUE);
+  cinfo.jpeg_color_space = colorSpace;
   if (rc == 0) {
     BOOST_LOG_TRIVIAL(error) <<  "Not valid jpeg.";
     jpeg_destroy_decompress(&cinfo);
@@ -97,21 +100,33 @@ std::unique_ptr<uint8_t[]> decodedJpeg(const int64_t width,
   }
   uint64_t sourceCounter = 0;
   uint64_t destCounter = 0;
-  const uint64_t source_size = height * width * 3;
+  const uint64_t sourceSize = height * width * 3;
 
+  // Aperio imaging encoded with colorspace == JCS_RGB
+  // requires colorspace  setting for correct decoding.
+  // imaging is BGR.  Does not require byte reording.
+
+  const bool ColorSpaceIsBGREncoded = colorSpace == JCS_RGB;
   for (uint64_t sourceCounter = 0;
-       sourceCounter < source_size;
-       sourceCounter += 3) {
-    // Swap color order from RGB to BGR
+      sourceCounter < sourceSize;
+      sourceCounter += 3) {
+    // color generated in BGR ordering
     const uint8_t blue = bmp_buffer[sourceCounter];
     const uint8_t green = bmp_buffer[sourceCounter+1];
     const uint8_t red = bmp_buffer[sourceCounter+2];
-    returnMemoryBuffer[destCounter] = red;
-    returnMemoryBuffer[destCounter+1] = green;
-    returnMemoryBuffer[destCounter+2] = blue;
+    if (ColorSpaceIsBGREncoded) {
+      returnMemoryBuffer[destCounter] = blue;
+      returnMemoryBuffer[destCounter+1] = green;
+      returnMemoryBuffer[destCounter+2] = red;
+    } else  {
+      returnMemoryBuffer[destCounter] = red;
+      returnMemoryBuffer[destCounter+1] = green;
+      returnMemoryBuffer[destCounter+2] = blue;
+    }
     returnMemoryBuffer[destCounter+3] = 0xff;  // alpha
     destCounter += 4;
   }
+
   if (abgrBuffer != nullptr) {
     return std::move(abgrBuffer);
   }
@@ -119,9 +134,10 @@ std::unique_ptr<uint8_t[]> decodedJpeg(const int64_t width,
 }
 
 bool canDecodeJpeg(const int64_t width, const int64_t height,
-                   uint8_t* rawBuffer, uint64_t rawBufferSize) {
+                   const J_COLOR_SPACE colorSpace,
+                   uint8_t* rawBuffer,const uint64_t rawBufferSize) {
   uint64_t bufferSize;
-  if (decodedJpeg(width, height, rawBuffer, rawBufferSize, &bufferSize) !=
+  if (decodedJpeg(width, height, colorSpace, rawBuffer, rawBufferSize, &bufferSize) !=
       nullptr) {
     return true;
   }

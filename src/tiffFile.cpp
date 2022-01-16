@@ -28,12 +28,14 @@ TiffFile::TiffFile(const std::string &path) {
       return;
   }
   do {
+    TIFFPrintDirectory(tiffFile_, stdout);
     tiffDir_.push_back(std::move(std::make_unique<TiffDirectory>(tiffFile_)));
   } while (TIFFReadDirectory(tiffFile_));
   currentDirectoryIndex_ = 0;
+  tiffFilePath_ = path;
   TIFFSetDirectory(tiffFile_, currentDirectoryIndex_);
   tileReadBufSize_ = TIFFTileSize(tiffFile_);
-  tileReadBuffer_ = _TIFFmalloc(tileReadBufSize_);
+  tileReadBuffer_ = _TIFFmalloc(tileReadBufSize_);  
 }
 
 TiffFile::~TiffFile() {

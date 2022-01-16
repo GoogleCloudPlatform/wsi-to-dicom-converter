@@ -26,7 +26,7 @@ class TestFrame : public Frame {
   TestFrame(int64_t width, int64_t height, uint32_t value);
   virtual void sliceFrame();
 
-  virtual int64_t get_raw_frame_bytes(uint8_t *raw_memory,
+  virtual int64_t rawABGRFrameBytes(uint8_t *raw_memory,
                                       int64_t memorysize);
   virtual bool has_compressed_raw_bytes() const;
 

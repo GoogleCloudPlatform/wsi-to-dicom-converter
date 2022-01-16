@@ -109,7 +109,7 @@ bool DICOMFileFrameRegionReader::get_frame_bytes(int64_t index,
     //   true if frame memory initalized
     Frame* fptr = get_frame_ptr(index);
     if (fptr != nullptr) {
-        return fptr->get_raw_frame_bytes(
+        return fptr->rawABGRFrameBytes(
                 reinterpret_cast<uint8_t *>(frame_memory),
                                             frame_buffer_size_bytes) ==
                                             frame_buffer_size_bytes;

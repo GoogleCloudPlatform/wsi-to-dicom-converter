@@ -504,7 +504,7 @@ TEST(getSlideLevelDim, largest_when_levels_are_out_of_order) {
   ASSERT_EQ(levels.size(), 6);
   // levels correspond to position in downsamples vector
   int expected_levels[] = {4, 5, 2, 1, 0, 3};
-  for (int level = 0; level < 6; ++level) {
+  for (int level = 0; level < 4; ++level) {
       ASSERT_EQ(expected_levels[level], levels[level]);
   }
   // -1 = get largest slice.
