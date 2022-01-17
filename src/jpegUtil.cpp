@@ -92,7 +92,7 @@ std::unique_ptr<uint8_t[]> decodedJpeg(const int64_t width,
   if (returnMemoryBuffer == nullptr) {
     abgrBuffer = std::make_unique<uint8_t[]>(*decodedImageSizeBytes);
     returnMemoryBuffer = abgrBuffer.get();
-  } else if (*decodedImageSizeBytes != returnMemoryBufferSize) {
+  } else if (*decodedImageSizeBytes > returnMemoryBufferSize) {
       // size of memory buffer passed in != decoding size.
       // set returned memory size to 0 and return nullptr
       *decodedImageSizeBytes = 0;
