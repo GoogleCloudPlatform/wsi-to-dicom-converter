@@ -22,7 +22,7 @@ namespace wsiToDicomConverter {
 
 TEST(tiffDirectory, iSet) {
   TiffFile tfile(tiffFileName);
-  TiffDirectory *tdir = tfile.directory(0);
+  const TiffDirectory *tdir = tfile.directory(0);
   int64_t numi = 5;
   double  numd = 5.0;
   ASSERT_TRUE(tdir->isSet(numi));
@@ -37,7 +37,7 @@ TEST(tiffDirectory, iSet) {
 
 TEST(tiffDirectory, pyramidImage) {
   TiffFile tfile(tiffFileName);
-  TiffDirectory *tdir = tfile.directory(0);
+  const TiffDirectory *tdir = tfile.directory(0);
   ASSERT_EQ(tdir->directoryIndex(), 0);
   ASSERT_TRUE(!tdir->hasICCProfile());
   ASSERT_EQ(tdir->subfileType(), 0);
@@ -68,7 +68,7 @@ TEST(tiffDirectory, pyramidImage) {
 
 TEST(tiffDirectory, thumbnailImage) {
   TiffFile tfile(tiffFileName);
-  TiffDirectory *tdir = tfile.directory(1);
+  const TiffDirectory *tdir = tfile.directory(1);
   ASSERT_EQ(tdir->directoryIndex(), 1);
   ASSERT_TRUE(!tdir->hasICCProfile());
   ASSERT_EQ(tdir->subfileType(), 0);
@@ -99,7 +99,7 @@ TEST(tiffDirectory, thumbnailImage) {
 
 TEST(tiffDirectory, labelImage) {
   TiffFile tfile(tiffFileName);
-  TiffDirectory *tdir = tfile.directory(2);
+  const TiffDirectory *tdir = tfile.directory(2);
   ASSERT_EQ(tdir->directoryIndex(), 2);
   ASSERT_TRUE(!tdir->hasICCProfile());
   ASSERT_EQ(tdir->subfileType(), 0x1);
@@ -130,7 +130,7 @@ TEST(tiffDirectory, labelImage) {
 
 TEST(tiffDirectory, macroImage) {
   TiffFile tfile(tiffFileName);
-  TiffDirectory *tdir = tfile.directory(3);
+  const TiffDirectory *tdir = tfile.directory(3);
   ASSERT_EQ(tdir->directoryIndex(), 3);
   ASSERT_TRUE(!tdir->hasICCProfile());
   ASSERT_EQ(tdir->subfileType(), 0x9);

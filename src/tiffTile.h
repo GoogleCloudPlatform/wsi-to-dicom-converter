@@ -23,13 +23,13 @@ namespace wsiToDicomConverter {
 
 class TiffTile {
  public:
-  TiffTile(TiffDirectory* tiffDirectory, uint64_t tileIndex,
-           std::unique_ptr<uint8_t[]> rawBuffer, uint64_t bufferSize);
+  TiffTile(const TiffDirectory* tiffDirectory, const uint64_t tileIndex,
+           std::unique_ptr<uint8_t[]> rawBuffer, const uint64_t bufferSize);
 
   std::unique_ptr<uint8_t[]> rawBuffer_;
-  uint64_t rawBufferSize_;
-  uint64_t tileIndex_;
-  TiffDirectory *tiffDirectory_;
+  const uint64_t rawBufferSize_;
+  const uint64_t tileIndex_;
+  const TiffDirectory *tiffDirectory_;
 };
 
 }  // namespace wsiToDicomConverter

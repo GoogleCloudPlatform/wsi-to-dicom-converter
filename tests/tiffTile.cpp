@@ -26,7 +26,7 @@ namespace wsiToDicomConverter {
 TEST(TiffTile, getTile) {
   TiffFile tfile(tiffFileName);
   const int imageIndex = 0;
-  TiffDirectory *tdir = tfile.directory(imageIndex);
+  const TiffDirectory *tdir = tfile.directory(imageIndex);
   int tileIndex = 1;
   std::unique_ptr<TiffTile> tile = std::move(tfile.tile(imageIndex,
                                                         tileIndex));

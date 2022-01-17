@@ -25,16 +25,17 @@
 
 namespace wsiToDicomConverter {
 
+uint64_t frameIndexFromLocation(const TiffFile *tiffFile, const uint64_t level,
+                                const int64_t xLoc, const int64_t yLoc);
+
 // Frame represents a DICOM image frame from the OpenSlide library or
 // downsampled from level captured at higher magnification.
 class TiffFrame : public Frame {
  public:
-  TiffFrame(
-    TiffFile *tiffFile, int64_t locationX, int64_t locationY, int64_t level,
-    int64_t frameWidth, int64_t frameHeight);
+  TiffFrame(TiffFile *tiffFile, const int64_t level, const uint64_t tileIndex);
 
   bool canDecodeJpeg();
-  TiffDirectory *tiffDirectory() const;
+  const TiffDirectory *tiffDirectory() const;
 
   virtual ~TiffFrame();
   // Gets frame by openslide library, performs scaling it and compressing
@@ -47,10 +48,12 @@ class TiffFrame : public Frame {
   virtual void incSourceFrameReadCounter();
   TiffFile *tiffFile() const;
   int64_t tiffFileLevel() const;
+  uint64_t tileIndex() const;
 
  private:
   TiffFile *tiffFile_;
   int64_t level_;
+  uint64_t tileIndex_;
   const J_COLOR_SPACE jpegDecodeColorSpace() const;
 };
 

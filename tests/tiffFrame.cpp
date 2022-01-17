@@ -29,14 +29,11 @@ TEST(tiffFrame, canDecodeImageFrames) {
 
   TiffFile tf(tiffFileName);
   const int tiffImageLevel = 0;
-  TiffDirectory * dir = tf.directory(tiffImageLevel);
+  const TiffDirectory * dir = tf.directory(tiffImageLevel);
   ASSERT_TRUE(dir->hasJpegTableData());
-  for (int y = 0; y < dir->imageHeight(); y += dir->tileHeight()) {
-    for (int x = 0; x < dir->imageWidth(); x += dir->tileWidth()) {
-        TiffFrame frame1(&tf, x, y, tiffImageLevel, dir->tileWidth(),
-                                                    dir->tileHeight());
-        ASSERT_TRUE(frame1.canDecodeJpeg());
-    }
+  for (int tileIndex = 0; tileIndex < dir->tileCount(); ++tileIndex) {
+    TiffFrame frame(&tf, tiffImageLevel, tileIndex);
+    ASSERT_TRUE(frame.canDecodeJpeg());
   }
 }
 

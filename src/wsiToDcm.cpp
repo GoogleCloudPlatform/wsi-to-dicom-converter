@@ -177,10 +177,9 @@ std::unique_ptr<OpenSlidePtr> WsiToDcm::initOpenslide() {
           int32_t level = tiffFile_->getDirectoryIndexMatchingImageDimensions(
                             largestSlideLevelWidth_, largestSlideLevelHeight_);
           if (level != -1) {
-            TiffDirectory * tiffDir = tiffFile_->directory(level);
-            TiffFrame tiffFrame(tiffFile_.get(), 0, 0, level,
-                                tiffDir->tileWidth(), tiffDir->tileHeight());
+            TiffFrame tiffFrame(tiffFile_.get(), level, 0);
             if (tiffFrame.canDecodeJpeg()) {
+              const TiffDirectory * tiffDir = tiffFile_->directory(level);
               BOOST_LOG_TRIVIAL(info) << "Reading JPEG tiles from SVS with "
                                          "out decoding.";
               int oldX = wsiRequest_->frameSizeX;
@@ -713,8 +712,8 @@ int WsiToDcm::dicomizeTiff() {
       while (x < levelWidth - cropSourceLevelWidth) {
         std::unique_ptr<Frame> frameData;
         if (slideLevelDim->readFromTiff) {
-          frameData = std::make_unique<TiffFrame>(tiffFile_.get(),
-              x, y, levelToGet, levelFrameWidth, levelFrameHeight);
+          frameData = std::make_unique<TiffFrame>(tiffFile_.get(), levelToGet,
+              frameIndexFromLocation(tiffFile_.get(), levelToGet, x, y));
         } else if (wsiRequest_->useOpenCVDownsampling) {
           frameData = std::make_unique<OpenCVInterpolationFrame>(
               slideLevelDim->osptr.get(), x, y, levelToGet,

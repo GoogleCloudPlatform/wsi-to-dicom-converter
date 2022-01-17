@@ -37,7 +37,7 @@ class TiffFile{
   int32_t getDirectoryIndexMatchingImageDimensions(uint32_t width,
                                                    uint32_t height,
                                         bool isExtractablePyramidImage = true);
-  TiffDirectory *directory(int64_t dirIndex);
+  const TiffDirectory *directory(int64_t dirIndex) const;
   uint32_t directoryCount();
   std::unique_ptr<TiffTile> tile(int32_t dirIndex, uint32_t tileIndex);
 

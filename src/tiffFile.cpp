@@ -76,7 +76,7 @@ int32_t TiffFile::getDirectoryIndexMatchingImageDimensions(uint32_t width,
   return -1;
 }
 
-TiffDirectory *TiffFile::directory(int64_t dirIndex) {
+const TiffDirectory *TiffFile::directory(int64_t dirIndex) const {
   return tiffDir_[dirIndex].get();
 }
 

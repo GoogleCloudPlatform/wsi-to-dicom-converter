@@ -30,7 +30,7 @@ class TiffFrameJpgBytes {
   explicit TiffFrameJpgBytes(TiffFrame * framePtr);
   virtual ~TiffFrameJpgBytes();
   bool hasJpegTable() const;
-  TiffDirectory *tiffDirectory() const;
+  const TiffDirectory *tiffDirectory() const;
   uint8_t *compressedJpeg() const;
   uint64_t compressedJpegSize() const;
   int64_t width() const;
@@ -96,9 +96,7 @@ int64_t TiffFrameJpgBytes::height() const {
 std::unique_ptr<TiffTile> TiffFrameJpgBytes::getTiffTileData(int64_t *tileWidth,
                                                      int64_t *tileHeight) {
   const TiffDirectory *dir = tiffDirectory();
-  const uint64_t tileIndex = ((framePtr_->locationY() / dir->tileHeight()) *
-                              dir->tilesPerRow()) +
-                              (framePtr_->locationX() /  dir->tileWidth());
+  const uint64_t tileIndex = framePtr_->tileIndex();
   *tileWidth = dir->tileWidth();
   *tileHeight = dir->tileHeight();
   return std::move(framePtr_->tiffFile()->tile(framePtr_->tiffFileLevel(),
@@ -200,7 +198,7 @@ void TiffFrameJpgBytes::constructJpeg(TiffTile *tile) {
   writeMem(writeBuffer, &(data[2]), rawBufferSize - 2, &bytesWritten);
 }
 
-TiffDirectory * TiffFrameJpgBytes::tiffDirectory() const {
+const TiffDirectory * TiffFrameJpgBytes::tiffDirectory() const {
   return framePtr_->tiffDirectory();
 }
 
@@ -208,12 +206,46 @@ bool TiffFrameJpgBytes::hasJpegTable() const {
   return tiffDirectory()->hasJpegTableData();
 }
 
+int64_t conFrameLocationX(const TiffFile *tiffFile, const uint64_t level,
+                          const uint64_t tileIndex) {
+  const TiffDirectory *dir = tiffFile->directory(level);
+  return tileIndex %  dir->tilesPerRow();
+}
+
+int64_t conFrameLocationY(const TiffFile *tiffFile, const uint64_t level,
+                          const uint64_t tileIndex) {
+  const TiffDirectory *dir = tiffFile->directory(level);
+  return tileIndex /  dir->tilesPerRow();
+}
+
+int64_t conFrameWidth(const TiffFile *tiffFile, const uint64_t level) {
+  return tiffFile->directory(level)->tileWidth();
+}
+
+int64_t conFrameHeight(const TiffFile *tiffFile, const uint64_t level) {
+  return tiffFile->directory(level)->tileHeight();
+}
+
+uint64_t frameIndexFromLocation(const TiffFile *tiffFile, const uint64_t level,
+                                const int64_t xLoc, const int64_t yLoc) {
+  const TiffDirectory *dir = tiffFile->directory(level);
+  return  ((yLoc / dir->tileHeight()) * dir->tilesPerRow()) +
+           (xLoc /  dir->tileWidth());
+}
+
 TiffFrame::TiffFrame(
-    TiffFile *tiffFile, int64_t locationX, int64_t locationY, int64_t level,
-    int64_t frameWidth, int64_t frameHeight):
-    Frame(locationX, locationY, frameWidth, frameHeight, NONE, -1, true) {
+    TiffFile *tiffFile, const int64_t level, const uint64_t tileIndex):
+    Frame(conFrameLocationX(tiffFile, level, tileIndex),
+          conFrameLocationY(tiffFile, level, tileIndex),
+          conFrameWidth(tiffFile, level),
+          conFrameHeight(tiffFile, level), NONE, -1, true) {
   tiffFile_ = tiffFile;
   level_ = level;
+  tileIndex_ = tileIndex;
+}
+
+uint64_t TiffFrame::tileIndex() const {
+  return tileIndex_;
 }
 
 TiffFile *TiffFrame::tiffFile() const {
@@ -224,7 +256,7 @@ int64_t TiffFrame::tiffFileLevel() const {
   return level_;
 }
 
-TiffDirectory * TiffFrame::tiffDirectory() const {
+const TiffDirectory * TiffFrame::tiffDirectory() const {
   return tiffFile()->directory(tiffFileLevel());
 }
 
