@@ -22,7 +22,7 @@
 
 namespace wsiToDicomConverter {
 
-TiffFile::TiffFile(const std::string &path) {
+TiffFile::TiffFile(const std::string &path) : tiffFilePath_(path) {
   tiffFile_ = TIFFOpen(path.c_str(), "r");
   if (tiffFile_ == nullptr) {
       return;
@@ -33,7 +33,6 @@ TiffFile::TiffFile(const std::string &path) {
     tiffDir_.push_back(std::move(std::make_unique<TiffDirectory>(tiffFile_)));
   } while (TIFFReadDirectory(tiffFile_));
   currentDirectoryIndex_ = 0;
-  tiffFilePath_ = path;
   TIFFSetDirectory(tiffFile_, currentDirectoryIndex_);
   tileReadBufSize_ = TIFFTileSize(tiffFile_);
   tileReadBuffer_ = _TIFFmalloc(tileReadBufSize_);
@@ -43,17 +42,17 @@ TiffFile::~TiffFile() {
   if (!isLoaded()) {
     return;
   }
-  if (tileReadBuffer_  != nullptr) {
+  if (tileReadBuffer_ != nullptr) {
     _TIFFfree(tileReadBuffer_);
   }
   TIFFClose(tiffFile_);
 }
 
-bool TiffFile::isLoaded() {
+bool TiffFile::isLoaded() const {
   return (tiffFile_ != nullptr);
 }
 
-bool TiffFile::hasExtractablePyramidImages() {
+bool TiffFile::hasExtractablePyramidImages() const {
   for (int32_t idx = 0; idx < tiffDir_.size(); ++idx) {
     if (tiffDir_[idx]->isExtractablePyramidImage()) {
       return true;
@@ -64,7 +63,7 @@ bool TiffFile::hasExtractablePyramidImages() {
 
 int32_t TiffFile::getDirectoryIndexMatchingImageDimensions(uint32_t width,
                                                            uint32_t height,
-                                            bool isExtractablePyramidImage) {
+                                        bool isExtractablePyramidImage) const {
   for (int32_t idx = 0; idx < tiffDir_.size(); ++idx) {
     if (!isExtractablePyramidImage ||
         tiffDir_[idx]->isExtractablePyramidImage()) {
@@ -80,7 +79,7 @@ const TiffDirectory *TiffFile::directory(int64_t dirIndex) const {
   return tiffDir_[dirIndex].get();
 }
 
-uint32_t TiffFile::directoryCount() {
+uint32_t TiffFile::directoryCount() const {
   return tiffDir_.size();
 }
 

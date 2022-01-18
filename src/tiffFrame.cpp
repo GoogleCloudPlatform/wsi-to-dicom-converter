@@ -238,10 +238,9 @@ TiffFrame::TiffFrame(
     Frame(conFrameLocationX(tiffFile, level, tileIndex),
           conFrameLocationY(tiffFile, level, tileIndex),
           conFrameWidth(tiffFile, level),
-          conFrameHeight(tiffFile, level), NONE, -1, true) {
+          conFrameHeight(tiffFile, level), NONE, -1, true),
+    level_(level), tileIndex_(tileIndex)       {
   tiffFile_ = tiffFile;
-  level_ = level;
-  tileIndex_ = tileIndex;
 }
 
 uint64_t TiffFrame::tileIndex() const {
@@ -262,7 +261,7 @@ const TiffDirectory * TiffFrame::tiffDirectory() const {
 
 TiffFrame::~TiffFrame() {}
 
-const J_COLOR_SPACE TiffFrame::jpegDecodeColorSpace() const {
+J_COLOR_SPACE TiffFrame::jpegDecodeColorSpace() const {
   return tiffDirectory()->isPhotoMetricRGB() ? JCS_RGB : JCS_YCbCr;
 }
 

@@ -31,19 +31,19 @@ class TiffFile{
  public:
   explicit TiffFile(const std::string &path);
   virtual ~TiffFile();
-  bool isLoaded();
-  bool hasExtractablePyramidImages();
+  bool isLoaded() const;
+  bool hasExtractablePyramidImages() const;
 
   int32_t getDirectoryIndexMatchingImageDimensions(uint32_t width,
                                                    uint32_t height,
-                                        bool isExtractablePyramidImage = true);
+                                  bool isExtractablePyramidImage = true) const;
   const TiffDirectory *directory(int64_t dirIndex) const;
-  uint32_t directoryCount();
+  uint32_t directoryCount() const;
   std::unique_ptr<TiffTile> tile(int32_t dirIndex, uint32_t tileIndex);
 
  private:
   TIFF * tiffFile_;
-  std::string tiffFilePath_;
+  const std::string tiffFilePath_;
   std::vector<std::unique_ptr<TiffDirectory>> tiffDir_;
   boost::mutex tiffReadMutex_;
 

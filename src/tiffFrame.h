@@ -52,9 +52,9 @@ class TiffFrame : public Frame {
 
  private:
   TiffFile *tiffFile_;
-  int64_t level_;
-  uint64_t tileIndex_;
-  const J_COLOR_SPACE jpegDecodeColorSpace() const;
+  const int64_t level_;
+  const uint64_t tileIndex_;
+  J_COLOR_SPACE jpegDecodeColorSpace() const;
 };
 
 }  // namespace wsiToDicomConverter
