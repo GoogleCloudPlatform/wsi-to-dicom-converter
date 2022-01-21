@@ -308,8 +308,9 @@ int64_t TiffFrame::rawABGRFrameBytes(uint8_t *rawMemory,
 void TiffFrame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> *dcmdata,
                                                           uint64_t size) {
   size_ = size;
+  // Store a copy of the data for downsampling.
   rawCompressedBytesSize_ = size;
-  rawCompressedBytes_ = std::move(*dcmdata);  // Store a copy of the data for downsampling.
+  rawCompressedBytes_ = std::move(*dcmdata);
   // Pointer will be handed to DCMTK when frame is written.  DCMTK will take
   // ownership of pointer.
   dcmPixelItem_ = std::make_unique<DcmPixelItem>(DcmTag(DCM_Item, EVR_OB));
