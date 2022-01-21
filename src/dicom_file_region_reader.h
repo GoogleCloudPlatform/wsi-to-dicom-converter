@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "src/dcmFileDraft.h"
+#include "src/tiffFile.h"
 
 namespace wsiToDicomConverter {
 
@@ -53,7 +54,8 @@ class DICOMFileFrameRegionReader {
   // All DICOM files must describe the same overall image, have
   // same global image width, height, and have frames which have same
   // dimensions.
-  void setDicomFiles(std::vector<std::unique_ptr<DcmFileDraft>> dcmFiles);
+  void setDicomFiles(std::vector<std::unique_ptr<DcmFileDraft>> dcmFiles,
+                     std::unique_ptr<TiffFile> tiffFile);
 
   // Clears the list of dicm files.
   void clearDicomFiles();
@@ -119,6 +121,9 @@ class DICOMFileFrameRegionReader {
 
 
   std::vector<std::unique_ptr<DcmFileDraft>> dcmFiles_;
+  std::unique_ptr<TiffFile> tiffFile_;  // Tiff file used to gen DICOM Frames
+                                        // nullptr if frames generated from
+                                        // prior level or openslide.
 
   // Dimensions of single frame
   int64_t frameWidth_, frameHeight_;

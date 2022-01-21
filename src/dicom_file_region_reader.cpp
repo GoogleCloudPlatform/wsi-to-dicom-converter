@@ -32,10 +32,14 @@ DcmFileDraft * DICOMFileFrameRegionReader::dicomFile(size_t index) {
 }
 
 void DICOMFileFrameRegionReader::setDicomFiles(
-                      std::vector<std::unique_ptr<DcmFileDraft>> dcmFiles) {
+                      std::vector<std::unique_ptr<DcmFileDraft>> dcmFiles,
+                      std::unique_ptr<TiffFile> tiffFile) {
   // all files should have frames with same dimensions
   clearDicomFiles();
   dcmFiles_ = std::move(dcmFiles);
+  tiffFile_ = std::move(tiffFile);  // Tiff file used to gen DICOM Frames
+                                    // nullptr if frames generated from
+                                    // prior level or openslide.
   if (dcmFiles_.size() <= 0) {
     clearDicomFiles();
     return;
@@ -61,6 +65,7 @@ void DICOMFileFrameRegionReader::setDicomFiles(
 
 void DICOMFileFrameRegionReader::clearDicomFiles() {
   dcmFiles_.clear();
+  tiffFile_ = nullptr;
   frameWidth_ = 0;
   frameHeight_ = 0;
   imageWidth_ = 0;

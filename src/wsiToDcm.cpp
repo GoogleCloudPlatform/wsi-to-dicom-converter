@@ -177,7 +177,8 @@ std::unique_ptr<OpenSlidePtr> WsiToDcm::initOpenslide() {
           int32_t level = tiffFile_->getDirectoryIndexMatchingImageDimensions(
                             largestSlideLevelWidth_, largestSlideLevelHeight_);
           if (level != -1) {
-            TiffFrame tiffFrame(tiffFile_.get(), level, 0);
+            tiffFile_ = std::make_unique<TiffFile>(*tiffFile_, level);
+            TiffFrame tiffFrame(tiffFile_.get(), 0, true);
             if (tiffFrame.canDecodeJpeg()) {
               const TiffDirectory * tiffDir = tiffFile_->directory(level);
               BOOST_LOG_TRIVIAL(info) << "Reading JPEG tiles from SVS with "
@@ -195,6 +196,7 @@ std::unique_ptr<OpenSlidePtr> WsiToDcm::initOpenslide() {
                                         wsiRequest_->frameSizeY;
               useSVSTileing = true;
             }
+            tiffFile_->close();
           }
       }
     }
@@ -285,7 +287,7 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int32_t level,
   bool generateUsingOpenSlide = true;
   bool readFromTiff = false;
 
-  if ((tiffFile_ != nullptr && tiffFile_->isLoaded()) &&
+  if ((tiffFile_ != nullptr && tiffFile_->isInitalized()) &&
       ((levelToGet == 0 &&
         wsiRequest_->SVSImportPreferScannerTileingForLargestLevel) ||
        wsiRequest_->SVSImportPreferScannerTileingForAllLevels)) {
@@ -633,6 +635,7 @@ int WsiToDcm::dicomizeTiff() {
   const double levelHeightMM = getDimensionMM(
                         largestSlideLevelHeight_ - largestSlideHeightCrop -
                         initialY_, openslideMPP_Y_);
+
   for (size_t levelIndex = 0; levelIndex < slideLevels.size(); ++levelIndex) {
     const int32_t level = slideLevels[levelIndex];
     slideLevelDim = std::move(getSlideLevelDim(level,
@@ -707,13 +710,20 @@ int WsiToDcm::dicomizeTiff() {
     //  Method in Frame::sliceFrame () downsamples the imaging.
     //
     //  DcmFileDraft Joins threads and combines results and writes dcm file.
+
+    std::unique_ptr<TiffFile> tiffFrameFilePtr = nullptr;
+    if (slideLevelDim->readFromTiff) {
+      tiffFrameFilePtr = std::make_unique<TiffFile>(*tiffFile_.get(),
+                                                    levelToGet);
+    }
     while (y < levelHeight - cropSourceLevelHeight) {
       int64_t x = initialX_;
       while (x < levelWidth - cropSourceLevelWidth) {
         std::unique_ptr<Frame> frameData;
         if (slideLevelDim->readFromTiff) {
-          frameData = std::make_unique<TiffFrame>(tiffFile_.get(), levelToGet,
-              frameIndexFromLocation(tiffFile_.get(), levelToGet, x, y));
+          frameData = std::make_unique<TiffFrame>(tiffFrameFilePtr.get(),
+              frameIndexFromLocation(tiffFrameFilePtr.get(), levelToGet, x, y),
+              saveCompressedRaw);
         } else if (wsiRequest_->useOpenCVDownsampling) {
           frameData = std::make_unique<OpenCVInterpolationFrame>(
               slideLevelDim->osptr.get(), x, y, levelToGet,
@@ -799,7 +809,8 @@ int WsiToDcm::dicomizeTiff() {
     if  (!saveCompressedRaw) {
       generatedDicomFiles.clear();
     }
-    higherMagnifcationDicomFiles.setDicomFiles(std::move(generatedDicomFiles));
+    higherMagnifcationDicomFiles.setDicomFiles(std::move(generatedDicomFiles),
+                                               std::move(tiffFrameFilePtr));
     // The combination of cropFrameToGenerateUniformPixelSpacing &
     // stopDownsamplingAtSingleFrame can result in cropping images
     // which would otherwise span multiple frames to one frame.
