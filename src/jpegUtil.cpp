@@ -64,7 +64,6 @@ std::unique_ptr<uint8_t[]> decodedJpeg(const int64_t width,
     jpeg_destroy_decompress(&cinfo);
     return nullptr;
   }
-
   jpeg_create_decompress(&cinfo);
   jpeg_mem_src(&cinfo, rawBuffer, rawBufferSize);
   int rc = jpeg_read_header(&cinfo, TRUE);
@@ -106,7 +105,6 @@ std::unique_ptr<uint8_t[]> decodedJpeg(const int64_t width,
   // requires colorspace  setting for correct decoding.
   // imaging is BGR.  Does not require byte reording.
 
-  const bool ColorSpaceIsBGREncoded = colorSpace == JCS_RGB;
   for (uint64_t sourceCounter = 0;
       sourceCounter < sourceSize;
       sourceCounter += 3) {
@@ -114,15 +112,9 @@ std::unique_ptr<uint8_t[]> decodedJpeg(const int64_t width,
     const uint8_t blue = bmp_buffer[sourceCounter];
     const uint8_t green = bmp_buffer[sourceCounter+1];
     const uint8_t red = bmp_buffer[sourceCounter+2];
-    if (ColorSpaceIsBGREncoded) {
-      returnMemoryBuffer[destCounter] = blue;
-      returnMemoryBuffer[destCounter+1] = green;
-      returnMemoryBuffer[destCounter+2] = red;
-    } else  {
-      returnMemoryBuffer[destCounter] = red;
-      returnMemoryBuffer[destCounter+1] = green;
-      returnMemoryBuffer[destCounter+2] = blue;
-    }
+    returnMemoryBuffer[destCounter] = blue;
+    returnMemoryBuffer[destCounter+1] = green;
+    returnMemoryBuffer[destCounter+2] = red;
     returnMemoryBuffer[destCounter+3] = 0xff;  // alpha
     destCounter += 4;
   }
