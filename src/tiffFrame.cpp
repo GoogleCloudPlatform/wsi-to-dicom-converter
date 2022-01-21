@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <boost/log/trivial.hpp>
 #include <jpeglib.h>
+#include <dcmtk/dcmdata/dcdeftag.h>
 
 #include <string>
 #include <utility>
@@ -99,8 +100,7 @@ std::unique_ptr<TiffTile> TiffFrameJpgBytes::getTiffTileData(int64_t *tileWidth,
   const uint64_t tileIndex = framePtr_->tileIndex();
   *tileWidth = dir->tileWidth();
   *tileHeight = dir->tileHeight();
-  return std::move(framePtr_->tiffFile()->tile(framePtr_->tiffFileLevel(),
-                                               tileIndex));
+  return std::move(framePtr_->tiffFile()->tile(tileIndex));
 }
 
 void setShortBigEndian(uint8_t* byteArray, int firstbyte, uint16_t val) {
@@ -234,12 +234,13 @@ uint64_t frameIndexFromLocation(const TiffFile *tiffFile, const uint64_t level,
 }
 
 TiffFrame::TiffFrame(
-    TiffFile *tiffFile, const int64_t level, const uint64_t tileIndex):
-    Frame(conFrameLocationX(tiffFile, level, tileIndex),
-          conFrameLocationY(tiffFile, level, tileIndex),
-          conFrameWidth(tiffFile, level),
-          conFrameHeight(tiffFile, level), NONE, -1, true),
-    level_(level), tileIndex_(tileIndex)       {
+    TiffFile *tiffFile, const uint64_t tileIndex, bool storeRawBytes):
+    Frame(conFrameLocationX(tiffFile, tiffFile->directoryLevel(), tileIndex),
+          conFrameLocationY(tiffFile, tiffFile->directoryLevel(), tileIndex),
+          conFrameWidth(tiffFile, tiffFile->directoryLevel()),
+          conFrameHeight(tiffFile, tiffFile->directoryLevel()), NONE, -1,
+          storeRawBytes),
+          tileIndex_(tileIndex) {
   tiffFile_ = tiffFile;
 }
 
@@ -251,12 +252,8 @@ TiffFile *TiffFrame::tiffFile() const {
   return tiffFile_;
 }
 
-int64_t TiffFrame::tiffFileLevel() const {
-  return level_;
-}
-
 const TiffDirectory * TiffFrame::tiffDirectory() const {
-  return tiffFile()->directory(tiffFileLevel());
+  return tiffFile()->fileDirectory();
 }
 
 TiffFrame::~TiffFrame() {}
@@ -291,50 +288,44 @@ std::string TiffFrame::photoMetrInt() const {
   }
 }
 
-bool TiffFrame::hasRawABGRFrameBytes() const {
-  return true;
-}
-
-void TiffFrame::clearRawABGRMem() {
-  // Clear out DICOM memory.
-  // DICOM memory and compressed memory are same thing.
-  // For TiffFrames.  Data in native form is already compressed.
-  // Compressed memory is cleared after dicom memory.
-  data_ = nullptr;
-}
-
 void TiffFrame::incSourceFrameReadCounter() {
   // Reads from Tiff no source frame counter to increment.
 }
 
-void TiffFrame::clearDicomMem() {
-  // DICOM memory and compressed memory are same thing.
-  // For TiffFrames.  Data in native form is already compressed.
-  // Compressed memory is cleared after dicom memory.
-  data_ = nullptr;
-}
-
 int64_t TiffFrame::rawABGRFrameBytes(uint8_t *rawMemory,
                                       int64_t memorySize) {
-  // For tiff frame data in native format is jpeg encoded.
+  // tiff frame data in native format is jpeg encoded.
   // to work with just uncompress and return.
-  TiffFrameJpgBytes jpegBytes(this);
-  std::unique_ptr<uint8_t[]> data;
-  size_t size;
-  jpegBytes.getJpegMemory(&data, &size);
-
   uint64_t abgrBufferSizeRead;
   jpegUtil::decodedJpeg(frameWidth(), frameHeight(),
-                        jpegDecodeColorSpace(), data.get(), size,
-                        &abgrBufferSizeRead, rawMemory, memorySize);
-  // decReadCounter(); unessary no memory to clear.
+                        jpegDecodeColorSpace(), rawCompressedBytes_.get(),
+                        rawCompressedBytesSize_, &abgrBufferSizeRead,
+                        rawMemory, memorySize);
+  decReadCounter();
   return abgrBufferSizeRead;
+}
+
+void TiffFrame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> *dcmdata,
+                                                          uint64_t size) {
+  size_ = size;
+  rawCompressedBytesSize_ = size;
+  rawCompressedBytes_ = std::move(*dcmdata);  // Store a copy of the data for downsampling.
+  // Pointer will be handed to DCMTK when frame is written.  DCMTK will take
+  // ownership of pointer.
+  dcmPixelItem_ = std::make_unique<DcmPixelItem>(DcmTag(DCM_Item, EVR_OB));
+  dcmPixelItem_->putUint8Array(rawCompressedBytes_.get(), size_);
+  if (!storeRawBytes_) {
+    rawCompressedBytes_ = nullptr;
+  }
 }
 
 void TiffFrame::sliceFrame() {
   TiffFrameJpgBytes jpegBytes(this);
-  jpegBytes.getJpegMemory(&data_, &size_);
-  BOOST_LOG_TRIVIAL(debug) << " Tiff extracted frame size: " << size_ /
+  uint64_t size;
+  std::unique_ptr<uint8_t[]> mem;
+  jpegBytes.getJpegMemory(&mem, &size);
+  setDicomFrameBytes(&mem, size);
+  BOOST_LOG_TRIVIAL(debug) << " Tiff extracted frame size: " << size /
                                                                 1024 << "kb";
   done_ = true;
 }

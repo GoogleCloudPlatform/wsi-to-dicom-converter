@@ -27,12 +27,12 @@ TEST(tiffFrame, canDecodeImageFrames) {
   // SVS has jpeg table which requires re-constructing
   // jpeg byte memory from missing headers, tables, and frame data.
 
-  TiffFile tf(tiffFileName);
   const int tiffImageLevel = 0;
-  const TiffDirectory * dir = tf.directory(tiffImageLevel);
+  TiffFile tf(tiffFileName, tiffImageLevel);
+  const TiffDirectory * dir = tf.fileDirectory();
   ASSERT_TRUE(dir->hasJpegTableData());
   for (int tileIndex = 0; tileIndex < dir->tileCount(); ++tileIndex) {
-    TiffFrame frame(&tf, tiffImageLevel, tileIndex);
+    TiffFrame frame(&tf, tileIndex, true);
     ASSERT_TRUE(frame.canDecodeJpeg());
   }
 }

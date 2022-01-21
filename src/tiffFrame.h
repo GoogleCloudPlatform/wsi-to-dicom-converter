@@ -32,7 +32,8 @@ uint64_t frameIndexFromLocation(const TiffFile *tiffFile, const uint64_t level,
 // downsampled from level captured at higher magnification.
 class TiffFrame : public Frame {
  public:
-  TiffFrame(TiffFile *tiffFile, const int64_t level, const uint64_t tileIndex);
+  TiffFrame(TiffFile *tiffFile, const uint64_t tileIndex, bool storeRawBytes);
+  TiffFrame(const TiffFrame &tiffFrame);  // not implemented no copy constructor
 
   bool canDecodeJpeg();
   const TiffDirectory *tiffDirectory() const;
@@ -42,17 +43,14 @@ class TiffFrame : public Frame {
   virtual void sliceFrame();
   virtual std::string photoMetrInt() const;
   virtual int64_t rawABGRFrameBytes(uint8_t *raw_memory, int64_t memorysize);
-  virtual bool hasRawABGRFrameBytes() const;
-  virtual void clearDicomMem();
-  virtual void clearRawABGRMem();
   virtual void incSourceFrameReadCounter();
   TiffFile *tiffFile() const;
-  int64_t tiffFileLevel() const;
   uint64_t tileIndex() const;
+  virtual void setDicomFrameBytes(std::unique_ptr<uint8_t[]> *dcmdata,
+                                                         uint64_t size);
 
  private:
   TiffFile *tiffFile_;
-  const int64_t level_;
   const uint64_t tileIndex_;
   J_COLOR_SPACE jpegDecodeColorSpace() const;
 };
