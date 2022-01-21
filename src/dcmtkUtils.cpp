@@ -182,11 +182,20 @@ OFCondition insertPixelMetadata(DcmDataset* dataset,
     cond = dataset->putAndInsertString(DCM_FrameIncrementPointer, "");
     if (cond.bad()) return cond;
 
-    cond = dataset->putAndInsertString(DCM_LossyImageCompressionRatio,
-                                       imgInfo.compressionRatio.c_str());
+    std::string lossy = "00";
+    if (imgInfo.transSyn == EXS_JPEGProcess1) {
+      lossy = "01";
+      cond = dataset->putAndInsertOFStringArray(DCM_LossyImageCompressionMethod,
+                                                  "ISO_10918_1", true);
+      if (cond.bad()) return cond;
+      cond = dataset->putAndInsertOFStringArray(DCM_LossyImageCompressionRatio,
+                                        imgInfo.compressionRatio.c_str());
+      if (cond.bad()) return cond;
+    }
+    cond = dataset->putAndInsertOFStringArray(DCM_LossyImageCompression,
+                                                lossy.c_str(), true);
     if (cond.bad()) return cond;
   }
-
   return dataset->putAndInsertUint16(DCM_PixelRepresentation,
                                      imgInfo.pixelRepr);
 }
@@ -201,15 +210,6 @@ OFCondition generateDcmDataset(I2DOutputPlug* outPlug, DcmDataset* resultDset,
   if (cond.bad()) {
     return cond;
   }
-
-  std::string lossy = "00";
-  if (imgInfo.transSyn == EXS_JPEGProcess1) {
-    lossy = "01";
-  }
-  cond = resultDset->putAndInsertOFStringArray(DCM_LossyImageCompression,
-                                               lossy.c_str(), true);
-
-  if (cond.bad()) return cond;
 
   cond = outPlug->convert(*resultDset);
   if (cond.bad()) {
