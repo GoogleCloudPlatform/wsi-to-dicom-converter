@@ -19,6 +19,10 @@
 
 Jpeg2000Compression::~Jpeg2000Compression() {}
 
+DCM_Compression Jpeg2000Compression::method() const {
+  return JPEG2000;
+}
+
 std::unique_ptr<uint8_t[]> Jpeg2000Compression::writeToMemory(
     unsigned int width, unsigned int height, unsigned int pitch,
     uint8_t* buffer, size_t* size) {

@@ -23,7 +23,7 @@ class Compressor {
  public:
   virtual std::unique_ptr<uint8_t[]> compress(
       const boost::gil::rgb8_view_t& view, size_t* size) = 0;
-
+  virtual DCM_Compression method() const = 0;
   virtual ~Compressor() { }
 };
 #endif  // SRC_COMPRESSOR_H_

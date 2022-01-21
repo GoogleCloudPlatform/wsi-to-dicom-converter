@@ -27,6 +27,10 @@ JpegCompression::JpegCompression(int quality) {
 
 JpegCompression::~JpegCompression() { jpeg_destroy_compress(&_cinfo); }
 
+DCM_Compression JpegCompression::method() const {
+  return JPEG;
+}
+
 std::unique_ptr<uint8_t[]> JpegCompression::compress(
     const boost::gil::rgb8_view_t &view, size_t *size) {
   typedef typename boost::gil::channel_type<

@@ -16,6 +16,8 @@
 #define SRC_JPEGCOMPRESSION_H_
 #include <boost/gil/extension/io/jpeg.hpp>
 #include <memory>
+
+#include "src/enums.h"
 #include "src/compressor.h"
 
 // Implementation of Compressor for jpeg
@@ -23,6 +25,8 @@ class JpegCompression : public Compressor {
  public:
   explicit JpegCompression(const int quality);
   virtual ~JpegCompression();
+
+  virtual DCM_Compression method() const;
 
   // Gets Raw data from rgb view and performs compression on it
   virtual std::unique_ptr<uint8_t[]> compress(

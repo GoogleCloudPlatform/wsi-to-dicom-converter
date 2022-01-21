@@ -29,6 +29,10 @@ struct PixelInserter {
   }
 };
 
+DCM_Compression RawCompression::method() const {
+  return RAW;
+}
+
 std::unique_ptr<uint8_t[]> RawCompression::compress(
     const boost::gil::rgb8_view_t &view, size_t *size) {
   return getRawData(view, size);

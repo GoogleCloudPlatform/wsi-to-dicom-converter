@@ -16,6 +16,8 @@
 #define SRC_JPEG2000COMPRESSION_H_
 
 #include <memory>
+
+#include "src/enums.h"
 #include "rawCompression.h"
 
 // Implementation of Compressor for JPEG2000
@@ -31,6 +33,8 @@ class Jpeg2000Compression : public RawCompression {
                                                    unsigned int pitch,
                                                    uint8_t* buffer,
                                                    size_t* size);
+
+  virtual DCM_Compression method() const;
 
   // Gets Raw data from rgb view and performs compression on it
   virtual std::unique_ptr<uint8_t[]> compress(
