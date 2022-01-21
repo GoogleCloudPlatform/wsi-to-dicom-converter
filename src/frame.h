@@ -15,8 +15,8 @@
 #ifndef SRC_FRAME_H_
 #define SRC_FRAME_H_
 #include <boost/thread/mutex.hpp>
+#include <dcmtk/dcmdata/dcpxitem.h>
 
-#include <atomic>
 #include <string>
 #include <memory>
 
@@ -50,17 +50,31 @@ class Frame {
   virtual int64_t locationX() const;
   virtual int64_t locationY() const;
   virtual std::string photoMetrInt() const;
+  virtual bool hasDcmPixelItem() const;
+  virtual DcmPixelItem *dcmPixelItem();
+  virtual void setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
+                                  uint64_t size);
 
  protected:
-  std::atomic_bool done_;
-  std::unique_ptr<uint8_t[]> data_;
+  bool done_;
+
+  // data to be written to dicom file
+  std::unique_ptr<uint8_t[]> data_;  // raw compression
+
+  // jpeg or jpeg2000 compression data
+  // to be written to dicom.  Pointer
+  // Allocated on assignment and then
+  // passed to DCMTK where its deleted.
+  // when the dicom is written.
+  std::unique_ptr<DcmPixelItem> dcmPixelItem_;
+
   const int64_t locationX_;
   const int64_t locationY_;
   size_t size_;
   const int64_t frameWidth_;
   const int64_t frameHeight_;
   boost::mutex readCounterMutex_;
-  std::atomic_int readCounter_;
+  int64_t readCounter_;
 
   std::unique_ptr<Compressor> compressor_;
 

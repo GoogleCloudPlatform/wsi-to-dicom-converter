@@ -13,8 +13,10 @@
 // limitations under the License.
 #include <boost/log/trivial.hpp>
 #include <boost/thread.hpp>
+#include <dcmtk/dcmdata/dcpxitem.h>
+#include <dcmtk/dcmdata/dcdeftag.h>
 
-#include <atomic>
+#include <utility>
 #include <string>
 
 #include "src/enums.h"
@@ -39,6 +41,7 @@ Frame::Frame(int64_t locationX, int64_t locationY, int64_t frameWidth,
     rawCompressedBytes_ = nullptr;
     rawCompressedBytesSize_ = 0;
     data_ = nullptr;
+    dcmPixelItem_ = nullptr;
     switch (compression) {
         case JPEG:
             compressor_ = std::make_unique<JpegCompression>(quality);
@@ -110,8 +113,30 @@ void Frame::clearRawABGRMem() {
   }
 }
 
+bool Frame::hasDcmPixelItem() const {
+  return dcmPixelItem_ != nullptr;
+}
+
+DcmPixelItem *Frame::dcmPixelItem() {
+  return dcmPixelItem_.release();
+}
+
 uint8_t *Frame::dicomFrameBytes() {
   return data_.get();
+}
+
+void Frame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
+                                               uint64_t size) {
+  size_ = size;
+  if (compressor_->method() == RAW) {
+    data_ = std::move(dcmdata);
+    dcmPixelItem_ = nullptr;
+  } else {
+    data_ = std::move(dcmdata);
+    dcmPixelItem_ = std::make_unique<DcmPixelItem>(DcmTag(DCM_Item, EVR_OB));
+    dcmPixelItem_->putUint8Array(data_.get(), size_);
+    data_ = nullptr;
+  }
 }
 
 size_t Frame::dicomFrameBytesSize() const { return size_; }

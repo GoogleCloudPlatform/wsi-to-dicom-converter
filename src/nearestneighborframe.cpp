@@ -134,8 +134,11 @@ void NearestNeighborFrame::sliceFrame() {
   }
 
   boost::gil::copy_and_convert_pixels(gil, rgbView, convert_rgba_to_rgb());
-  data_ = compressor_->compress(rgbView, &size_);
-  BOOST_LOG_TRIVIAL(debug) << " frame size: " << size_ / 1024 << "kb";
+  uint64_t size;
+  std::unique_ptr<uint8_t[]>mem = std::move(compressor_->compress(rgbView,
+                                                                  &size));
+  setDicomFrameBytes(std::move(mem), size);
+  BOOST_LOG_TRIVIAL(debug) << " frame size: " << size / 1024 << "kb";
   done_ = true;
 }
 
