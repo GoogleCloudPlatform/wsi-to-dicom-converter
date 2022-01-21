@@ -13,6 +13,7 @@
 // limitations under the License.
 #include <boost/log/trivial.hpp>
 
+#include <cmath>
 #include <memory>
 #include <string>
 
@@ -50,6 +51,40 @@ TiffDirectory::TiffDirectory(TIFF *tiff) {      // comment # is tiff tag number
   _getTiffField_ui32(tiff, TIFFTAG_JPEGQUALITY, &jpegQuality_);
   _getTiffField_ui32(tiff, TIFFTAG_JPEGCOLORMODE, &jpegColorMode_);
   _getTiffField_ui32(tiff, TIFFTAG_JPEGTABLESMODE, &jpegTableMode_);
+}
+
+TiffDirectory::TiffDirectory(const TiffDirectory &dir) {
+  directoryIndex_ = dir.directoryIndex_;
+  subfileType_ = dir.subfileType_;
+  imageWidth_ = dir.imageWidth_;
+  imageHeight_ = dir.imageHeight_;
+  bitsPerSample_ = dir.bitsPerSample_;
+  compression_ = dir.compression_;
+  photoMetric_ = dir.photoMetric_;
+  imageDescription_ = dir.imageDescription_;
+  orientation_ = dir.orientation_;
+  samplePerPixel_ = dir.samplePerPixel_;
+  rowsPerStrip_ = dir.rowsPerStrip_;
+  planarConfig_ = dir.planarConfig_;
+  tileWidth_ = dir.tileWidth_;
+  tileHeight_ = dir.tileHeight_;
+  imageDepth_ = dir.imageDepth_;
+  tileDepth_ = dir.tileDepth_;
+  hasIccProfile_ = dir.hasIccProfile_;
+  xResolution_ = dir.xResolution_;
+  yResolution_ = dir.yResolution_;
+  tileCount_ = dir.tileCount_;
+  isTiled_ = dir.isTiled_;
+  jpegTableDataSize_ = dir.jpegTableDataSize_;
+  if (jpegTableDataSize_ <= 0 || dir.jpegTableData_ == nullptr) {
+    jpegTableData_ = nullptr;
+  } else {
+    jpegTableData_ = std::make_unique<uint8_t[]>(jpegTableDataSize_);
+    memcpy(jpegTableData_.get(), dir.jpegTableData_.get(), jpegTableDataSize_);
+  }
+  jpegQuality_ = dir.jpegQuality_;
+  jpegColorMode_ = dir.jpegColorMode_;
+  jpegTableMode_ = dir.jpegTableMode_;
 }
 
 TiffDirectory::~TiffDirectory() {}

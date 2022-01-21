@@ -128,6 +128,37 @@ TEST(tiffDirectory, labelImage) {
   ASSERT_TRUE(tdir->doImageDimensionsMatch(387, 463));
 }
 
+TEST(tiffDirectory, copyConstructor) {
+  TiffFile tfile(tiffFileName);
+  const TiffDirectory tdir(*tfile.directory(2));
+  ASSERT_EQ(tdir.directoryIndex(), 2);
+  ASSERT_TRUE(!tdir.hasICCProfile());
+  ASSERT_EQ(tdir.subfileType(), 0x1);
+  ASSERT_EQ(tdir.imageWidth(), 387);
+  ASSERT_EQ(tdir.imageHeight(), 463);
+  ASSERT_EQ(tdir.imageDepth(), 1);
+  ASSERT_EQ(tdir.bitsPerSample(), 8);
+  ASSERT_EQ(tdir.tileWidth(), -1);
+  ASSERT_EQ(tdir.tileHeight(), -1);
+  ASSERT_EQ(tdir.tileDepth(), -1);
+  ASSERT_TRUE(!tdir.hasJpegTableData());
+  ASSERT_EQ(tdir.jpegTableData(), nullptr);
+  ASSERT_EQ(tdir.tilesPerColumn(), -1);
+  ASSERT_EQ(tdir.tilesPerRow(), -1);
+  ASSERT_EQ(tdir.tileCount(), 0);
+  ASSERT_TRUE(!tdir.isTiled());
+  ASSERT_TRUE(!tdir.isPyramidImage());
+  ASSERT_TRUE(!tdir.isThumbnailImage());
+  ASSERT_TRUE(!tdir.isMacroImage());
+  ASSERT_TRUE(tdir.isLabelImage());
+  ASSERT_TRUE(!tdir.isJpegCompressed());
+  ASSERT_TRUE(tdir.isPhotoMetricRGB());
+  ASSERT_TRUE(!tdir.isPhotoMetricYCBCR());
+  ASSERT_TRUE(!tdir.isExtractablePyramidImage());
+  ASSERT_TRUE(!tdir.doImageDimensionsMatch(2220, 2967));
+  ASSERT_TRUE(tdir.doImageDimensionsMatch(387, 463));
+}
+
 TEST(tiffDirectory, macroImage) {
   TiffFile tfile(tiffFileName);
   const TiffDirectory *tdir = tfile.directory(3);

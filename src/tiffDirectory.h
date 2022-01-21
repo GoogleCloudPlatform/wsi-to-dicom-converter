@@ -15,7 +15,6 @@
 #ifndef SRC_TIFFDIRECTORY_H_
 #define SRC_TIFFDIRECTORY_H_
 
-#include <boost/thread/mutex.hpp>
 #include <tiffio.h>
 
 #include <memory>
@@ -26,6 +25,7 @@ namespace wsiToDicomConverter {
 class TiffDirectory {
  public:
   explicit TiffDirectory(TIFF *tiff);
+  explicit TiffDirectory(const TiffDirectory &dir);
   virtual ~TiffDirectory();
 
   tdir_t directoryIndex() const;
