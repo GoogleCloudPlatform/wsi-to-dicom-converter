@@ -24,12 +24,11 @@
 namespace wsiToDicomConverter {
 
 TEST(TiffTile, getTile) {
-  TiffFile tfile(tiffFileName);
   const int imageIndex = 0;
-  const TiffDirectory *tdir = tfile.directory(imageIndex);
+  TiffFile tfile(tiffFileName, imageIndex);
+  const TiffDirectory *tdir = tfile.fileDirectory();
   int tileIndex = 1;
-  std::unique_ptr<TiffTile> tile = std::move(tfile.tile(imageIndex,
-                                                        tileIndex));
+  std::unique_ptr<TiffTile> tile = std::move(tfile.tile(tileIndex));
   ASSERT_NE(tile->rawBuffer_, nullptr);
   ASSERT_EQ(tile->rawBufferSize_, 2345);
   ASSERT_EQ(tile->tileIndex_, tileIndex);
