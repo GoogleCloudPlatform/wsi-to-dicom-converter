@@ -113,12 +113,17 @@ TEST(tiffFile, getDirectoryCount) {
     ASSERT_EQ(4, tfile.directoryCount());
 }
 
+TEST(tiffFile, path) {
+  TiffFile tfile(tiffFileName, 0);
+  ASSERT_EQ(tfile.path(), tiffFileName);
+}
+
 TEST(tiffFile, getTile) {
-    TiffFile tfile(tiffFileName);
+    TiffFile tfile(tiffFileName, 0);
     const TiffDirectory *tdir = tfile.directory(0);
     const int tileCount = tdir->tileCount();
     for (int tileIndex = 0; tileIndex < tileCount; ++tileIndex) {
-        ASSERT_NE(tfile.tile(0, tileIndex), nullptr);
+        ASSERT_NE(tfile.tile(tileIndex), nullptr);
     }
 }
 

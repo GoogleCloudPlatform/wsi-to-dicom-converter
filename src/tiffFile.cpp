@@ -11,8 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include <boost/thread.hpp>
-
 #include <memory>
 #include <string>
 #include <utility>
@@ -22,7 +20,9 @@
 
 namespace wsiToDicomConverter {
 
-TiffFile::TiffFile(const std::string &path) : tiffFilePath_(path) {
+TiffFile::TiffFile(const std::string &path, const int32_t dirIndex) :
+  tiffFilePath_(path), currentDirectoryIndex_(dirIndex) {
+  initalized_ = false;
   tiffFile_ = TIFFOpen(path.c_str(), "r");
   if (tiffFile_ == nullptr) {
       return;
@@ -32,24 +32,54 @@ TiffFile::TiffFile(const std::string &path) : tiffFilePath_(path) {
     // TIFFPrintDirectory(tiffFile_, stdout);
     tiffDir_.push_back(std::move(std::make_unique<TiffDirectory>(tiffFile_)));
   } while (TIFFReadDirectory(tiffFile_));
-  currentDirectoryIndex_ = 0;
   TIFFSetDirectory(tiffFile_, currentDirectoryIndex_);
   tileReadBufSize_ = TIFFTileSize(tiffFile_);
-  tileReadBuffer_ = _TIFFmalloc(tileReadBufSize_);
+  initalized_ = true;
+}
+
+TiffFile::TiffFile(const TiffFile &tf, const int32_t dirIndex) :
+    tiffFilePath_(tf.path()), currentDirectoryIndex_(dirIndex) {
+    initalized_ = false;
+    tiffFile_ = TIFFOpen(tiffFilePath_.c_str(), "r");
+    if (tiffFile_ == nullptr) {
+      return;
+    }
+    const size_t dirCount = tf.directoryCount();
+    for (size_t idx = 0; idx < dirCount; ++idx) {
+      tiffDir_.push_back((std::move(
+                      std::make_unique<TiffDirectory>(*tf.directory(idx)))));
+    }
+    TIFFSetDirectory(tiffFile_, currentDirectoryIndex_);
+    tileReadBufSize_ = tf.tileReadBufSize_;
+    initalized_ = true;
 }
 
 TiffFile::~TiffFile() {
-  if (!isLoaded()) {
+  close();
+}
+
+void TiffFile::close() {
+  if (tiffFile_ == nullptr) {
     return;
   }
-  if (tileReadBuffer_ != nullptr) {
-    _TIFFfree(tileReadBuffer_);
-  }
   TIFFClose(tiffFile_);
+  tiffFile_ = nullptr;
+}
+
+std::string TiffFile::path() const {
+  return tiffFilePath_;
+}
+
+int32_t TiffFile::directoryLevel() const {
+  return currentDirectoryIndex_;
 }
 
 bool TiffFile::isLoaded() const {
   return (tiffFile_ != nullptr);
+}
+
+bool TiffFile::isInitalized() const {
+  return initalized_;
 }
 
 bool TiffFile::hasExtractablePyramidImages() const {
@@ -75,6 +105,10 @@ int32_t TiffFile::getDirectoryIndexMatchingImageDimensions(uint32_t width,
   return -1;
 }
 
+const TiffDirectory *TiffFile::fileDirectory() const {
+  return directory(currentDirectoryIndex_);
+}
+
 const TiffDirectory *TiffFile::directory(int64_t dirIndex) const {
   return tiffDir_[dirIndex].get();
 }
@@ -83,25 +117,45 @@ uint32_t TiffFile::directoryCount() const {
   return tiffDir_.size();
 }
 
-std::unique_ptr<TiffTile> TiffFile::tile(int32_t dirIndex,
-                                         uint32_t tileIndex) {
-  std::unique_ptr<uint8_t[]>  mem_buffer;
-  uint32_t bufferSize;
-  {
-    boost::lock_guard<boost::mutex> guard(tiffReadMutex_);
-    if (currentDirectoryIndex_ != dirIndex) {
-      currentDirectoryIndex_ = dirIndex;
-      TIFFSetDirectory(tiffFile_, currentDirectoryIndex_);
-    }
-    bufferSize = TIFFReadRawTile(tiffFile_, static_cast<ttile_t>(tileIndex),
-                                 tileReadBuffer_, tileReadBufSize_);
-    if (bufferSize == 0) {
-      return nullptr;
-    }
-    mem_buffer = std::make_unique<uint8_t[]>(bufferSize);
-    std::memcpy(mem_buffer.get(), tileReadBuffer_, bufferSize);
+class TileReadBuffer {
+ public:
+  explicit TileReadBuffer(uint64_t size);
+  virtual ~TileReadBuffer();
+  tdata_t buffer_;
+};
+
+TileReadBuffer::TileReadBuffer(uint64_t size) {
+  buffer_ = _TIFFmalloc(size);
+}
+
+TileReadBuffer::~TileReadBuffer() {
+  if (buffer_ != nullptr) {
+    _TIFFfree(buffer_);
   }
-  return std::make_unique<TiffTile>(directory(dirIndex), tileIndex,
+}
+
+std::unique_ptr<TiffTile> TiffFile::tile(uint32_t tileIndex) {
+  if (tiffFile_ == nullptr) {
+    return nullptr;
+  }
+  TileReadBuffer readBuffer(tileReadBufSize_);
+  if (readBuffer.buffer_ == nullptr) {
+    return nullptr;
+  }
+  uint32_t bufferSize = TIFFReadRawTile(tiffFile_,
+                                        static_cast<ttile_t>(tileIndex),
+                                        readBuffer.buffer_,
+                                        tileReadBufSize_);
+  if (bufferSize == 0) {
+    return nullptr;
+  }
+  std::unique_ptr<uint8_t[]> mem_buffer =
+                                       std::make_unique<uint8_t[]>(bufferSize);
+  if (mem_buffer == nullptr) {
+    return nullptr;
+  }
+  _TIFFmemcpy(mem_buffer.get(), readBuffer.buffer_, bufferSize);
+  return std::make_unique<TiffTile>(directory(directoryLevel()), tileIndex,
                                     std::move(mem_buffer), bufferSize);
 }
 
