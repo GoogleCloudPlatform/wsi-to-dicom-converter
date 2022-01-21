@@ -123,31 +123,40 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
   std::vector<uint8_t> frames;
   std::string framePhotoMetrIntrp;
   int64_t imaging_size_bytes = 0;
-  for (size_t frameNumber = 0; frameNumber < framesData_.size();
-       frameNumber++) {
+  const int64_t  frameDataSize = framesData_.size();
+  for (size_t frameNumber = 0; frameNumber < frameDataSize; ++frameNumber) {
     while (!framesData_[frameNumber]->isDone()) {
       boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
     }
-    {
-      Frame *frame = framesData_[frameNumber].get();
-      if (frameNumber == 0) {
-        framePhotoMetrIntrp = frame->photoMetrInt();
-      }
-      if (compression_ == JPEG || compression_ == JPEG2000) {
-        compressedPixelSequence->storeCompressedFrame(
-            offsetList, frame->dicomFrameBytes(),
-            frame->dicomFrameBytesSize(), 0U);
-      } else {
-        frames.insert(frames.end(), frame->dicomFrameBytes(),
-                      frame->dicomFrameBytes() + frame->dicomFrameBytesSize());
-      }
-      imaging_size_bytes += frame->dicomFrameBytesSize();
-      frame->clearDicomMem();
+    Frame *frame = framesData_[frameNumber].get();
+    if (frameNumber == 0) {
+      framePhotoMetrIntrp = frame->photoMetrInt();
     }
+    if (frame->hasDcmPixelItem()) {  // Jpeg or JPeg2000 encoded data.
+      // if currentSize is odd this will be fixed by dcmtk during
+      // DcmOtherByteOtherWord::write()
+      // passing ownership of frame pointer to dcmtk.
+      compressedPixelSequence->insert(frame->dcmPixelItem());
+      // 8 bytes extra for header
+      Uint32 currentSize = frame->dicomFrameBytesSize() + 8;
+      // odd frame size requires padding, i.e. last fragment uses odd
+      // length pixel item
+      if (currentSize & 1) {
+        currentSize++;
+      }
+      offsetList.push_back(currentSize);
+    } else {
+      frames.insert(frames.end(), frame->dicomFrameBytes(),
+                    frame->dicomFrameBytes() + frame->dicomFrameBytesSize());
+      frame->clearDicomMem();  // memory copied clear.
+    }
+    imaging_size_bytes += frame->dicomFrameBytesSize();
   }
   if (imaging_size_bytes > 0) {
-    const double uncompressed = static_cast<double>(3.0 * imageHeight_ *
-                                                                  imageWidth_);
+    // compute uncompressed size realtive to frames written in file. Possible
+    // to split frames across multiple files.
+    const double uncompressed = static_cast<double>(3 * frameWidth_ *
+                                                frameHeight_ * frameDataSize);
     const double storedImageSize = static_cast<double>(imaging_size_bytes);
     const double compression_ratio = uncompressed / storedImageSize;
     imgInfo.compressionRatio = std::to_string(compression_ratio);
@@ -209,4 +218,5 @@ void DcmFileDraft::saveFile() {
       std::make_unique<DcmOutputFileStream>(fileName);
   write(fileStream.get());
 }
+
 }  // namespace wsiToDicomConverter
