@@ -15,15 +15,26 @@
 # This script updates environment and build wsi2dcm by steps:
 # 1: update of ubuntu deb repos
 # 2: install of tools and libs for build
-# 3: install opencv
-# 4: download and unpack source code of libs for build
-# 5: build
+# 3: install libjpeg turbo
+# 4: install opencv
+# 5: download and unpack source code of libs for build
+# 6: build
 
 #1
 echo "deb  http://old-releases.ubuntu.com cosmic universe" | tee -a /etc/apt/sources.list
 apt-get update
 #2
-DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-essential libjsoncpp-dev libjpeg8-dev libgdk-pixbuf2.0-dev libcairo2-dev libsqlite3-dev cmake libglib2.0-dev libxml2-dev libopenjp2-7-dev g++-8 libgtest-dev -y
+DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-essential libjsoncpp-dev libgdk-pixbuf2.0-dev libcairo2-dev libsqlite3-dev cmake libglib2.0-dev libxml2-dev libopenjp2-7-dev g++-8 libgtest-dev -y
+#3
+wget -O /libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.2.zip
+unzip /libjpeg_turbo.zip
+mv /libjpeg-turbo-2.1.2 /libjpeg-turbo
+mkdir -p /libjpegturbo_build
+cd libjpegturbo_build
+cmake -G"Unix Makefiles" ../libjpeg-turbo
+make -j12
+make install
+cd ..
 #3
 wget -O /opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.5.4.zip > /dev/null
 unzip /opencv.zip  > /dev/null
@@ -41,14 +52,14 @@ wget https://github.com/uclouvain/openjpeg/archive/v2.3.0.zip > /dev/null
 unzip v2.3.0.zip  > /dev/null
 wget https://boostorg.jfrog.io/artifactory/main/release/1.69.0/source/boost_1_69_0.tar.gz  > /dev/null
 tar xvzf boost_1_69_0.tar.gz  > /dev/null
-wget https://dicom.offis.de/download/dcmtk/dcmtk362/dcmtk-3.6.2.zip  > /dev/null
+wget -O dcmtk-3.6.2.zip https://github.com/DCMTK/dcmtk/archive/refs/tags/DCMTK-3.6.2.zip > /dev/null
+#wget https://dicom.offis.de/download/dcmtk/dcmtk362/dcmtk-3.6.2.zip  > /dev/null
 unzip dcmtk-3.6.2.zip  > /dev/null
+mv ./dcmtk-DCMTK-3.6.2 ./dcmtk-3.6.2
 wget https://github.com/open-source-parsers/jsoncpp/archive/0.10.7.zip
 unzip 0.10.7.zip > /dev/null
 wget https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz
 tar xvzf openslide-3.4.1.tar.gz  > /dev/null
-wget https://www.ijg.org/files/jpegsr9c.zip
-unzip jpegsr9c.zip > /dev/null
 #5
 cmake -DSTATIC_BUILD=ON -DTESTS_BUILD=ON ..
 make -j12
