@@ -44,9 +44,12 @@ DcmFileDraft::DcmFileDraft(
     absl::string_view seriesId, absl::string_view imageName,
     DCM_Compression compression, bool tiled, DcmTags* additionalTags,
     double firstLevelWidthMm, double firstLevelHeightMm, int64_t downsample,
-    const std::vector<std::unique_ptr<DcmFileDraft>> * prior_frame_batches) {
+    const std::vector<std::unique_ptr<DcmFileDraft>> * prior_frame_batches,
+    absl::string_view sourceImageDescription) {
   framesData_ = std::move(framesData);
   outputFileMask_ = std::move(static_cast<std::string>(outputFileMask));
+  sourceImageDescription_ = std::move(static_cast<std::string>(
+                                                      sourceImageDescription));
   imageWidth_ = imageWidth;
   imageHeight_ = imageHeight;
   level_ = level;
@@ -121,17 +124,29 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
   compressedPixelSequence->insert(offsetTable.release());
   DcmtkImgDataInfo imgInfo;
   std::vector<uint8_t> frames;
-  std::string framePhotoMetrIntrp;
+  std::string framePhotoMetrIntrp = "";
+  std::string derivationDescription = "";
   int64_t imaging_size_bytes = 0;
   const int64_t  frameDataSize = framesData_.size();
+  // get general state from first frame.
+  if (frameDataSize > 0) {
+    const int firstFrameNumber = 0;
+    while (!framesData_[firstFrameNumber]->isDone()) {
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+    }
+    Frame *frame = framesData_[firstFrameNumber].get();
+    framePhotoMetrIntrp = frame->photoMetrInt();
+    derivationDescription = sourceImageDescription_ +
+                            frame->derivationDescription();
+    // maximum length of derivationDescription vr type is 1024 chars
+    // subtracting 1 to allow for null.
+    derivationDescription = std::move(derivationDescription.substr(0, 1023));
+  }
   for (size_t frameNumber = 0; frameNumber < frameDataSize; ++frameNumber) {
     while (!framesData_[frameNumber]->isDone()) {
       boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
     }
     Frame *frame = framesData_[frameNumber].get();
-    if (frameNumber == 0) {
-      framePhotoMetrIntrp = frame->photoMetrInt();
-    }
     if (frame->hasDcmPixelItem()) {  // Jpeg or JPeg2000 encoded data.
       // if currentSize is odd this will be fixed by dcmtk during
       // DcmOtherByteOtherWord::write()
@@ -160,8 +175,10 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
     const double storedImageSize = static_cast<double>(imaging_size_bytes);
     const double compression_ratio = uncompressed / storedImageSize;
     imgInfo.compressionRatio = std::to_string(compression_ratio);
+    imgInfo.derivationDescription = derivationDescription;
   } else {
     imgInfo.compressionRatio = "";
+    imgInfo.derivationDescription = "";
   }
 
   switch (compression_) {

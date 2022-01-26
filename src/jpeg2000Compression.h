@@ -35,6 +35,7 @@ class Jpeg2000Compression : public RawCompression {
                                                    size_t* size);
 
   virtual DCM_Compression method() const;
+  virtual std::string toString() const;
 
   // Gets Raw data from rgb view and performs compression on it
   virtual std::unique_ptr<uint8_t[]> compress(

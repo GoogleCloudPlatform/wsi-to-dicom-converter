@@ -28,7 +28,7 @@ class TestFrame : public Frame {
 
   virtual int64_t rawABGRFrameBytes(uint8_t *rawMemory, int64_t memorySize);
   virtual bool hasRawABGRFrameBytes() const;
-
+  virtual std::string derivationDescription() const;
   virtual void incSourceFrameReadCounter();
 
  private:

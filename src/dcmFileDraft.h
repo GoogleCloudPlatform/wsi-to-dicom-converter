@@ -65,7 +65,7 @@ class DcmFileDraft {
                bool tiled, DcmTags* additionalTags, double firstLevelWidthMm,
                double firstLevelHeightMmm, int64_t downsample,
               const std::vector<std::unique_ptr<DcmFileDraft>>
-              *prior_frame_batches);
+              *prior_frame_batches, absl::string_view sourceImageDescription);
 
   ~DcmFileDraft();
 
@@ -86,6 +86,7 @@ class DcmFileDraft {
   std::string studyId_;
   std::string seriesId_;
   std::string imageName_;
+  std::string sourceImageDescription_;
   DcmTags* additionalTags_;
   DCM_Compression compression_;
   int64_t prior_batch_frames_;

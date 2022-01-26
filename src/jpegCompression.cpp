@@ -31,6 +31,10 @@ DCM_Compression JpegCompression::method() const {
   return JPEG;
 }
 
+std::string JpegCompression::toString() const {  
+  return std::string("JPEG compressed (quality: ") + std::to_string(_quality) + ")";
+}
+
 std::unique_ptr<uint8_t[]> JpegCompression::compress(
     const boost::gil::rgb8_view_t &view, size_t *size) {
   typedef typename boost::gil::channel_type<

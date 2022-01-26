@@ -36,6 +36,7 @@ struct DcmtkImgDataInfo {
   Uint16 pixAspectV;
   E_TransferSyntax transSyn;
   std::string compressionRatio;
+  std::string derivationDescription;
 
   OFBool operator==(const DcmtkImgDataInfo &other) {
     return (rows == other.rows) && (cols == other.cols) &&
@@ -46,7 +47,8 @@ struct DcmtkImgDataInfo {
            (highBit == other.highBit) && (pixelRepr == other.pixelRepr) &&
            (planConf == other.planConf) && (pixAspectH == other.pixAspectH) &&
            (pixAspectV == other.pixAspectV) && (transSyn == other.transSyn) &&
-           (compressionRatio == other.compressionRatio);
+           (compressionRatio == other.compressionRatio) &&
+           (derivationDescription == other.derivationDescription);
   }
 
   OFBool operator!=(const DcmtkImgDataInfo &other) {

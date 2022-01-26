@@ -139,6 +139,11 @@ void Frame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
   }
 }
 
+std::string Frame::derivationDescription() const
+{  
+  return std::string("saved ") + compressor_->toString() + ".";
+}
+
 size_t Frame::dicomFrameBytesSize() const { return size_; }
 
 bool Frame::hasRawABGRFrameBytes() const {

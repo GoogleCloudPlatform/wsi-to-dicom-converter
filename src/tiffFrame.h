@@ -48,6 +48,7 @@ class TiffFrame : public Frame {
   uint64_t tileIndex() const;
   virtual void setDicomFrameBytes(std::unique_ptr<uint8_t[]> *dcmdata,
                                                          uint64_t size);
+  virtual std::string derivationDescription() const;
 
  private:
   TiffFile *tiffFile_;

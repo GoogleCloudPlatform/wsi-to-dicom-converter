@@ -45,7 +45,7 @@ TEST(fileGeneration, withoutConcatenation) {
   }
   DcmFileDraft draft(std::move(framesData), "./", 50000, 50000, 0, 0, 0,
                 "study", "series", "image", JPEG, false, nullptr, 0.0, 0.0, 1,
-                 &empty_dicom_file_vec);
+                 &empty_dicom_file_vec, "FileGeneration without concatenation");
 
   OFVector<Uint8> writeBuffer(bufferSize);
   std::unique_ptr<DcmOutputBufferStream> output =
@@ -81,7 +81,7 @@ TEST(fileGeneration, withConcatenation) {
   std::unique_ptr<DcmFileDraft> batch_0_dicom = std::make_unique<DcmFileDraft>(
       std::move(framesData), "./", 50000, 50000, 0, 0, 0,
       "study", "series", "image", JPEG2000, true, nullptr, 0.0, 0.0, 1,
-      &dicom_file_vec);
+      &dicom_file_vec, "FileGeneration with concatenation 1");
   dicom_file_vec.push_back(std::move(batch_0_dicom));
 
   // emptyPixelData
@@ -90,7 +90,7 @@ TEST(fileGeneration, withConcatenation) {
   }
   DcmFileDraft draft(std::move(framesData), "./", 50000, 50000, 0, 0, 0,
       "study", "series", "image", JPEG2000, true, nullptr, 0.0, 0.0, 1,
-      &dicom_file_vec);
+      &dicom_file_vec, "FileGeneration with concatenation 2");
 
   OFVector<Uint8> writeBuffer(bufferSize);
   std::unique_ptr<DcmOutputBufferStream> output =
@@ -118,7 +118,8 @@ TEST(fileGeneration, fileSave) {
       framesData.push_back(std::make_unique<TestFrame>(500, 500));
   }
   DcmFileDraft draft(std::move(framesData), "./", 50000, 50000, 0, 0, 0,
-      "study", "series", "image", JPEG2000, true, nullptr, 0.0, 0.0, 1, NULL);
+      "study", "series", "image", JPEG2000, true, nullptr, 0.0, 0.0, 1, NULL,
+      "FileGeneration fileSave");
 
   draft.saveFile();
   ASSERT_TRUE(boost::filesystem::exists("./level-0-frames-0-100.dcm"));
@@ -134,7 +135,8 @@ TEST(fileGeneration, fileSaveBatch) {
     }
     std::unique_ptr<DcmFileDraft> draft = std::make_unique<DcmFileDraft>(
        std::move(framesData), "./", 50000, 50000, 2, 0, 0, "study", "series",
-       "image", JPEG2000, true, nullptr, 0.0, 0.0, 1, &dicom_file_vec);
+       "image", JPEG2000, true, nullptr, 0.0, 0.0, 1, &dicom_file_vec,
+       "FileGeneration fileSaveBatch 1");
     dicom_file_vec.push_back(std::move(draft));
   }
 
@@ -143,7 +145,7 @@ TEST(fileGeneration, fileSaveBatch) {
   }
   DcmFileDraft draft(std::move(framesData), "./", 50000, 50000, 2, 0,
      0, "study", "series", "image", JPEG2000, true, nullptr, 0.0, 0.0, 1,
-     &dicom_file_vec);
+     &dicom_file_vec, "FileGeneration fileSaveBatch 2");
 
   draft.saveFile();
   ASSERT_TRUE(boost::filesystem::exists("./level-2-frames-900-1000.dcm"));

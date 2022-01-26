@@ -71,4 +71,8 @@ bool TestFrame::hasRawABGRFrameBytes() const {
   return true;
 }
 
+std::string TestFrame::derivationDescription() const {  
+  return std::string("test frame.");
+}
+
 }  // namespace wsiToDicomConverter

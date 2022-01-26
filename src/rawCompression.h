@@ -26,6 +26,7 @@ class RawCompression : public Compressor {
                             const boost::gil::rgb8_view_t& view, size_t* size);
 
   virtual DCM_Compression method() const;
+  virtual std::string toString() const;
 
   // Returns data without compression from rgb view
   std::unique_ptr<uint8_t[]> getRawData(const boost::gil::rgb8_view_t& view,

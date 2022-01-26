@@ -320,6 +320,11 @@ void TiffFrame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> *dcmdata,
   }
 }
 
+std::string TiffFrame::derivationDescription() const
+{  
+  return std::string("saved source compressed imageing; bytes unchanged.");
+}
+
 void TiffFrame::sliceFrame() {
   TiffFrameJpgBytes jpegBytes(this);
   uint64_t size;

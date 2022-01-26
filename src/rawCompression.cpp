@@ -29,6 +29,10 @@ struct PixelInserter {
   }
 };
 
+std::string RawCompression::toString() const {  
+  return std::string("RAW");
+}
+
 DCM_Compression RawCompression::method() const {
   return RAW;
 }

@@ -197,6 +197,10 @@ OFCondition insertPixelMetadata(DcmDataset* dataset,
     cond = dataset->putAndInsertOFStringArray(DCM_LossyImageCompression,
                                                 lossy.c_str(), true);
     if (cond.bad()) return cond;
+    cond = dataset->putAndInsertOFStringArray(DCM_DerivationDescription,
+                                         imgInfo.derivationDescription.c_str(),
+                                         true);
+    if (cond.bad()) return cond;
   }
   return dataset->putAndInsertUint16(DCM_PixelRepresentation,
                                      imgInfo.pixelRepr);

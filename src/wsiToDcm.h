@@ -84,6 +84,9 @@ class SlideLevelDim {
   bool readOpenslide;
 
   bool readFromTiff = false;
+
+  // string description of source imaging.
+  std::string sourceDescription;
 };
 
 // Structure for wsi2dcm settings

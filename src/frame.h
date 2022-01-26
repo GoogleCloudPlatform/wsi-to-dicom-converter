@@ -54,6 +54,7 @@ class Frame {
   virtual DcmPixelItem *dcmPixelItem();
   virtual void setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
                                   uint64_t size);
+  virtual std::string derivationDescription() const;
 
  protected:
   bool done_;
