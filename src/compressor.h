@@ -17,6 +17,7 @@
 #include <boost/gil/typedefs.hpp>
 #include <cstdint>
 #include <memory>
+#include <string>
 
 // Interface for different type of compressions
 class Compressor {

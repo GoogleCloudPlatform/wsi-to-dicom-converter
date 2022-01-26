@@ -304,9 +304,9 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int32_t level,
       generateUsingOpenSlide = false;
       readFromTiff = true;
       sourceDescription =
-                    std::string("Image frame/tiles extracted without decompression from ") +
-                    tiffFile_->path() + ", file level: " +
-                    std::to_string(levelToGet) + ", and ";
+                    std::string("Image frame/tiles extracted without ")
+                    "decompression from ") + tiffFile_->path() +
+                    ", file level: " + std::to_string(levelToGet) + ", and ";
     }
   }
   // ProgressiveDownsampling

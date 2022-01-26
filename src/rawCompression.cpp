@@ -15,6 +15,7 @@
 #include "src/rawCompression.h"
 #include <boost/gil/image.hpp>
 #include <algorithm>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -29,7 +30,7 @@ struct PixelInserter {
   }
 };
 
-std::string RawCompression::toString() const {  
+std::string RawCompression::toString() const {
   return std::string("RAW");
 }
 

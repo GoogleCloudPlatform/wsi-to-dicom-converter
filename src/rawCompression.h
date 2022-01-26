@@ -15,6 +15,7 @@
 #ifndef SRC_RAWCOMPRESSION_H_
 #define SRC_RAWCOMPRESSION_H_
 #include <memory>
+#include <string>
 
 #include "src/enums.h"
 #include "src/compressor.h"

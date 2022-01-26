@@ -15,6 +15,7 @@
 #define TESTS_TEST_FRAME_H_
 #include <atomic>
 #include <memory>
+#include <string>
 
 #include "src/frame.h"
 

@@ -139,8 +139,7 @@ void Frame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
   }
 }
 
-std::string Frame::derivationDescription() const
-{  
+std::string Frame::derivationDescription() const {
   return std::string("saved ") + compressor_->toString() + ".";
 }
 

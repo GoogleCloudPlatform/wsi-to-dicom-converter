@@ -60,7 +60,8 @@ TEST(insertStaticTagsTest, correctInsert_Level0) {
 
   char* stringValue;
   findElement(dataSet.get(), DCM_SOPClassUID)->getString(stringValue);
-  ASSERT_EQ(UID_VLWholeSlideMicroscopyImageStorage, absl::string_view(stringValue));
+  ASSERT_EQ(UID_VLWholeSlideMicroscopyImageStorage,
+            absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_Modality)->getString(stringValue);
   ASSERT_EQ("SM", absl::string_view(stringValue));
@@ -84,13 +85,15 @@ TEST(insertStaticTagsTest, correctInsert_Level1) {
 
   char* stringValue;
   findElement(dataSet.get(), DCM_SOPClassUID)->getString(stringValue);
-  ASSERT_EQ(UID_VLWholeSlideMicroscopyImageStorage, absl::string_view(stringValue));
+  ASSERT_EQ(UID_VLWholeSlideMicroscopyImageStorage,
+            absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_Modality)->getString(stringValue);
   ASSERT_EQ("SM", absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_ImageType)->getString(stringValue);
-  ASSERT_EQ("DERIVED\\PRIMARY\\VOLUME\\RESAMPLED", absl::string_view(stringValue));
+  ASSERT_EQ("DERIVED\\PRIMARY\\VOLUME\\RESAMPLED",
+            absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_ImageOrientationSlide)->getString(stringValue);
   ASSERT_EQ("0\\-1\\0\\-1\\0\\0", absl::string_view(stringValue));

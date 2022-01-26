@@ -16,6 +16,7 @@
 #define SRC_JPEG2000COMPRESSION_H_
 
 #include <memory>
+#include <string>
 
 #include "src/enums.h"
 #include "rawCompression.h"
