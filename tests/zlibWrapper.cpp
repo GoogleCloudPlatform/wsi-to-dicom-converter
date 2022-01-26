@@ -44,7 +44,7 @@ TEST(zlibWrapper, small_mem) {
                               raw_memory_out.get(),
                               raw_memory_size_bytes), raw_memory_size_bytes);
   for (size_t idx = 0; idx < raw_memory_size_bytes; idx++) {
-    ASSERT_EQ(raw_memory_out[idx], raw_memory[idx]);
+    EXPECT_EQ(raw_memory_out[idx], raw_memory[idx]);
   }
 }
 
@@ -71,7 +71,7 @@ TEST(zlibWrapper, large_mem) {
                               raw_memory_size_bytes),
              raw_memory_size_bytes);
   for (size_t idx = 0; idx < raw_memory_size_bytes; idx++) {
-    ASSERT_EQ(raw_memory_out[idx], raw_memory[idx]);
+    EXPECT_EQ(raw_memory_out[idx], raw_memory[idx]);
   }
 }
 

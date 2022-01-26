@@ -33,7 +33,7 @@ TEST(tiffFrame, canDecodeImageFrames) {
   ASSERT_TRUE(dir->hasJpegTableData());
   for (int tileIndex = 0; tileIndex < dir->tileCount(); ++tileIndex) {
     TiffFrame frame(&tf, tileIndex, true);
-    ASSERT_TRUE(frame.canDecodeJpeg());
+    EXPECT_TRUE(frame.canDecodeJpeg());
   }
 }
 

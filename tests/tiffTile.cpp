@@ -29,10 +29,10 @@ TEST(TiffTile, getTile) {
   const TiffDirectory *tdir = tfile.fileDirectory();
   int tileIndex = 1;
   std::unique_ptr<TiffTile> tile = std::move(tfile.tile(tileIndex));
-  ASSERT_NE(tile->rawBuffer_, nullptr);
-  ASSERT_EQ(tile->rawBufferSize_, 2345);
-  ASSERT_EQ(tile->tileIndex_, tileIndex);
-  ASSERT_EQ(tile->tiffDirectory_, tdir);
+  EXPECT_NE(tile->rawBuffer_, nullptr);
+  EXPECT_EQ(tile->rawBufferSize_, 2345);
+  EXPECT_EQ(tile->tileIndex_, tileIndex);
+  EXPECT_EQ(tile->tiffDirectory_, tdir);
 }
 
 }  // namespace wsiToDicomConverter

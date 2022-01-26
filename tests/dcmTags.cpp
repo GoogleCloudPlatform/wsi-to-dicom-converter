@@ -52,11 +52,11 @@ TEST(readJson, sequnceTag) {
       reinterpret_cast<DcmSequenceOfItems*>(
           findElement(&dataset, DCM_DimensionOrganizationSequence));
 
-  ASSERT_NE(nullptr, dimensionOrganization);
+  EXPECT_NE(nullptr, dimensionOrganization);
   char* stringValue;
   findElement(dimensionOrganization->getItem(0), DCM_DimensionOrganizationUID)
       ->getString(stringValue);
-  ASSERT_EQ(dimension, absl::string_view(stringValue));
+  EXPECT_EQ(dimension, absl::string_view(stringValue));
 }
 
 TEST(readJson, attributeTag) {
@@ -68,10 +68,10 @@ TEST(readJson, attributeTag) {
   tags.populateDataset(&dataset);
   DcmAttributeTag* dimensionOrganization = reinterpret_cast<DcmAttributeTag*>(
       findElement(&dataset, DCM_DimensionIndexPointer));
-  ASSERT_NE(nullptr, dimensionOrganization);
+  EXPECT_NE(nullptr, dimensionOrganization);
   DcmTagKey tagValue;
   dimensionOrganization->getTagVal(tagValue);
-  ASSERT_EQ(DCM_ColumnPositionInTotalImagePixelMatrix, tagValue);
+  EXPECT_EQ(DCM_ColumnPositionInTotalImagePixelMatrix, tagValue);
 }
 
 TEST(readJson, incorrectJson) {

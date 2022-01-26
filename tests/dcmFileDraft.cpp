@@ -60,16 +60,16 @@ TEST(fileGeneration, withoutConcatenation) {
   findElement(dcmFileFormat.getDataset(), DCM_LossyImageCompression)
       ->getString(stringValue);
 
-  ASSERT_EQ("01", absl::string_view(stringValue));
+  EXPECT_EQ("01", absl::string_view(stringValue));
   findElement(dcmFileFormat.getDataset(), DCM_SeriesDescription)
       ->getString(stringValue);
-  ASSERT_EQ("image", absl::string_view(stringValue));
+  EXPECT_EQ("image", absl::string_view(stringValue));
 
   DcmSequenceOfItems* element =
       reinterpret_cast<DcmSequenceOfItems*>(findElement(
           dcmFileFormat.getDataset(), DCM_PerFrameFunctionalGroupsSequence));
 
-  ASSERT_NE(nullptr, element);
+  EXPECT_NE(nullptr, element);
 }
 
 TEST(fileGeneration, withConcatenation) {
@@ -105,10 +105,10 @@ TEST(fileGeneration, withConcatenation) {
   Uint16 batchNumber;
   findElement(dcmFileFormat.getDataset(), DCM_InConcatenationNumber)
       ->getUint16(batchNumber);
-  ASSERT_EQ(2, batchNumber);
+  EXPECT_EQ(2, batchNumber);
   findElement(dcmFileFormat.getDataset(), DCM_LossyImageCompression)
       ->getString(stringValue);
-  ASSERT_EQ("00", absl::string_view(stringValue));
+  EXPECT_EQ("00", absl::string_view(stringValue));
 }
 
 TEST(fileGeneration, fileSave) {

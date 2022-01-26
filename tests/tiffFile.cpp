@@ -123,7 +123,7 @@ TEST(tiffFile, getTile) {
     const TiffDirectory *tdir = tfile.directory(0);
     const int tileCount = tdir->tileCount();
     for (int tileIndex = 0; tileIndex < tileCount; ++tileIndex) {
-        ASSERT_NE(tfile.tile(tileIndex), nullptr);
+        EXPECT_NE(tfile.tile(tileIndex), nullptr);
     }
 }
 

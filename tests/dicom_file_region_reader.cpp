@@ -37,15 +37,15 @@ TEST(DICOMFileRegionReader, base_test) {
   uint32_t mem[1] = { 9 };
 
   DICOMFileFrameRegionReader region_reader;
-  ASSERT_EQ(region_reader.dicomFileCount(), 0);
-  ASSERT_FALSE(region_reader.readRegion(0, 0, 1, 1, mem));
+  EXPECT_EQ(region_reader.dicomFileCount(), 0);
+  EXPECT_FALSE(region_reader.readRegion(0, 0, 1, 1, mem));
 
   region_reader.setDicomFiles(std::move(dcm_file_vec), nullptr);
-  ASSERT_EQ(region_reader.dicomFileCount(), 1);
-  ASSERT_TRUE(region_reader.readRegion(0, 0, 1, 1, mem));
+  EXPECT_EQ(region_reader.dicomFileCount(), 1);
+  EXPECT_TRUE(region_reader.readRegion(0, 0, 1, 1, mem));
 
   region_reader.clearDicomFiles();
-  ASSERT_EQ(region_reader.dicomFileCount(), 0);
+  EXPECT_EQ(region_reader.dicomFileCount(), 0);
   ASSERT_FALSE(region_reader.readRegion(0, 0, 1, 1, mem));
 }
 
@@ -64,12 +64,12 @@ TEST(DICOMFileRegionReader, readRegion) {
 
   DICOMFileFrameRegionReader region_reader;
   region_reader.setDicomFiles(std::move(dcm_file_vec), nullptr);
-  ASSERT_EQ(region_reader.dicomFileCount(), 1);
+  EXPECT_EQ(region_reader.dicomFileCount(), 1);
   uint32_t mem[5] = { 9, 9, 9, 9, 9 };
   ASSERT_TRUE(region_reader.readRegion(0, 0, 2, 2, mem));
   uint32_t test_mem[5] = {1, 2, 3, 4, 9 };
   for (size_t idx = 0; idx < 5; ++idx) {
-    ASSERT_EQ(test_mem[idx], mem[idx]);
+    EXPECT_EQ(test_mem[idx], mem[idx]);
   }
 }
 
@@ -87,12 +87,12 @@ TEST(DICOMFileRegionReader, read_beyond_region) {
 
   DICOMFileFrameRegionReader region_reader;
   region_reader.setDicomFiles(std::move(dcm_file_vec), nullptr);
-  ASSERT_EQ(region_reader.dicomFileCount(), 1);
+  EXPECT_EQ(region_reader.dicomFileCount(), 1);
   uint32_t mem[9] = { 9, 9, 9, 9, 9, 9, 9, 9, 9 };
   ASSERT_TRUE(region_reader.readRegion(0, 0, 3, 3, mem));
   uint32_t test_mem[9] = {1, 2, 0,  3, 4, 0, 0, 0, 0 };
   for (size_t idx = 0; idx < 9; ++idx) {
-      ASSERT_EQ(test_mem[idx], mem[idx]);
+      EXPECT_EQ(test_mem[idx], mem[idx]);
   }
 }
 
@@ -110,12 +110,12 @@ TEST(DICOMFileRegionReader, read_sub_region1) {
 
   DICOMFileFrameRegionReader region_reader;
   region_reader.setDicomFiles(std::move(dcm_file_vec), nullptr);
-  ASSERT_EQ(region_reader.dicomFileCount(), 1);
+  EXPECT_EQ(region_reader.dicomFileCount(), 1);
   uint32_t mem[9] = { 9, 9, 9, 9, 9, 9, 9, 9, 9 };
   ASSERT_TRUE(region_reader.readRegion(1, 1, 3, 3, mem));
   uint32_t test_mem[9] = {1, 2, 2,  3, 4, 4, 3, 4, 4 };
   for (size_t idx = 0; idx < 9; ++idx) {
-      ASSERT_EQ(test_mem[idx], mem[idx]);
+    EXPECT_EQ(test_mem[idx], mem[idx]);
   }
 }
 
@@ -133,12 +133,12 @@ TEST(DICOMFileRegionReader, read_sub_region2) {
 
   DICOMFileFrameRegionReader region_reader;
   region_reader.setDicomFiles(std::move(dcm_file_vec), nullptr);
-  ASSERT_EQ(region_reader.dicomFileCount(), 1);
+  EXPECT_EQ(region_reader.dicomFileCount(), 1);
   uint32_t mem[9] = { 9, 9, 9, 9, 9, 9, 9, 9, 9 };
   ASSERT_TRUE(region_reader.readRegion(0, 0, 3, 3, mem));
   uint32_t test_mem[9] = {1, 1, 2,  1, 1, 2, 3, 3, 4 };
   for (size_t idx = 0; idx < 9; ++idx) {
-      ASSERT_EQ(test_mem[idx], mem[idx]);
+      EXPECT_EQ(test_mem[idx], mem[idx]);
   }
 }
 
@@ -156,12 +156,12 @@ TEST(DICOMFileRegionReader, read_multi_files) {
 
   DICOMFileFrameRegionReader region_reader;
   region_reader.setDicomFiles(std::move(dcm_file_vec), nullptr);
-  ASSERT_EQ(region_reader.dicomFileCount(), 4);
+  EXPECT_EQ(region_reader.dicomFileCount(), 4);
   uint32_t mem[9] = { 9, 9, 9, 9, 9, 9, 9, 9, 9 };
   ASSERT_TRUE(region_reader.readRegion(1, 1, 3, 3, mem));
   uint32_t test_mem[9] = {1, 2, 2,  3, 4, 4, 3, 4, 4 };
   for (size_t idx = 0; idx < 9; ++idx) {
-      ASSERT_EQ(test_mem[idx], mem[idx]);
+      EXPECT_EQ(test_mem[idx], mem[idx]);
   }
 }
 

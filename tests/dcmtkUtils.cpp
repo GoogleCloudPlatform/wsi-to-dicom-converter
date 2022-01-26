@@ -28,25 +28,25 @@ TEST(insertBaseImageTagsTest, correctInsert) {
 
   char* stringValue;
   findElement(dataSet.get(), DCM_SeriesDescription)->getString(stringValue);
-  ASSERT_EQ("image", absl::string_view(stringValue));
+  EXPECT_EQ("image", absl::string_view(stringValue));
 
   Uint32 rows;
   findElement(dataSet.get(), DCM_TotalPixelMatrixRows)->getUint32(rows);
-  ASSERT_EQ(10, rows);
+  EXPECT_EQ(10, rows);
 
   Uint32 columns;
   findElement(dataSet.get(), DCM_TotalPixelMatrixColumns)->getUint32(columns);
-  ASSERT_EQ(20, columns);
+  EXPECT_EQ(20, columns);
 
-  ASSERT_EQ(nullptr, findElement(dataSet.get(), DCM_ImagedVolumeWidth));
-  ASSERT_EQ(nullptr, findElement(dataSet.get(), DCM_ImagedVolumeHeight));
+  EXPECT_EQ(nullptr, findElement(dataSet.get(), DCM_ImagedVolumeWidth));
+  EXPECT_EQ(nullptr, findElement(dataSet.get(), DCM_ImagedVolumeHeight));
 
   wsiToDicomConverter::DcmtkUtils::insertBaseImageTags("image", 10, 20, 10.0,
                                                        20.0, dataSet.get());
 
   Float32 width;
   findElement(dataSet.get(), DCM_ImagedVolumeWidth)->getFloat32(width);
-  ASSERT_EQ(10, width);
+  EXPECT_EQ(10, width);
 
   Float32 height;
   findElement(dataSet.get(), DCM_ImagedVolumeHeight)->getFloat32(height);
@@ -60,17 +60,17 @@ TEST(insertStaticTagsTest, correctInsert_Level0) {
 
   char* stringValue;
   findElement(dataSet.get(), DCM_SOPClassUID)->getString(stringValue);
-  ASSERT_EQ(UID_VLWholeSlideMicroscopyImageStorage,
+  EXPECT_EQ(UID_VLWholeSlideMicroscopyImageStorage,
             absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_Modality)->getString(stringValue);
-  ASSERT_EQ("SM", absl::string_view(stringValue));
+  EXPECT_EQ("SM", absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_ImageType)->getString(stringValue);
-  ASSERT_EQ("ORIGINAL\\PRIMARY\\VOLUME\\NONE", absl::string_view(stringValue));
+  EXPECT_EQ("ORIGINAL\\PRIMARY\\VOLUME\\NONE", absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_ImageOrientationSlide)->getString(stringValue);
-  ASSERT_EQ("0\\-1\\0\\-1\\0\\0", absl::string_view(stringValue));
+  EXPECT_EQ("0\\-1\\0\\-1\\0\\0", absl::string_view(stringValue));
 
   Uint16 frameNumber;
   findElement(dataSet.get(), DCM_RepresentativeFrameNumber)
@@ -85,18 +85,18 @@ TEST(insertStaticTagsTest, correctInsert_Level1) {
 
   char* stringValue;
   findElement(dataSet.get(), DCM_SOPClassUID)->getString(stringValue);
-  ASSERT_EQ(UID_VLWholeSlideMicroscopyImageStorage,
+  EXPECT_EQ(UID_VLWholeSlideMicroscopyImageStorage,
             absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_Modality)->getString(stringValue);
-  ASSERT_EQ("SM", absl::string_view(stringValue));
+  EXPECT_EQ("SM", absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_ImageType)->getString(stringValue);
-  ASSERT_EQ("DERIVED\\PRIMARY\\VOLUME\\RESAMPLED",
+  EXPECT_EQ("DERIVED\\PRIMARY\\VOLUME\\RESAMPLED",
             absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_ImageOrientationSlide)->getString(stringValue);
-  ASSERT_EQ("0\\-1\\0\\-1\\0\\0", absl::string_view(stringValue));
+  EXPECT_EQ("0\\-1\\0\\-1\\0\\0", absl::string_view(stringValue));
 
   Uint16 frameNumber;
   findElement(dataSet.get(), DCM_RepresentativeFrameNumber)
@@ -109,11 +109,11 @@ TEST(insertIdsTest, correctInsert) {
 
   wsiToDicomConverter::DcmtkUtils::insertIds("study", "series", dataSet.get());
 
-  ASSERT_NE(nullptr, findElement(dataSet.get(), DCM_SOPInstanceUID));
+  EXPECT_NE(nullptr, findElement(dataSet.get(), DCM_SOPInstanceUID));
 
   char* stringValue;
   findElement(dataSet.get(), DCM_StudyInstanceUID)->getString(stringValue);
-  ASSERT_EQ("study", absl::string_view(stringValue));
+  EXPECT_EQ("study", absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_SeriesInstanceUID)->getString(stringValue);
   ASSERT_EQ("series", absl::string_view(stringValue));
@@ -129,43 +129,43 @@ TEST(insertMultiFrameTagsTest, correctInsert) {
 
   char* stringValue;
   findElement(dataSet.get(), DCM_InstanceNumber)->getString(stringValue);
-  ASSERT_EQ("1", absl::string_view(stringValue));
+  EXPECT_EQ("1", absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_FrameOfReferenceUID)->getString(stringValue);
-  ASSERT_EQ("series.1", absl::string_view(stringValue));
+  EXPECT_EQ("series.1", absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_DimensionOrganizationType)
       ->getString(stringValue);
-  ASSERT_EQ("TILED_FULL", absl::string_view(stringValue));
+  EXPECT_EQ("TILED_FULL", absl::string_view(stringValue));
 
   Uint32 offset;
   findElement(dataSet.get(), DCM_ConcatenationFrameOffsetNumber)
       ->getUint32(offset);
-  ASSERT_EQ(0, offset);
+  EXPECT_EQ(0, offset);
 
   Uint16 batchNumber;
   findElement(dataSet.get(), DCM_InConcatenationNumber)->getUint16(batchNumber);
-  ASSERT_EQ(1, batchNumber);
+  EXPECT_EQ(1, batchNumber);
 
   Uint16 concatenationTotalNumber;
   findElement(dataSet.get(), DCM_InConcatenationTotalNumber)
       ->getUint16(concatenationTotalNumber);
-  ASSERT_EQ(2, concatenationTotalNumber);
+  EXPECT_EQ(2, concatenationTotalNumber);
 
   wsiToDicomConverter::DcmtkUtils::insertMultiFrameTags(
       imgInfo, 4, 5, 1, 1, 0, 0, 0, 105, false, "series", dataSet.get());
   findElement(dataSet.get(), DCM_InConcatenationTotalNumber)
       ->getUint16(concatenationTotalNumber);
-  ASSERT_EQ(27, concatenationTotalNumber);
+  EXPECT_EQ(27, concatenationTotalNumber);
 
   findElement(dataSet.get(), DCM_DimensionOrganizationType)
       ->getString(stringValue);
-  ASSERT_EQ("TILED_SPARSE", absl::string_view(stringValue));
+  EXPECT_EQ("TILED_SPARSE", absl::string_view(stringValue));
 
   DcmSequenceOfItems* element = reinterpret_cast<DcmSequenceOfItems*>(
       findElement(dataSet.get(), DCM_PerFrameFunctionalGroupsSequence));
 
-  ASSERT_NE(nullptr, element);
+  EXPECT_NE(nullptr, element);
   Sint32 column;
   // 3rd item of 1st batch should be in 4th column
   findElement(
@@ -174,7 +174,7 @@ TEST(insertMultiFrameTagsTest, correctInsert) {
           ->getItem(0),
       DCM_ColumnPositionInTotalImagePixelMatrix)
       ->getSint32(column);
-  ASSERT_EQ(31, column);
+  EXPECT_EQ(31, column);
 
   Sint32 row;
   // 2nd item of 1st batch should be in 1st row
@@ -184,7 +184,7 @@ TEST(insertMultiFrameTagsTest, correctInsert) {
           ->getItem(0),
       DCM_RowPositionInTotalImagePixelMatrix)
       ->getSint32(row);
-  ASSERT_EQ(1, row);
+  EXPECT_EQ(1, row);
 
   dataSet = std::make_unique<DcmDataset>();
 
@@ -200,7 +200,7 @@ TEST(insertMultiFrameTagsTest, correctInsert) {
           ->getItem(0),
       DCM_ColumnPositionInTotalImagePixelMatrix)
       ->getSint32(column);
-  ASSERT_EQ(41, column);
+  EXPECT_EQ(41, column);
 
   // 2nd item of 2nd batch should be in 1st column
   findElement(
@@ -209,7 +209,7 @@ TEST(insertMultiFrameTagsTest, correctInsert) {
           ->getItem(0),
       DCM_ColumnPositionInTotalImagePixelMatrix)
       ->getSint32(column);
-  ASSERT_EQ(1, column);
+  EXPECT_EQ(1, column);
 
   // 1st item of 2nd batch should be in 1st row
   findElement(
@@ -218,7 +218,7 @@ TEST(insertMultiFrameTagsTest, correctInsert) {
           ->getItem(0),
       DCM_RowPositionInTotalImagePixelMatrix)
       ->getSint32(row);
-  ASSERT_EQ(1, row);
+  EXPECT_EQ(1, row);
 
   // 2nd item of 2nd batch should be in 2nd row
   findElement(

@@ -86,10 +86,10 @@ TEST(readTiff, withJson) {
   char* stringValue;
   findElement(dcmFileFormat.getDataset(), DCM_StudyDate)
       ->getString(stringValue);
-  ASSERT_EQ(date, absl::string_view(stringValue));
+  EXPECT_EQ(date, absl::string_view(stringValue));
   findElement(dcmFileFormat.getDataset(), DCM_SeriesDate)
       ->getString(stringValue);
-  ASSERT_EQ(date, absl::string_view(stringValue));
+  EXPECT_EQ(date, absl::string_view(stringValue));
 }
 
 TEST(readTiff, multiFile) {
@@ -111,31 +111,31 @@ TEST(readTiff, multiFile) {
   request.debug = true;
   wsiToDicomConverter::WsiToDcm converter(&request);
   converter.wsi2dcm();
-  ASSERT_TRUE(boost::filesystem::exists(dcmFile + "0-10.dcm"));
-  ASSERT_TRUE(boost::filesystem::exists(dcmFile + "10-20.dcm"));
-  ASSERT_TRUE(boost::filesystem::exists(dcmFile + "20-30.dcm"));
+  EXPECT_TRUE(boost::filesystem::exists(dcmFile + "0-10.dcm"));
+  EXPECT_TRUE(boost::filesystem::exists(dcmFile + "10-20.dcm"));
+  EXPECT_TRUE(boost::filesystem::exists(dcmFile + "20-30.dcm"));
 }
 
 TEST(compressionString, jpeg) {
-    ASSERT_EQ(dcmCompressionFromString("jpeg"), JPEG);
-    ASSERT_EQ(dcmCompressionFromString("JPEG"), JPEG);
+    EXPECT_EQ(dcmCompressionFromString("jpeg"), JPEG);
+    EXPECT_EQ(dcmCompressionFromString("JPEG"), JPEG);
 }
 
 TEST(compressionString, jpeg2000) {
-    ASSERT_EQ(dcmCompressionFromString("jpeg2000"), JPEG2000);
-    ASSERT_EQ(dcmCompressionFromString("JPEG2000"), JPEG2000);
+    EXPECT_EQ(dcmCompressionFromString("jpeg2000"), JPEG2000);
+    EXPECT_EQ(dcmCompressionFromString("JPEG2000"), JPEG2000);
 }
 
 TEST(compressionString, none) {
-    ASSERT_EQ(dcmCompressionFromString("none"), RAW);
-    ASSERT_EQ(dcmCompressionFromString("raw"), RAW);
+    EXPECT_EQ(dcmCompressionFromString("none"), RAW);
+    EXPECT_EQ(dcmCompressionFromString("raw"), RAW);
 }
 
 TEST(compressionString, unknown) {
-    ASSERT_EQ(dcmCompressionFromString("unknown"), UNKNOWN);
-    ASSERT_EQ(dcmCompressionFromString("random"), UNKNOWN);
-    ASSERT_EQ(dcmCompressionFromString("jpeg/"), UNKNOWN);
-    ASSERT_EQ(dcmCompressionFromString("jpeg2000."), UNKNOWN);
+    EXPECT_EQ(dcmCompressionFromString("unknown"), UNKNOWN);
+    EXPECT_EQ(dcmCompressionFromString("random"), UNKNOWN);
+    EXPECT_EQ(dcmCompressionFromString("jpeg/"), UNKNOWN);
+    EXPECT_EQ(dcmCompressionFromString("jpeg2000."), UNKNOWN);
 }
 
 TEST(getOpenslideLevelForDownsample, image_with_one_level) {
@@ -160,8 +160,8 @@ TEST(getOpenslideLevelForDownsample, image_with_one_level) {
 
   // Not great test. Image has one level.
   wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
-  ASSERT_EQ(0, converter.getOpenslideLevelForDownsample(&osptr, 1));
-  ASSERT_EQ(0, converter.getOpenslideLevelForDownsample(&osptr, 99));
+  EXPECT_EQ(0, converter.getOpenslideLevelForDownsample(&osptr, 1));
+  EXPECT_EQ(0, converter.getOpenslideLevelForDownsample(&osptr, 99));
 }
 
 TEST(getSmallestSlideDim, smallest_slide) {
@@ -191,20 +191,20 @@ TEST(getSmallestSlideDim, smallest_slide) {
                                                      &saveLevelCompressedRaw));
   ASSERT_EQ(6, levels.size());
   for (int level = 0; level < 6; ++level) {
-      ASSERT_EQ(level, levels[level]);
+      EXPECT_EQ(level, levels[level]);
   }
-  ASSERT_EQ(slide_dim->levelToGet, 0);
-  ASSERT_EQ(slide_dim->downsample, 32);
-  ASSERT_EQ(slide_dim->multiplicator, 1);
-  ASSERT_EQ(slide_dim->downsampleOfLevel, 32);
-  ASSERT_EQ(slide_dim->levelWidth, 2220);
-  ASSERT_EQ(slide_dim->levelHeight, 2967);
-  ASSERT_EQ(slide_dim->levelWidthDownsampled, 69);
-  ASSERT_EQ(slide_dim->levelHeightDownsampled, 92);
-  ASSERT_EQ(slide_dim->levelFrameWidth, 69);
-  ASSERT_EQ(slide_dim->levelFrameHeight, 92);
-  ASSERT_EQ(slide_dim->frameWidthDownsampled, 2220);
-  ASSERT_EQ(slide_dim->frameHeightDownsampled, 2967);
+  EXPECT_EQ(slide_dim->levelToGet, 0);
+  EXPECT_EQ(slide_dim->downsample, 32);
+  EXPECT_EQ(slide_dim->multiplicator, 1);
+  EXPECT_EQ(slide_dim->downsampleOfLevel, 32);
+  EXPECT_EQ(slide_dim->levelWidth, 2220);
+  EXPECT_EQ(slide_dim->levelHeight, 2967);
+  EXPECT_EQ(slide_dim->levelWidthDownsampled, 69);
+  EXPECT_EQ(slide_dim->levelHeightDownsampled, 92);
+  EXPECT_EQ(slide_dim->levelFrameWidth, 69);
+  EXPECT_EQ(slide_dim->levelFrameHeight, 92);
+  EXPECT_EQ(slide_dim->frameWidthDownsampled, 2220);
+  EXPECT_EQ(slide_dim->frameHeightDownsampled, 2967);
 }
 
 TEST(getSmallestSlideDim, smallest_slide_middle) {
@@ -239,27 +239,27 @@ TEST(getSmallestSlideDim, smallest_slide_middle) {
   wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
   slide_dim = std::move(converter.getSmallestSlideDim(&osptr, &levels,
                                                      &saveLevelCompressedRaw));
-  ASSERT_EQ(slide_dim->levelWidthDownsampled, 69);
-  ASSERT_EQ(slide_dim->levelHeightDownsampled, 92);
+  EXPECT_EQ(slide_dim->levelWidthDownsampled, 69);
+  EXPECT_EQ(slide_dim->levelHeightDownsampled, 92);
   ASSERT_EQ(6, levels.size());
   // levels correspond to position in downsamples vector
   // level 64 ignored due to stopDownsamplingAtSingleFrame = true
   int expected_levels[] = {5, 6, 4, 3, 2, 1};
   for (int level = 0; level < 6; ++level) {
-      ASSERT_EQ(expected_levels[level], levels[level]);
+      EXPECT_EQ(expected_levels[level], levels[level]);
   }
-  ASSERT_EQ(slide_dim->levelToGet, 0);
-  ASSERT_EQ(slide_dim->downsample, 32);
-  ASSERT_EQ(slide_dim->multiplicator, 1);
-  ASSERT_EQ(slide_dim->downsampleOfLevel, 32);
-  ASSERT_EQ(slide_dim->levelWidth, 2220);
-  ASSERT_EQ(slide_dim->levelHeight, 2967);
-  ASSERT_EQ(slide_dim->levelWidthDownsampled, 69);
-  ASSERT_EQ(slide_dim->levelHeightDownsampled, 92);
-  ASSERT_EQ(slide_dim->levelFrameWidth, 69);
-  ASSERT_EQ(slide_dim->levelFrameHeight, 92);
-  ASSERT_EQ(slide_dim->frameWidthDownsampled, 2220);
-  ASSERT_EQ(slide_dim->frameHeightDownsampled, 2967);
+  EXPECT_EQ(slide_dim->levelToGet, 0);
+  EXPECT_EQ(slide_dim->downsample, 32);
+  EXPECT_EQ(slide_dim->multiplicator, 1);
+  EXPECT_EQ(slide_dim->downsampleOfLevel, 32);
+  EXPECT_EQ(slide_dim->levelWidth, 2220);
+  EXPECT_EQ(slide_dim->levelHeight, 2967);
+  EXPECT_EQ(slide_dim->levelWidthDownsampled, 69);
+  EXPECT_EQ(slide_dim->levelHeightDownsampled, 92);
+  EXPECT_EQ(slide_dim->levelFrameWidth, 69);
+  EXPECT_EQ(slide_dim->levelFrameHeight, 92);
+  EXPECT_EQ(slide_dim->frameWidthDownsampled, 2220);
+  EXPECT_EQ(slide_dim->frameHeightDownsampled, 2967);
 }
 
 TEST(getDownsampledLevelDimensionMM, width) {
@@ -334,22 +334,22 @@ TEST(getSlideLevelDim, no_cropping_no_progressive) {
   wsiToDicomConverter::WsiToDcm converter(&request);
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
   slide_dim = std::move(converter.getSlideLevelDim(1, NULL, NULL, false));
-  ASSERT_EQ(slide_dim->levelWidthDownsampled, 1110);
-  ASSERT_EQ(slide_dim->levelHeightDownsampled, 1483);
-  ASSERT_EQ(slide_dim->levelToGet, 0);
-  ASSERT_EQ(slide_dim->downsample, 2);
-  ASSERT_EQ(slide_dim->level, 1);
-  ASSERT_EQ(slide_dim->multiplicator, 1);
-  ASSERT_EQ(slide_dim->downsampleOfLevel, 2);
-  ASSERT_EQ(slide_dim->levelWidth, 2220);
-  ASSERT_EQ(slide_dim->levelHeight, 2967);
-  ASSERT_EQ(slide_dim->levelFrameWidth, 100);
-  ASSERT_EQ(slide_dim->levelFrameHeight, 100);
-  ASSERT_EQ(slide_dim->frameWidthDownsampled, 200);
-  ASSERT_EQ(slide_dim->frameHeightDownsampled, 200);
-  ASSERT_EQ(slide_dim->cropSourceLevelWidth, 0);
-  ASSERT_EQ(slide_dim->cropSourceLevelHeight, 0);
-  ASSERT_TRUE(slide_dim->readOpenslide);
+  EXPECT_EQ(slide_dim->levelWidthDownsampled, 1110);
+  EXPECT_EQ(slide_dim->levelHeightDownsampled, 1483);
+  EXPECT_EQ(slide_dim->levelToGet, 0);
+  EXPECT_EQ(slide_dim->downsample, 2);
+  EXPECT_EQ(slide_dim->level, 1);
+  EXPECT_EQ(slide_dim->multiplicator, 1);
+  EXPECT_EQ(slide_dim->downsampleOfLevel, 2);
+  EXPECT_EQ(slide_dim->levelWidth, 2220);
+  EXPECT_EQ(slide_dim->levelHeight, 2967);
+  EXPECT_EQ(slide_dim->levelFrameWidth, 100);
+  EXPECT_EQ(slide_dim->levelFrameHeight, 100);
+  EXPECT_EQ(slide_dim->frameWidthDownsampled, 200);
+  EXPECT_EQ(slide_dim->frameHeightDownsampled, 200);
+  EXPECT_EQ(slide_dim->cropSourceLevelWidth, 0);
+  EXPECT_EQ(slide_dim->cropSourceLevelHeight, 0);
+  EXPECT_TRUE(slide_dim->readOpenslide);
 }
 
 TEST(getSlideLevelDim, croping_no_progressive) {
@@ -379,35 +379,35 @@ TEST(getSlideLevelDim, croping_no_progressive) {
   wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
   smallestSlideDim = std::move(converter.getSmallestSlideDim(&osptr, &levels,
                                                      &saveLevelCompressedRaw));
-  ASSERT_EQ(levels.size(), 6);
-  ASSERT_EQ(smallestSlideDim->levelWidthDownsampled, 69);
-  ASSERT_EQ(smallestSlideDim->levelHeightDownsampled, 92);
+  EXPECT_EQ(levels.size(), 6);
+  EXPECT_EQ(smallestSlideDim->levelWidthDownsampled, 69);
+  EXPECT_EQ(smallestSlideDim->levelHeightDownsampled, 92);
   slide_dim = std::move(converter.getSlideLevelDim(1,
                                                    NULL,
                                                    smallestSlideDim.get(),
                                                    false));
-  ASSERT_EQ(slide_dim->levelWidthDownsampled, 1104);
-  ASSERT_EQ(slide_dim->levelHeightDownsampled, 1472);
-  ASSERT_EQ(slide_dim->levelToGet, 0);
-  ASSERT_EQ(slide_dim->downsample, 2);
-  ASSERT_EQ(slide_dim->level, 1);
-  ASSERT_EQ(slide_dim->multiplicator, 1);
-  ASSERT_EQ(slide_dim->downsampleOfLevel, 2);
-  ASSERT_EQ(slide_dim->levelWidth, 2220);
-  ASSERT_EQ(slide_dim->levelHeight, 2967);
-  ASSERT_EQ(slide_dim->levelFrameWidth, 100);
-  ASSERT_EQ(slide_dim->levelFrameHeight, 100);
-  ASSERT_EQ(slide_dim->frameWidthDownsampled, 200);
-  ASSERT_EQ(slide_dim->frameHeightDownsampled, 200);
+  EXPECT_EQ(slide_dim->levelWidthDownsampled, 1104);
+  EXPECT_EQ(slide_dim->levelHeightDownsampled, 1472);
+  EXPECT_EQ(slide_dim->levelToGet, 0);
+  EXPECT_EQ(slide_dim->downsample, 2);
+  EXPECT_EQ(slide_dim->level, 1);
+  EXPECT_EQ(slide_dim->multiplicator, 1);
+  EXPECT_EQ(slide_dim->downsampleOfLevel, 2);
+  EXPECT_EQ(slide_dim->levelWidth, 2220);
+  EXPECT_EQ(slide_dim->levelHeight, 2967);
+  EXPECT_EQ(slide_dim->levelFrameWidth, 100);
+  EXPECT_EQ(slide_dim->levelFrameHeight, 100);
+  EXPECT_EQ(slide_dim->frameWidthDownsampled, 200);
+  EXPECT_EQ(slide_dim->frameHeightDownsampled, 200);
   // 2220 = width of source imaging being downsampled
   // 2208 = width of smallestSlideDim scaled to source level(0)
   // downsampling factor. 2208 = 69 (width pixels) * 32 (downsample factor)
-  ASSERT_EQ(slide_dim->cropSourceLevelWidth, 2220 - 2208);
+  EXPECT_EQ(slide_dim->cropSourceLevelWidth, 2220 - 2208);
   // 2967 = height of source imaging being downsampled
   // 2944 = height of smallestSlideDim scaled to source level(0)
   // downsampling factor. 2944 = 92 (height pixels) * 32 (downsample factor)
-  ASSERT_EQ(slide_dim->cropSourceLevelHeight, 2967 - 2944);
-  ASSERT_TRUE(slide_dim->readOpenslide);
+  EXPECT_EQ(slide_dim->cropSourceLevelHeight, 2967 - 2944);
+  EXPECT_TRUE(slide_dim->readOpenslide);
 }
 
 TEST(getSlideLevelDim, cropping_progressive) {
@@ -438,9 +438,9 @@ TEST(getSlideLevelDim, cropping_progressive) {
   wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
   smallestSlideDim = std::move(converter.getSmallestSlideDim(&osptr, &levels,
                                                      &saveLevelCompressedRaw));
-  ASSERT_EQ(levels.size(), 8);
-  ASSERT_EQ(smallestSlideDim->levelWidthDownsampled, 17);
-  ASSERT_EQ(smallestSlideDim->levelHeightDownsampled, 23);
+  EXPECT_EQ(levels.size(), 8);
+  EXPECT_EQ(smallestSlideDim->levelWidthDownsampled, 17);
+  EXPECT_EQ(smallestSlideDim->levelHeightDownsampled, 23);
   slide_dim = std::move(converter.getSlideLevelDim(0,
                                                    NULL,
                                                    smallestSlideDim.get(),
@@ -449,22 +449,22 @@ TEST(getSlideLevelDim, cropping_progressive) {
                                                    slide_dim.get(),
                                                    smallestSlideDim.get(),
                                                    true));
-  ASSERT_EQ(slide_dim->levelWidthDownsampled,  1088);
-  ASSERT_EQ(slide_dim->levelHeightDownsampled, 1472);
-  ASSERT_EQ(slide_dim->levelToGet, 0);
-  ASSERT_EQ(slide_dim->level, 1);
-  ASSERT_EQ(slide_dim->downsample, 2);
-  ASSERT_EQ(slide_dim->multiplicator, 1);
-  ASSERT_EQ(slide_dim->downsampleOfLevel, 2);
-  ASSERT_EQ(slide_dim->levelWidth, 2176);
-  ASSERT_EQ(slide_dim->levelHeight, 2944);
-  ASSERT_EQ(slide_dim->levelFrameWidth, 25);
-  ASSERT_EQ(slide_dim->levelFrameHeight, 25);
-  ASSERT_EQ(slide_dim->frameWidthDownsampled, 50);
-  ASSERT_EQ(slide_dim->frameHeightDownsampled, 50);
-  ASSERT_EQ(slide_dim->cropSourceLevelWidth, 0);
-  ASSERT_EQ(slide_dim->cropSourceLevelHeight, 0);
-  ASSERT_FALSE(slide_dim->readOpenslide);
+  EXPECT_EQ(slide_dim->levelWidthDownsampled,  1088);
+  EXPECT_EQ(slide_dim->levelHeightDownsampled, 1472);
+  EXPECT_EQ(slide_dim->levelToGet, 0);
+  EXPECT_EQ(slide_dim->level, 1);
+  EXPECT_EQ(slide_dim->downsample, 2);
+  EXPECT_EQ(slide_dim->multiplicator, 1);
+  EXPECT_EQ(slide_dim->downsampleOfLevel, 2);
+  EXPECT_EQ(slide_dim->levelWidth, 2176);
+  EXPECT_EQ(slide_dim->levelHeight, 2944);
+  EXPECT_EQ(slide_dim->levelFrameWidth, 25);
+  EXPECT_EQ(slide_dim->levelFrameHeight, 25);
+  EXPECT_EQ(slide_dim->frameWidthDownsampled, 50);
+  EXPECT_EQ(slide_dim->frameHeightDownsampled, 50);
+  EXPECT_EQ(slide_dim->cropSourceLevelWidth, 0);
+  EXPECT_EQ(slide_dim->cropSourceLevelHeight, 0);
+  EXPECT_FALSE(slide_dim->readOpenslide);
 }
 
 
@@ -506,36 +506,36 @@ TEST(getSlideLevelDim, largest_when_levels_are_out_of_order) {
   // levels correspond to position in downsamples vector
   int expected_levels[] = {4, 5, 2, 1, 0, 3};
   for (int level = 0; level < 4; ++level) {
-      ASSERT_EQ(expected_levels[level], levels[level]);
+      EXPECT_EQ(expected_levels[level], levels[level]);
   }
   // -1 = get largest slice.
-  ASSERT_EQ(smallestSlideDim->levelWidthDownsampled, 69);
-  ASSERT_EQ(smallestSlideDim->levelHeightDownsampled, 92);
+  EXPECT_EQ(smallestSlideDim->levelWidthDownsampled, 69);
+  EXPECT_EQ(smallestSlideDim->levelHeightDownsampled, 92);
   slide_dim = std::move(converter.getSlideLevelDim(-1,
                                                    NULL,
                                                    smallestSlideDim.get(),
                                                    false));
-  ASSERT_EQ(slide_dim->levelWidthDownsampled, 2208);
-  ASSERT_EQ(slide_dim->levelHeightDownsampled, 2944);
-  ASSERT_EQ(slide_dim->levelToGet, 0);
-  ASSERT_EQ(slide_dim->downsample, 1);
-  ASSERT_EQ(slide_dim->level, 0);
-  ASSERT_EQ(slide_dim->multiplicator, 1);
-  ASSERT_EQ(slide_dim->downsampleOfLevel, 1);
-  ASSERT_EQ(slide_dim->levelWidth, 2220);
-  ASSERT_EQ(slide_dim->levelHeight, 2967);
-  ASSERT_EQ(slide_dim->levelFrameWidth, 100);
-  ASSERT_EQ(slide_dim->levelFrameHeight, 100);
-  ASSERT_EQ(slide_dim->frameWidthDownsampled, 100);
-  ASSERT_EQ(slide_dim->frameHeightDownsampled, 100);
+  EXPECT_EQ(slide_dim->levelWidthDownsampled, 2208);
+  EXPECT_EQ(slide_dim->levelHeightDownsampled, 2944);
+  EXPECT_EQ(slide_dim->levelToGet, 0);
+  EXPECT_EQ(slide_dim->downsample, 1);
+  EXPECT_EQ(slide_dim->level, 0);
+  EXPECT_EQ(slide_dim->multiplicator, 1);
+  EXPECT_EQ(slide_dim->downsampleOfLevel, 1);
+  EXPECT_EQ(slide_dim->levelWidth, 2220);
+  EXPECT_EQ(slide_dim->levelHeight, 2967);
+  EXPECT_EQ(slide_dim->levelFrameWidth, 100);
+  EXPECT_EQ(slide_dim->levelFrameHeight, 100);
+  EXPECT_EQ(slide_dim->frameWidthDownsampled, 100);
+  EXPECT_EQ(slide_dim->frameHeightDownsampled, 100);
   // 2220 = width of source imaging being downsampled
   // 2208 = width of smallestSlideDim scaled to source level(0)
   // downsampling factor. 2208 = 69 (width pixels) * 32 (downsample factor)
-  ASSERT_EQ(slide_dim->cropSourceLevelWidth, 2220 - 2208);
+  EXPECT_EQ(slide_dim->cropSourceLevelWidth, 2220 - 2208);
   // 2967 = height of source imaging being downsampled
   // 2944 = height of smallestSlideDim scaled to source level(0)
   // downsampling factor. 2944 = 92 (height pixels) * 32 (downsample factor)
-  ASSERT_EQ(slide_dim->cropSourceLevelHeight, 2967 - 2944);
-  ASSERT_TRUE(slide_dim->readOpenslide);
+  EXPECT_EQ(slide_dim->cropSourceLevelHeight, 2967 - 2944);
+  EXPECT_TRUE(slide_dim->readOpenslide);
 }
 

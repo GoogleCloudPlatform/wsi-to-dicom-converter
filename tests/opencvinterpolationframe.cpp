@@ -33,8 +33,8 @@ TEST(OpenCVInterpolationFrame, jpeg) {
                                    cv::INTER_LANCZOS4);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
-  ASSERT_FALSE(frame.hasRawABGRFrameBytes());
-  ASSERT_GE(frame.dicomFrameBytesSize(), 0);
+  EXPECT_FALSE(frame.hasRawABGRFrameBytes());
+  EXPECT_GE(frame.dicomFrameBytesSize(), 0);
 }
 
 TEST(OpenCVInterpolationFrame, jpeg2000Scaling) {
@@ -46,8 +46,8 @@ TEST(OpenCVInterpolationFrame, jpeg2000Scaling) {
                                    cv::INTER_LANCZOS4);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
-  ASSERT_TRUE(frame.hasRawABGRFrameBytes());
-  ASSERT_GE(frame.dicomFrameBytesSize(), 0);
+  EXPECT_TRUE(frame.hasRawABGRFrameBytes());
+  EXPECT_GE(frame.dicomFrameBytesSize(), 0);
 }
 
 }  // namespace wsiToDicomConverter

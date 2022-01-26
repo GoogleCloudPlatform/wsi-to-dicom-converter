@@ -75,9 +75,9 @@ TEST(jpegUtil, decodeJpegValidJpeg) {
                                                 returnMemoryBuffer.get(),
                                                 4*957*715 + 3));
   // Test if return buffer was used nullptr is returned
-  ASSERT_EQ(retVal, nullptr);
+  EXPECT_EQ(retVal, nullptr);
   // Test return buffer size
-  ASSERT_EQ(decodedBufferSize, 4*957*715);
+  EXPECT_EQ(decodedBufferSize, 4*957*715);
   // Test buffer contains non-zero value;
   bool foundNonZeroValue = false;
   for (int idx = 0; idx < 4*957*715; ++idx) {
@@ -86,11 +86,11 @@ TEST(jpegUtil, decodeJpegValidJpeg) {
       break;
     }
   }
-  ASSERT_TRUE(foundNonZeroValue);
+  EXPECT_TRUE(foundNonZeroValue);
   // Test Read into preallocated buffer does not overflow
-  ASSERT_EQ(returnMemoryBuffer[4*957*715], 0xba);
-  ASSERT_EQ(returnMemoryBuffer[4*957*715 + 1], 0xdf);
-  ASSERT_EQ(returnMemoryBuffer[4*957*715 + 2], 0x0d);
+  EXPECT_EQ(returnMemoryBuffer[4*957*715], 0xba);
+  EXPECT_EQ(returnMemoryBuffer[4*957*715 + 1], 0xdf);
+  EXPECT_EQ(returnMemoryBuffer[4*957*715 + 2], 0x0d);
 
   // Test read with no return buffer returns allocated memory that
   // equals what previously was returned.
@@ -100,7 +100,7 @@ TEST(jpegUtil, decodeJpegValidJpeg) {
                           jpegMem.get(), lSize, &secondReadBufferSize));
   ASSERT_EQ(decodedBufferSize, secondReadBufferSize);
   for (int idx = 0; idx < 4*957*715; ++idx) {
-    ASSERT_EQ(returnMemoryBuffer[idx], secondRead[idx]);
+    EXPECT_EQ(returnMemoryBuffer[idx], secondRead[idx]);
   }
 }
 
