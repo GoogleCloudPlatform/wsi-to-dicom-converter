@@ -26,6 +26,7 @@ include_directories(wsi2dcmCli PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/)
 include_directories(wsi2dcmCli PUBLIC /usr/local/include/opencv4/)
 include_directories(wsi2dcmCli PUBLIC /usr/local/include/opencv4/)
 include_directories(wsi2dcmCli PUBLIC ${TURBOJPEG_INCLUDE_DIRS})
+include_directories(wsi2dcmCli PUBLIC /abseil/install/include/)
 
 link_directories(${TURBOJPEG_LIBDIR})
 
@@ -53,9 +54,8 @@ add_library(wsi2dcm SHARED
     ${JSONCPP_SOURCES}
     ${OpenCV_SOURCES}
     ${TURBOJPEG_SOURCES}
+    /abseil/install/lib
  )
-
-#    ${LIBJPEG_SOURCES}
 
 if(APPLE)
     set(CMAKE_MACOSX_RPATH 1)

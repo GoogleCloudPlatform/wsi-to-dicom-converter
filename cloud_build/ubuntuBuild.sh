@@ -17,8 +17,9 @@
 # 2: install of tools and libs for build
 # 3: install libjpeg turbo
 # 4: install opencv
-# 5: download and unpack source code of libs for build
-# 6: build
+# 5: install abseil
+# 6: download and unpack source code of libs for build
+# 7: build
 
 #1
 echo "deb  http://old-releases.ubuntu.com cosmic universe" | tee -a /etc/apt/sources.list
@@ -35,7 +36,7 @@ cmake -G"Unix Makefiles" ../libjpeg-turbo
 make -j12
 make install
 cd ..
-#3
+#4
 wget -O /opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.5.4.zip > /dev/null
 unzip /opencv.zip  > /dev/null
 mkdir -p opencv_build
@@ -44,7 +45,17 @@ cmake ../opencv-4.5.4 -DBUILD_LIST=core,imgproc
 make -j12
 make install
 cd ..
-#4
+#5
+wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.zip > /dev/null
+unzip abseil.zip > /dev/null
+rm abseil.zip
+mv /abseil-cpp-20211102.0 /abseil
+mkdir -p /abseil/build
+cd /abseil/build
+cmake ..  -DCMAKE_INSTALL_PREFIX=/abseil/install
+cmake  --build . --target install
+cd /
+#6
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
 cd build
@@ -60,7 +71,7 @@ wget https://github.com/open-source-parsers/jsoncpp/archive/0.10.7.zip
 unzip 0.10.7.zip > /dev/null
 wget https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz
 tar xvzf openslide-3.4.1.tar.gz  > /dev/null
-#5
+#7
 cmake -DSTATIC_BUILD=ON -DTESTS_BUILD=ON ..
 make -j12
 ./gTests
