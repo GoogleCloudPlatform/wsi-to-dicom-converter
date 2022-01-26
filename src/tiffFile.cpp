@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <absl/strings/string_view.h>
 #include <memory>
 #include <string>
 #include <utility>
@@ -20,10 +21,11 @@
 
 namespace wsiToDicomConverter {
 
-TiffFile::TiffFile(const std::string &path, const int32_t dirIndex) :
+TiffFile::TiffFile(absl::string_view path, const int32_t dirIndex) :
   tiffFilePath_(path), currentDirectoryIndex_(dirIndex) {
   initalized_ = false;
-  tiffFile_ = TIFFOpen(path.c_str(), "r");
+  std::string path_str = std::move(static_cast<std::string>(path));
+  tiffFile_ = TIFFOpen(path_str.c_str(), "r");
   if (tiffFile_ == nullptr) {
       return;
   }

@@ -14,6 +14,7 @@
 
 #include "src/wsiToDcm.h"
 
+#include <absl/strings/string_view.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/thread_pool.hpp>
@@ -43,9 +44,10 @@
 
 namespace wsiToDicomConverter {
 
-inline void isFileExist(const std::string &name) {
-  if (!boost::filesystem::exists(name)) {
-    BOOST_LOG_TRIVIAL(error) << "can't access " << name;
+inline void isFileExist(absl::string_view name) {
+  std::string name_str = std::move(static_cast<std::string>(name));
+  if (!boost::filesystem::exists(name_str)) {
+    BOOST_LOG_TRIVIAL(error) << "can't access " << name_str;
     throw 1;
   }
 }

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/dcmtkUtils.h"
+#include <absl/strings/string_view.h>
 #include <dcmtk/dcmdata/dcuid.h>
 #include <gtest/gtest.h>
 #include <memory>
@@ -27,7 +28,7 @@ TEST(insertBaseImageTagsTest, correctInsert) {
 
   char* stringValue;
   findElement(dataSet.get(), DCM_SeriesDescription)->getString(stringValue);
-  ASSERT_EQ("image", std::string(stringValue));
+  ASSERT_EQ("image", absl::string_view(stringValue));
 
   Uint32 rows;
   findElement(dataSet.get(), DCM_TotalPixelMatrixRows)->getUint32(rows);
@@ -59,16 +60,16 @@ TEST(insertStaticTagsTest, correctInsert_Level0) {
 
   char* stringValue;
   findElement(dataSet.get(), DCM_SOPClassUID)->getString(stringValue);
-  ASSERT_EQ(UID_VLWholeSlideMicroscopyImageStorage, std::string(stringValue));
+  ASSERT_EQ(UID_VLWholeSlideMicroscopyImageStorage, absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_Modality)->getString(stringValue);
-  ASSERT_EQ("SM", std::string(stringValue));
+  ASSERT_EQ("SM", absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_ImageType)->getString(stringValue);
-  ASSERT_EQ("ORIGINAL\\PRIMARY\\VOLUME\\NONE", std::string(stringValue));
+  ASSERT_EQ("ORIGINAL\\PRIMARY\\VOLUME\\NONE", absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_ImageOrientationSlide)->getString(stringValue);
-  ASSERT_EQ("0\\-1\\0\\-1\\0\\0", std::string(stringValue));
+  ASSERT_EQ("0\\-1\\0\\-1\\0\\0", absl::string_view(stringValue));
 
   Uint16 frameNumber;
   findElement(dataSet.get(), DCM_RepresentativeFrameNumber)
@@ -83,16 +84,16 @@ TEST(insertStaticTagsTest, correctInsert_Level1) {
 
   char* stringValue;
   findElement(dataSet.get(), DCM_SOPClassUID)->getString(stringValue);
-  ASSERT_EQ(UID_VLWholeSlideMicroscopyImageStorage, std::string(stringValue));
+  ASSERT_EQ(UID_VLWholeSlideMicroscopyImageStorage, absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_Modality)->getString(stringValue);
-  ASSERT_EQ("SM", std::string(stringValue));
+  ASSERT_EQ("SM", absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_ImageType)->getString(stringValue);
-  ASSERT_EQ("DERIVED\\PRIMARY\\VOLUME\\RESAMPLED", std::string(stringValue));
+  ASSERT_EQ("DERIVED\\PRIMARY\\VOLUME\\RESAMPLED", absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_ImageOrientationSlide)->getString(stringValue);
-  ASSERT_EQ("0\\-1\\0\\-1\\0\\0", std::string(stringValue));
+  ASSERT_EQ("0\\-1\\0\\-1\\0\\0", absl::string_view(stringValue));
 
   Uint16 frameNumber;
   findElement(dataSet.get(), DCM_RepresentativeFrameNumber)
@@ -109,10 +110,10 @@ TEST(insertIdsTest, correctInsert) {
 
   char* stringValue;
   findElement(dataSet.get(), DCM_StudyInstanceUID)->getString(stringValue);
-  ASSERT_EQ("study", std::string(stringValue));
+  ASSERT_EQ("study", absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_SeriesInstanceUID)->getString(stringValue);
-  ASSERT_EQ("series", std::string(stringValue));
+  ASSERT_EQ("series", absl::string_view(stringValue));
 }
 
 TEST(insertMultiFrameTagsTest, correctInsert) {
@@ -125,14 +126,14 @@ TEST(insertMultiFrameTagsTest, correctInsert) {
 
   char* stringValue;
   findElement(dataSet.get(), DCM_InstanceNumber)->getString(stringValue);
-  ASSERT_EQ("1", std::string(stringValue));
+  ASSERT_EQ("1", absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_FrameOfReferenceUID)->getString(stringValue);
-  ASSERT_EQ("series.1", std::string(stringValue));
+  ASSERT_EQ("series.1", absl::string_view(stringValue));
 
   findElement(dataSet.get(), DCM_DimensionOrganizationType)
       ->getString(stringValue);
-  ASSERT_EQ("TILED_FULL", std::string(stringValue));
+  ASSERT_EQ("TILED_FULL", absl::string_view(stringValue));
 
   Uint32 offset;
   findElement(dataSet.get(), DCM_ConcatenationFrameOffsetNumber)
@@ -156,7 +157,7 @@ TEST(insertMultiFrameTagsTest, correctInsert) {
 
   findElement(dataSet.get(), DCM_DimensionOrganizationType)
       ->getString(stringValue);
-  ASSERT_EQ("TILED_SPARSE", std::string(stringValue));
+  ASSERT_EQ("TILED_SPARSE", absl::string_view(stringValue));
 
   DcmSequenceOfItems* element = reinterpret_cast<DcmSequenceOfItems*>(
       findElement(dataSet.get(), DCM_PerFrameFunctionalGroupsSequence));

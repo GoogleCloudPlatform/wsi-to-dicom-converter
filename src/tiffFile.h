@@ -15,6 +15,7 @@
 #ifndef SRC_TIFFFILE_H_
 #define SRC_TIFFFILE_H_
 
+#include <absl/strings/string_view.h>
 #include <tiffio.h>
 
 #include <memory>
@@ -28,7 +29,7 @@ namespace wsiToDicomConverter {
 
 class TiffFile{
  public:
-  explicit TiffFile(const std::string &path, const int32_t dirIndex = 0);
+  explicit TiffFile(absl::string_view path, const int32_t dirIndex = 0);
   explicit TiffFile(const TiffFile &tf, const int32_t dirIndex);
   TiffFile(const TiffFile &tf);  // not implemented no copy constructor
 

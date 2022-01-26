@@ -19,6 +19,7 @@
 #include <dcmtk/ofstd/ofvector.h>
 #include <gtest/gtest.h>
 #include <boost/filesystem.hpp>
+#include <absl/strings/string_view.h>
 
 #include <memory>
 #include <utility>
@@ -59,10 +60,10 @@ TEST(fileGeneration, withoutConcatenation) {
   findElement(dcmFileFormat.getDataset(), DCM_LossyImageCompression)
       ->getString(stringValue);
 
-  ASSERT_EQ("01", std::string(stringValue));
+  ASSERT_EQ("01", absl::string_view(stringValue));
   findElement(dcmFileFormat.getDataset(), DCM_SeriesDescription)
       ->getString(stringValue);
-  ASSERT_EQ("image", std::string(stringValue));
+  ASSERT_EQ("image", absl::string_view(stringValue));
 
   DcmSequenceOfItems* element =
       reinterpret_cast<DcmSequenceOfItems*>(findElement(
@@ -107,7 +108,7 @@ TEST(fileGeneration, withConcatenation) {
   ASSERT_EQ(2, batchNumber);
   findElement(dcmFileFormat.getDataset(), DCM_LossyImageCompression)
       ->getString(stringValue);
-  ASSERT_EQ("00", std::string(stringValue));
+  ASSERT_EQ("00", absl::string_view(stringValue));
 }
 
 TEST(fileGeneration, fileSave) {

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/dcmTags.h"
+#include <absl/strings/string_view.h>
 #include <dcmtk/dcmdata/dcuid.h>
 #include <dcmtk/dcmdata/dcvrat.h>
 #include <gtest/gtest.h>
@@ -32,7 +33,7 @@ TEST(readJson, singleTag) {
   tags.populateDataset(&dataset);
   char* stringValue;
   findElement(&dataset, DCM_MediaStorageSOPClassUID)->getString(stringValue);
-  ASSERT_EQ(mediaStorage, std::string(stringValue));
+  ASSERT_EQ(mediaStorage, absl::string_view(stringValue));
 }
 
 TEST(readJson, sequnceTag) {
@@ -55,7 +56,7 @@ TEST(readJson, sequnceTag) {
   char* stringValue;
   findElement(dimensionOrganization->getItem(0), DCM_DimensionOrganizationUID)
       ->getString(stringValue);
-  ASSERT_EQ(dimension, std::string(stringValue));
+  ASSERT_EQ(dimension, absl::string_view(stringValue));
 }
 
 TEST(readJson, attributeTag) {

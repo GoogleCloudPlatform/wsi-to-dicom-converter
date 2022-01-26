@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/wsiToDcm.h"
+#include <absl/strings/string_view.h>
 #include <dcmtk/dcmdata/dcfilefo.h>
 #include <dcmtk/dcmdata/dcistrmb.h>
 #include <dcmtk/dcmdata/dcostrma.h>
@@ -54,7 +55,7 @@ TEST(readTiff, simple) {
   char* stringValue;
   findElement(dcmFileFormat.getDataset(), DCM_LossyImageCompression)
       ->getString(stringValue);
-  ASSERT_EQ("01", std::string(stringValue));
+  ASSERT_EQ("01", absl::string_view(stringValue));
 }
 
 TEST(readTiff, withJson) {
@@ -81,14 +82,14 @@ TEST(readTiff, withJson) {
   ASSERT_TRUE(boost::filesystem::exists(dcmFile));
   DcmFileFormat dcmFileFormat;
   dcmFileFormat.loadFile(dcmFile.c_str());
-  std::string date = "20190327";
+  absl::string_view date = "20190327";
   char* stringValue;
   findElement(dcmFileFormat.getDataset(), DCM_StudyDate)
       ->getString(stringValue);
-  ASSERT_EQ(date, std::string(stringValue));
+  ASSERT_EQ(date, absl::string_view(stringValue));
   findElement(dcmFileFormat.getDataset(), DCM_SeriesDate)
       ->getString(stringValue);
-  ASSERT_EQ(date, std::string(stringValue));
+  ASSERT_EQ(date, absl::string_view(stringValue));
 }
 
 TEST(readTiff, multiFile) {

@@ -15,6 +15,7 @@
 #ifndef SRC_DCMFILEDRAFT_H_
 #define SRC_DCMFILEDRAFT_H_
 
+#include <absl/strings/string_view.h>
 #include <dcmtk/dcmdata/dcdatset.h>
 #include <dcmtk/dcmdata/dcofsetl.h>
 #include <dcmtk/dcmdata/dcpixel.h>
@@ -57,10 +58,10 @@ class DcmFileDraft {
   // of first level
 
   DcmFileDraft(std::vector<std::unique_ptr<Frame> > framesData,
-               const std::string& outputFileMask, int64_t imageWidth,
+               absl::string_view outputFileMask, int64_t imageWidth,
                int64_t imageHeight, int64_t level, int64_t row, int64_t column,
-               const std::string& studyId, const std::string& seriesId,
-               const std::string& imageName, DCM_Compression compression,
+               absl::string_view studyId, absl::string_view seriesId,
+               absl::string_view imageName, DCM_Compression compression,
                bool tiled, DcmTags* additionalTags, double firstLevelWidthMm,
                double firstLevelHeightMmm, int64_t downsample,
               const std::vector<std::unique_ptr<DcmFileDraft>>

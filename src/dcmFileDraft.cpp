@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/dcmFileDraft.h"
+#include <absl/strings/string_view.h>
 #include <dcmtk/dcmdata/dcdeftag.h>
 #include <dcmtk/dcmdata/dcdict.h>
 #include <dcmtk/dcmdata/dcfilefo.h>
@@ -38,14 +39,14 @@
 namespace wsiToDicomConverter {
 DcmFileDraft::DcmFileDraft(
     std::vector<std::unique_ptr<Frame> > framesData,
-    const std::string& outputFileMask, int64_t imageWidth, int64_t imageHeight,
-    int64_t level, int64_t row, int64_t column, const std::string& studyId,
-    const std::string& seriesId, const std::string& imageName,
+    absl::string_view outputFileMask, int64_t imageWidth, int64_t imageHeight,
+    int64_t level, int64_t row, int64_t column, absl::string_view studyId,
+    absl::string_view seriesId, absl::string_view imageName,
     DCM_Compression compression, bool tiled, DcmTags* additionalTags,
     double firstLevelWidthMm, double firstLevelHeightMm, int64_t downsample,
     const std::vector<std::unique_ptr<DcmFileDraft>> * prior_frame_batches) {
   framesData_ = std::move(framesData);
-  outputFileMask_ = outputFileMask;
+  outputFileMask_ = std::move(static_cast<std::string>(outputFileMask));
   imageWidth_ = imageWidth;
   imageHeight_ = imageHeight;
   level_ = level;
@@ -68,10 +69,9 @@ DcmFileDraft::DcmFileDraft(
     frameWidth_ = framesData_.at(0)->frameWidth();
     frameHeight_ = framesData_.at(0)->frameHeight();
   }
-
-  studyId_ = studyId;
-  seriesId_ = seriesId;
-  imageName_ = imageName;
+  studyId_ = std::move(static_cast<std::string>(studyId));
+  seriesId_ = std::move(static_cast<std::string>(seriesId));
+  imageName_ = std::move(static_cast<std::string>(imageName));
   compression_ = compression;
   tiled_ = tiled;
   additionalTags_ = additionalTags;
