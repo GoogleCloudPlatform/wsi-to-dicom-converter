@@ -181,9 +181,6 @@ OFCondition insertPixelMetadata(DcmDataset* dataset,
     cond = dataset->putAndInsertOFStringArray(DCM_NumberOfFrames, buf);
     if (cond.bad()) return cond;
 
-    cond = dataset->putAndInsertString(DCM_FrameIncrementPointer, "");
-    if (cond.bad()) return cond;
-
     std::string lossy = "00";
     if (imgInfo.transSyn == EXS_JPEGProcess1) {
       lossy = "01";
