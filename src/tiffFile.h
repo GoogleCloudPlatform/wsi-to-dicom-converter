@@ -38,6 +38,26 @@ class TiffFile{
   bool isInitalized() const;
   bool hasExtractablePyramidImages() const;
 
+  // Tiff Files and SVS Files can contain mulitiple images.
+  // In Tiff terminology, images are stored in directories.
+  // Image 1 = (dir 0), Image 2 = (dir 1), ..., Image N = (dir N - 1)
+  // The properties of each image can different.
+  //
+  // On intitalization, the TiffFile class builds a list of the metadata
+  // associated with each of the image directories.  This is stored in
+  // the TiffDirectory vector.
+  //
+  // the getDirectoryIndexMatchingImageDimensions method
+  // find the first image in the iage directory list which
+  // has the dimensions (width and height) and optionally (true default)
+  // also an isExtractablePyramidImage.
+  // This the criteria for this setting filters images for
+  // image types which the TiffFile can extract and embedded directly in
+  // DICOM as encapsulated lossy jpeg. In the future the images
+  // formats returned by this filter may be expaneded if the
+  // TiffFrame image encapsulation is broadened to support
+  // other image compression formats supported by svs (e.g.,
+  // Lossless JPEG 20000).
   int32_t getDirectoryIndexMatchingImageDimensions(uint32_t width,
                                                    uint32_t height,
                                   bool isExtractablePyramidImage = true) const;

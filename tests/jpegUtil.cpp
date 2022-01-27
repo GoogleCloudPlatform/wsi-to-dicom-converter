@@ -67,17 +67,11 @@ TEST(jpegUtil, decodeJpegValidJpeg) {
   returnMemoryBuffer[4*957*715] = 0xba;
   returnMemoryBuffer[4*957*715+1] = 0xdf;
   returnMemoryBuffer[4*957*715+2] = 0x0d;
-  uint64_t decodedBufferSize;
-  std::unique_ptr<uint8_t[]> retVal =
-                std::move(jpegUtil::decodedJpeg(957, 715, JCS_RGB,
-                                                jpegMem.get(), lSize,
-                                                &decodedBufferSize,
-                                                returnMemoryBuffer.get(),
-                                                4*957*715 + 3));
-  // Test if return buffer was used nullptr is returned
-  EXPECT_EQ(retVal, nullptr);
+  ASSERT_TRUE(jpegUtil::decodeJpeg(957, 715, JCS_RGB,
+                                   jpegMem.get(), lSize,
+                                   returnMemoryBuffer.get(),
+                                   4*957*715 + 3));
   // Test return buffer size
-  EXPECT_EQ(decodedBufferSize, 4*957*715);
   // Test buffer contains non-zero value;
   bool foundNonZeroValue = false;
   for (int idx = 0; idx < 4*957*715; ++idx) {
@@ -91,17 +85,6 @@ TEST(jpegUtil, decodeJpegValidJpeg) {
   EXPECT_EQ(returnMemoryBuffer[4*957*715], 0xba);
   EXPECT_EQ(returnMemoryBuffer[4*957*715 + 1], 0xdf);
   EXPECT_EQ(returnMemoryBuffer[4*957*715 + 2], 0x0d);
-
-  // Test read with no return buffer returns allocated memory that
-  // equals what previously was returned.
-  uint64_t secondReadBufferSize;
-  std::unique_ptr<uint8_t[]> secondRead =
-                std::move(jpegUtil::decodedJpeg(957, 715, JCS_RGB,
-                          jpegMem.get(), lSize, &secondReadBufferSize));
-  ASSERT_EQ(decodedBufferSize, secondReadBufferSize);
-  for (int idx = 0; idx < 4*957*715; ++idx) {
-    EXPECT_EQ(returnMemoryBuffer[idx], secondRead[idx]);
-  }
 }
 
 }  // namespace wsiToDicomConverter

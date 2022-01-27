@@ -20,16 +20,28 @@ namespace jpegUtil {
 
 bool canDecodeJpeg(const int64_t width, const int64_t height,
                    const J_COLOR_SPACE colorSpace,
-                   uint8_t* rawBuffer, const uint64_t rawBufferSize);
+                   const uint8_t* rawBuffer, const uint64_t rawBufferSize);
 
-std::unique_ptr<uint8_t[]> decodedJpeg(const int64_t width,
-                                       const int64_t height,
-                                       const J_COLOR_SPACE colorSpace,
-                                       uint8_t* rawBuffer,
-                                       const uint64_t rawBufferSize,
-                                       uint64_t *decodedImageSizeBytes,
-                                       uint8_t *returnMemoryBuffer = nullptr,
-                                     const int64_t returnMemoryBufferSize = 0);
+/* Decodes compressed jpeg image of known size and
+   Prameters:
+    width  : width of image
+    height : height of image
+    colorSpace: jpeg color space to decode image as e.g. RGB
+    rawBuffer: byte array holding compressed image.
+    rawBufferSize: # of bytes in rawBuffer
+    returnMemoryBuffer: preallocated buffer to return
+                        decompressed image bytes.
+    returnMemoryBufferSize: size of return buffer in bytes.
+
+  Returns: true if image decoded successfully.
+*/
+bool decodeJpeg(const int64_t width,
+                const int64_t height,
+                const J_COLOR_SPACE colorSpace,
+                const uint8_t* rawBuffer,
+                const uint64_t rawBufferSize,
+                uint8_t *returnMemoryBuffer,
+                const int64_t returnMemoryBufferSize);
 
 }  // namespace jpegUtil
 

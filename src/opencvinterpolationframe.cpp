@@ -144,12 +144,12 @@ void OpenCVInterpolationFrame::sliceFrame() {
     // Open slide read region returns ARGB formated pixels
     // Values are pre-multiplied with alpha
     // https://github.com/openslide/openslide/wiki/PremultipliedARGB
-    openslide_read_region(osptr_->osr, buf_bytes.get(), Level0_x,
+    openslide_read_region(osptr_->osr(), buf_bytes.get(), Level0_x,
                           Level0_y, level_,
                           frameWidthDownsampled_ + padWidth_,
                            frameHeightDownsampled_ + padHeight_);
-    if (openslide_get_error(osptr_->osr)) {
-       BOOST_LOG_TRIVIAL(error) << openslide_get_error(osptr_->osr);
+    if (openslide_get_error(osptr_->osr())) {
+       BOOST_LOG_TRIVIAL(error) << openslide_get_error(osptr_->osr());
        throw 1;
     }
     // Uncommon, openslide C++ API premults RGB by alpha.
@@ -182,11 +182,15 @@ void OpenCVInterpolationFrame::sliceFrame() {
       yoffset += frameWidthDownsampled_ + padWidth_;
     }
   } else {
-    dcmFrameRegionReader_->readRegion(locationX_ - padLeft_,
+    if (!dcmFrameRegionReader_->readRegion(locationX_ - padLeft_,
                                       locationY_ - padTop_,
                                       frameWidthDownsampled_ + padWidth_,
                                       frameHeightDownsampled_ + padHeight_,
-                                      buf_bytes.get());
+                                      buf_bytes.get())) {
+      BOOST_LOG_TRIVIAL(error) << "Error occured decoding previous level "
+                                  "region.";
+      throw 1;
+    }
   }
   const size_t frame_mem_size = static_cast<size_t>(frameWidth_ * frameHeight_);
   std::unique_ptr<uint32_t[]> raw_bytes;

@@ -213,7 +213,7 @@ bool DICOMFileFrameRegionReader::frameBytes(int64_t index,
     for (int64_t frameYC = firstFrameY; frameYC <= lastFrameY; ++frameYC) {
       // iterate over frame columns.
       for (int64_t frameXC = firstFrameX; frameXC <= lastFrameX; ++frameXC) {
-        if ((frameXC <= framesPerRow_) && (frameYC <= framesPerColumn_)) {
+        if ((frameXC < framesPerRow_) && (frameYC < framesPerColumn_)) {
           Frame* fptr = framePtr(frameXC + frameYCOffset);
           if (fptr != nullptr) {
             fptr->incReadCounter();
@@ -293,10 +293,13 @@ bool DICOMFileFrameRegionReader::frameBytes(int64_t index,
       for (int64_t frameXC = firstFrameX; frameXC <= lastFrameX; ++frameXC) {
         // Get Frame memory
         uint32_t *rawFrameBytes = nullptr;
-        if ((frameXC <= framesPerRow_) && (frameYC <= framesPerColumn_)) {
+        if ((frameXC < framesPerRow_) && (frameYC < framesPerColumn_)) {
           if (frameBytes(frameXC + frameYCOffset, frameMem.get(),
                          frameMemSizeBytes)) {
             rawFrameBytes = frameMem.get();
+          } else {
+            // if unable to read region. e.g., jpeg decode failed.
+            return false;
           }
         }
         // width to copy from frame to mem buffer.  clip to data in frame

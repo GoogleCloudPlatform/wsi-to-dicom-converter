@@ -26,20 +26,24 @@ OpenSlidePtr::OpenSlidePtr(const std::string &filename) {
 }
 
 OpenSlidePtr::~OpenSlidePtr() {
-  if (osr != nullptr) {
-    openslide_close(osr);
+  if (osr_ != nullptr) {
+    openslide_close(osr_);
   }
 }
 
+openslide_t *OpenSlidePtr::osr() {
+  return osr_;
+}
+
 void OpenSlidePtr::_open(const char *filename) {
-  osr = openslide_open(filename);
-  if (osr == nullptr) {
+  osr_ = openslide_open(filename);
+  if (osr_ == nullptr) {
     // Openslide did not intialize
     throw 1;
   }
-  if (openslide_get_error(osr)) {
-    BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr);
-    openslide_close(osr);
+  if (openslide_get_error(osr_)) {
+    BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
+    openslide_close(osr_);
     throw 1;
   }
 }

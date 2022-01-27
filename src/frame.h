@@ -54,10 +54,13 @@ class Frame {
   virtual DcmPixelItem *dcmPixelItem();
   virtual void setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
                                   uint64_t size);
+
+  // Returns frame component of DCM_DerivationDescription
+  // describes in text how frame imaging data was saved in frame.
   virtual std::string derivationDescription() const;
 
  protected:
-  bool done_;
+  bool done_ = false;
 
   // data to be written to dicom file
   std::unique_ptr<uint8_t[]> data_;  // raw compression
@@ -71,11 +74,11 @@ class Frame {
 
   const int64_t locationX_;
   const int64_t locationY_;
-  size_t size_;
+  size_t size_ = 0;
   const int64_t frameWidth_;
   const int64_t frameHeight_;
   boost::mutex readCounterMutex_;
-  int64_t readCounter_;
+  int64_t readCounter_ = 0;
 
   std::unique_ptr<Compressor> compressor_;
 
@@ -84,7 +87,7 @@ class Frame {
   const bool storeRawBytes_;
 
   std::unique_ptr<uint8_t[]> rawCompressedBytes_;
-  int64_t rawCompressedBytesSize_;
+  int64_t rawCompressedBytesSize_ = 0;
 };
 
 }  // namespace wsiToDicomConverter

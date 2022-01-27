@@ -27,4 +27,26 @@ TiffTile::TiffTile(const TiffDirectory* tiffDirectory,
   rawBuffer_ = std::move(rawBuffer);
 }
 
+TiffTile::~TiffTile() {
+}
+
+uint64_t TiffTile::index() const {
+  return tileIndex_;
+}
+
+const TiffDirectory * TiffTile::directory() const {
+  return tiffDirectory_;
+}
+uint64_t TiffTile::rawBufferSize() const {
+  return rawBufferSize_;
+}
+
+const uint8_t* TiffTile::rawBuffer() const {
+  return rawBuffer_.get();
+}
+
+std::unique_ptr<uint8_t[]> TiffTile::getRawBuffer() {
+  return std::move(rawBuffer_);
+}
+
 }  // namespace wsiToDicomConverter

@@ -28,8 +28,11 @@ namespace wsiToDicomConverter {
 uint64_t frameIndexFromLocation(const TiffFile *tiffFile, const uint64_t level,
                                 const int64_t xLoc, const int64_t yLoc);
 
-// Frame represents a DICOM image frame from the OpenSlide library or
-// downsampled from level captured at higher magnification.
+// TiffFrame represents a image extracted without decompression
+// from a SVS or Tiff file. Enables Tiff files composed of Lossy
+// JPEG images to be added to DICOM directly; avoiding image
+// uncompression & recompression artifacts otherwise introduced by
+// use of OpenslideAPI.
 class TiffFrame : public Frame {
  public:
   TiffFrame(TiffFile *tiffFile, const uint64_t tileIndex, bool storeRawBytes);
@@ -39,15 +42,17 @@ class TiffFrame : public Frame {
   const TiffDirectory *tiffDirectory() const;
 
   virtual ~TiffFrame();
-  // Gets frame by openslide library, performs scaling it and compressing
   virtual void sliceFrame();
   virtual std::string photoMetrInt() const;
   virtual int64_t rawABGRFrameBytes(uint8_t *raw_memory, int64_t memorysize);
   virtual void incSourceFrameReadCounter();
   TiffFile *tiffFile() const;
   uint64_t tileIndex() const;
-  virtual void setDicomFrameBytes(std::unique_ptr<uint8_t[]> *dcmdata,
+  virtual void setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
                                                          uint64_t size);
+
+  // Returns frame component of DCM_DerivationDescription
+  // describes in text how frame imaging data was saved in frame.
   virtual std::string derivationDescription() const;
 
  private:

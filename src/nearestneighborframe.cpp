@@ -81,20 +81,24 @@ void NearestNeighborFrame::sliceFrame() {
                           std::make_unique<uint32_t[]>(frameWidthDownsampled_ *
                                                       frameHeightDownsampled_);
   if (dcmFrameRegionReader_->dicomFileCount() == 0) {
-    openslide_read_region(osptr_->osr, buf.get(),
+    openslide_read_region(osptr_->osr(), buf.get(),
                           static_cast<int64_t>(locationX_ * multiplicator_),
                           static_cast<int64_t>(locationY_ * multiplicator_),
                           level_, frameWidthDownsampled_,
                           frameHeightDownsampled_);
-    if (openslide_get_error(osptr_->osr)) {
-      BOOST_LOG_TRIVIAL(error) << openslide_get_error(osptr_->osr);
+    if (openslide_get_error(osptr_->osr())) {
+      BOOST_LOG_TRIVIAL(error) << openslide_get_error(osptr_->osr());
       throw 1;
     }
   } else {
-    dcmFrameRegionReader_->readRegion(locationX_, locationY_,
+    if (!dcmFrameRegionReader_->readRegion(locationX_, locationY_,
                                        frameWidthDownsampled_,
                                        frameHeightDownsampled_,
-                                       buf.get());
+                                       buf.get())) {
+      BOOST_LOG_TRIVIAL(error) << "Error occured decoding region from previous"
+                                  " level.";
+      throw 1;
+    }
   }
   boost::gil::rgba8c_view_t gil = boost::gil::interleaved_view(
               frameWidthDownsampled_,

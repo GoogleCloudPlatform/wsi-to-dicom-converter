@@ -21,14 +21,19 @@
 
 namespace wsiToDicomConverter {
 
+/* Wrapper for openslide pointer.
+   closes pointer when object
+   is destructed.
+*/
 class OpenSlidePtr {
  public:
-  openslide_t *osr;
   explicit OpenSlidePtr(const char *filename);
   explicit OpenSlidePtr(const std::string &filename);
   virtual ~OpenSlidePtr();
+  openslide_t *osr();
 
  private:
+  openslide_t *osr_;
   void _open(const char *filename);
 };
 

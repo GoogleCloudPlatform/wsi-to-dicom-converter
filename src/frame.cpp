@@ -35,13 +35,6 @@ Frame::Frame(int64_t locationX, int64_t locationY, int64_t frameWidth,
                                                   frameWidth_(frameWidth),
                                                   frameHeight_(frameHeight),
                                             storeRawBytes_(storeRawBytes) {
-    done_ = false;
-    readCounter_ = 0;
-    size_ = 0;
-    rawCompressedBytes_ = nullptr;
-    rawCompressedBytesSize_ = 0;
-    data_ = nullptr;
-    dcmPixelItem_ = nullptr;
     switch (compression) {
         case JPEG:
             compressor_ = std::make_unique<JpegCompression>(quality);
@@ -140,6 +133,8 @@ void Frame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
 }
 
 std::string Frame::derivationDescription() const {
+  // Returns frame component of DCM_DerivationDescription
+  // describes in text how frame imaging data was saved in frame.
   return std::string("saved ") + compressor_->toString() + ".";
 }
 

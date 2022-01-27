@@ -85,8 +85,9 @@ class SlideLevelDim {
 
   bool readFromTiff = false;
 
-  // string description of source imaging.
-  std::string sourceDescription;
+  // Source component of DCM_DerivationDescription
+  // describes in text where imaging data was acquired from.
+  std::string sourceDerivationDescription;
 };
 
 // Structure for wsi2dcm settings

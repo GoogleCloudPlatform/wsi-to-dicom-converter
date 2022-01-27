@@ -21,11 +21,21 @@
 
 namespace wsiToDicomConverter {
 
+// TiffTile is a structure which contains tiles data and related data
+// to the caller.
 class TiffTile {
  public:
   TiffTile(const TiffDirectory* tiffDirectory, const uint64_t tileIndex,
            std::unique_ptr<uint8_t[]> rawBuffer, const uint64_t bufferSize);
+  virtual ~TiffTile();
 
+  uint64_t index() const;
+  const TiffDirectory * directory() const;
+  uint64_t rawBufferSize() const;
+  const uint8_t* rawBuffer() const;
+  std::unique_ptr<uint8_t[]> getRawBuffer();
+
+ private:
   std::unique_ptr<uint8_t[]> rawBuffer_;
   const uint64_t rawBufferSize_;
   const uint64_t tileIndex_;

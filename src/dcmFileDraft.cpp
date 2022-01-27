@@ -124,9 +124,22 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
   compressedPixelSequence->insert(offsetTable.release());
   DcmtkImgDataInfo imgInfo;
   std::vector<uint8_t> frames;
+
+  // What channel components in represent.
+  // Values = RGB or YBR_FULL_422.
+  // value determined by compression JPEG2000 & RAW = RGB
+  // Jpeg compressed = YBR_FULL_422
+  // TiffFrame jpeg compressed = RGB or YBR_FULL_422 value
+  // dependent on encoding of jpeg.
   std::string framePhotoMetrIntrp = "";
+
+  // Text description of rough image processing which generated frames.
   std::string derivationDescription = "";
-  int64_t imaging_size_bytes = 0;
+
+  // Actual size of imaging for frames writen in dicom file.
+  // Summed across frames.  Used to calculate imaging compression ratio.
+  int64_t imagingSizeBytes = 0;
+
   const int64_t  frameDataSize = framesData_.size();
   // get general state from first frame.
   if (frameDataSize > 0) {
@@ -165,14 +178,14 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
                     frame->dicomFrameBytes() + frame->dicomFrameBytesSize());
       frame->clearDicomMem();  // memory copied clear.
     }
-    imaging_size_bytes += frame->dicomFrameBytesSize();
+    imagingSizeBytes += frame->dicomFrameBytesSize();
   }
-  if (imaging_size_bytes > 0) {
+  if (imagingSizeBytes > 0) {
     // compute uncompressed size realtive to frames written in file. Possible
     // to split frames across multiple files.
     const double uncompressed = static_cast<double>(3 * frameWidth_ *
                                                 frameHeight_ * frameDataSize);
-    const double storedImageSize = static_cast<double>(imaging_size_bytes);
+    const double storedImageSize = static_cast<double>(imagingSizeBytes);
     const double compression_ratio = uncompressed / storedImageSize;
     imgInfo.compressionRatio = std::to_string(compression_ratio);
     imgInfo.derivationDescription = derivationDescription;
@@ -185,22 +198,22 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
     case JPEG:
       imgInfo.transSyn = EXS_JPEGProcess1;
 
-      imgInfo.photoMetrInt = (framePhotoMetrIntrp.length() > 0) ?
-                                  framePhotoMetrIntrp.c_str() : "YBR_FULL_422";
+      imgInfo.photoMetrInt = (framePhotoMetrIntrp.empty()) ?
+                                  "YBR_FULL_422" : framePhotoMetrIntrp.c_str();
       pixelData->putOriginalRepresentation(imgInfo.transSyn, nullptr,
                                            compressedPixelSequence.release());
       break;
     case JPEG2000:
       imgInfo.transSyn = EXS_JPEG2000LosslessOnly;
-      imgInfo.photoMetrInt = (framePhotoMetrIntrp.length() > 0) ?
-                                           framePhotoMetrIntrp.c_str() : "RGB";
+      imgInfo.photoMetrInt = (framePhotoMetrIntrp.empty()) ?
+                                           "RGB" : framePhotoMetrIntrp.c_str();
       pixelData->putOriginalRepresentation(imgInfo.transSyn, nullptr,
                                            compressedPixelSequence.release());
       break;
     default:
       imgInfo.transSyn = EXS_LittleEndianExplicit;
-      imgInfo.photoMetrInt = (framePhotoMetrIntrp.length() > 0) ?
-                                           framePhotoMetrIntrp.c_str() : "RGB";
+      imgInfo.photoMetrInt = (framePhotoMetrIntrp.empty()) ?
+                                           "RGB" : framePhotoMetrIntrp.c_str();
       pixelData->putUint8Array(&frames[0], frames.size());
   }
   imgInfo.samplesPerPixel = 3;

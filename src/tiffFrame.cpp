@@ -26,82 +26,26 @@
 
 namespace wsiToDicomConverter {
 
+// TiffFrameJpgBytes is a helper class that handles construction of
+// fully formed jpeg payload from TIFF.
 class TiffFrameJpgBytes {
  public:
   explicit TiffFrameJpgBytes(TiffFrame * framePtr);
   virtual ~TiffFrameJpgBytes();
   bool hasJpegTable() const;
   const TiffDirectory *tiffDirectory() const;
-  uint8_t *compressedJpeg() const;
+  const uint8_t *compressedJpeg() const;
   uint64_t compressedJpegSize() const;
   int64_t width() const;
   int64_t height() const;
-
-  void getJpegMemory(std::unique_ptr<uint8_t[]>*data, uint64_t *size);
+  std::unique_ptr<uint8_t[]> getJpegMemory(uint64_t *size);
 
  private:
   std::unique_ptr<TiffTile> tile_;
   TiffFrame* framePtr_;
-  uint64_t constructJpegMemSize_;
   std::unique_ptr<uint8_t[]> constructJpegMem_;
-  uint8_t *data_;
   uint64_t rawBufferSize_;
-  int64_t tileWidth_, tileHeight_;
-  std::unique_ptr<TiffTile> getTiffTileData(int64_t *tileWidth,
-                                            int64_t *tileHeight);
-  void constructJpeg(TiffTile *tile);
 };
-
-TiffFrameJpgBytes::TiffFrameJpgBytes(TiffFrame * framePtr) {
-  framePtr_ = framePtr;
-  constructJpegMem_ = nullptr;
-  constructJpegMemSize_ = 0;
-  tile_ = std::move(getTiffTileData(&tileWidth_, &tileHeight_));
-  if (hasJpegTable()) {
-      constructJpeg(tile_.get());
-      data_ = constructJpegMem_.get();
-      rawBufferSize_ = constructJpegMemSize_;
-  } else  {
-    data_ = tile_->rawBuffer_.get();
-    rawBufferSize_ = tile_->rawBufferSize_;
-  }
-}
-
-void TiffFrameJpgBytes::getJpegMemory(std::unique_ptr<uint8_t[]>*data,
-                                      uint64_t *size) {
-  if (constructJpegMem_ != nullptr) {
-    *data = std::move(constructJpegMem_);
-  } else {
-    *data = std::move(tile_->rawBuffer_);
-  }
-  *size = rawBufferSize_;
-}
-
-TiffFrameJpgBytes::~TiffFrameJpgBytes() {}
-
-uint8_t *TiffFrameJpgBytes::compressedJpeg() const {
-  return data_;
-}
-
-uint64_t TiffFrameJpgBytes::compressedJpegSize() const {
-  return rawBufferSize_;
-}
-
-int64_t TiffFrameJpgBytes::width() const {
-  return tileWidth_;
-}
-int64_t TiffFrameJpgBytes::height() const {
-    return tileHeight_;
-}
-
-std::unique_ptr<TiffTile> TiffFrameJpgBytes::getTiffTileData(int64_t *tileWidth,
-                                                     int64_t *tileHeight) {
-  const TiffDirectory *dir = tiffDirectory();
-  const uint64_t tileIndex = framePtr_->tileIndex();
-  *tileWidth = dir->tileWidth();
-  *tileHeight = dir->tileHeight();
-  return std::move(framePtr_->tiffFile()->tile(tileIndex));
-}
 
 void setShortBigEndian(uint8_t* byteArray, int firstbyte, uint16_t val) {
   val = htons(val);
@@ -116,7 +60,7 @@ void writeMem(uint8_t * writeBuffer, const uint8_t *data, const uint64_t size,
   *bytesWritten += size;
 }
 
-void TiffFrameJpgBytes::constructJpeg(TiffTile *tile) {
+std::unique_ptr<uint8_t[]> constructJpeg(TiffTile *tile, uint64_t *size) {
   /*
     Tiff frames from files with missing complete jpeg tiles
     require reconstruction of jpeg payload.
@@ -134,9 +78,9 @@ void TiffFrameJpgBytes::constructJpeg(TiffTile *tile) {
       * adding pixel data.  <- embedded with start / end tags.
       * image end tag (2 bytes)
   */
-  const uint8_t *data = tile->rawBuffer_.get();
-  const uint64_t rawBufferSize = tile->rawBufferSize_;
-  const TiffDirectory *dir = tiffDirectory();
+  const uint8_t *data = tile->rawBuffer();
+  const uint64_t rawBufferSize = tile->rawBufferSize();
+  const TiffDirectory *dir = tile->directory();
   const int64_t tableDatasize = dir->jpegTableDataSize();
   const uint8_t *tableData = dir->jpegTableData();
   uint8_t APP0[] = {
@@ -187,15 +131,56 @@ void TiffFrameJpgBytes::constructJpeg(TiffTile *tile) {
 
   // -6 exclude start and end markers in table data, and
   // start maker in raw buffer.
-  constructJpegMemSize_ = tableDatasize + rawBufferSize - 6 + sizeof(APP0) +
-                          sizeof(APP14);
-  constructJpegMem_ = std::make_unique<uint8_t[]>(constructJpegMemSize_);
-  uint8_t * writeBuffer = constructJpegMem_.get();
+  *size = tableDatasize + rawBufferSize - 6 + sizeof(APP0) + sizeof(APP14);
+  std::unique_ptr<uint8_t[]> jpegMem = std::make_unique<uint8_t[]>(*size);
+  uint8_t * writeBuffer = jpegMem.get();
   uint64_t bytesWritten = 0;
   writeMem(writeBuffer, APP0, sizeof(APP0), &bytesWritten);
   writeMem(writeBuffer, APP14, sizeof(APP14), &bytesWritten);
   writeMem(writeBuffer, &(tableData[2]), tableDatasize - 4, &bytesWritten);
   writeMem(writeBuffer, &(data[2]), rawBufferSize - 2, &bytesWritten);
+  return std::move(jpegMem);
+}
+
+TiffFrameJpgBytes::TiffFrameJpgBytes(TiffFrame * framePtr) :
+                                                          framePtr_(framePtr) {
+  const uint64_t tileIndex = framePtr_->tileIndex();
+  tile_ = std::move(framePtr_->tiffFile()->tile(tileIndex));
+  if (hasJpegTable()) {
+    constructJpegMem_ = std::move(constructJpeg(tile_.get(), &rawBufferSize_));
+  } else  {
+    rawBufferSize_ = tile_->rawBufferSize();
+  }
+}
+
+std::unique_ptr<uint8_t[]> TiffFrameJpgBytes::getJpegMemory(uint64_t *size) {
+  *size = rawBufferSize_;
+  if (constructJpegMem_ != nullptr) {
+    return std::move(constructJpegMem_);
+  } else {
+    return std::move(tile_->getRawBuffer());
+  }
+}
+
+TiffFrameJpgBytes::~TiffFrameJpgBytes() {}
+
+const uint8_t *TiffFrameJpgBytes::compressedJpeg() const {
+  if (constructJpegMem_ != nullptr) {
+    return constructJpegMem_.get();
+  } else  {
+    return tile_->rawBuffer();
+  }
+}
+
+uint64_t TiffFrameJpgBytes::compressedJpegSize() const {
+  return rawBufferSize_;
+}
+
+int64_t TiffFrameJpgBytes::width() const {
+  return tiffDirectory()->tileWidth();
+}
+int64_t TiffFrameJpgBytes::height() const {
+  return tiffDirectory()->tileHeight();
 }
 
 const TiffDirectory * TiffFrameJpgBytes::tiffDirectory() const {
@@ -295,22 +280,26 @@ void TiffFrame::incSourceFrameReadCounter() {
 int64_t TiffFrame::rawABGRFrameBytes(uint8_t *rawMemory,
                                       int64_t memorySize) {
   // tiff frame data in native format is jpeg encoded.
-  // to work with just uncompress and return.
-  uint64_t abgrBufferSizeRead;
-  jpegUtil::decodedJpeg(frameWidth(), frameHeight(),
-                        jpegDecodeColorSpace(), rawCompressedBytes_.get(),
-                        rawCompressedBytesSize_, &abgrBufferSizeRead,
-                        rawMemory, memorySize);
+  // uncompress and return # of bytes read.
+  // return 0 if error occures.
+  uint64_t abgrBufferSizeRead = 0;
+  const uint64_t width = frameWidth();
+  const uint64_t height = frameHeight();
+  if (jpegUtil::decodeJpeg(width, height, jpegDecodeColorSpace(),
+                           rawCompressedBytes_.get(),
+                           rawCompressedBytesSize_, rawMemory, memorySize)) {
+    abgrBufferSizeRead = width * height * 4;
+  }
   decReadCounter();
   return abgrBufferSizeRead;
 }
 
-void TiffFrame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> *dcmdata,
+void TiffFrame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
                                                           uint64_t size) {
   size_ = size;
   // Store a copy of the data for downsampling.
   rawCompressedBytesSize_ = size;
-  rawCompressedBytes_ = std::move(*dcmdata);
+  rawCompressedBytes_ = std::move(dcmdata);
   // Pointer will be handed to DCMTK when frame is written.  DCMTK will take
   // ownership of pointer.
   dcmPixelItem_ = std::make_unique<DcmPixelItem>(DcmTag(DCM_Item, EVR_OB));
@@ -321,20 +310,19 @@ void TiffFrame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> *dcmdata,
 }
 
 std::string TiffFrame::derivationDescription() const {
+  // Returns frame component of DCM_DerivationDescription
+  // describes in text how frame imaging data was saved in frame.
   return std::string("saved source compressed imageing; bytes unchanged.");
 }
 
 void TiffFrame::sliceFrame() {
   TiffFrameJpgBytes jpegBytes(this);
   uint64_t size;
-  std::unique_ptr<uint8_t[]> mem;
-  jpegBytes.getJpegMemory(&mem, &size);
-  setDicomFrameBytes(&mem, size);
+  std::unique_ptr<uint8_t[]> mem = std::move(jpegBytes.getJpegMemory(&size));
+  setDicomFrameBytes(std::move(mem), size);
   BOOST_LOG_TRIVIAL(debug) << " Tiff extracted frame size: " << size /
                                                                 1024 << "kb";
   done_ = true;
 }
 
 }  // namespace wsiToDicomConverter
-
-

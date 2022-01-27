@@ -196,6 +196,10 @@ OFCondition insertPixelMetadata(DcmDataset* dataset,
     }
     cond = dataset->putAndInsertOFStringArray(DCM_LossyImageCompression,
                                                 lossy.c_str(), true);
+
+    // DerivationDescription is text constructed from image source
+    // and frame generation text.  See dcmFileDraft.cpp for
+    // construction of image source and frame representation components.
     if (cond.bad()) return cond;
     cond = dataset->putAndInsertOFStringArray(DCM_DerivationDescription,
                                          imgInfo.derivationDescription.c_str(),
