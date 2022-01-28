@@ -31,31 +31,34 @@ ls -l
 wget -O /libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.2.zip
 unzip /libjpeg_turbo.zip
 mv /libjpeg-turbo-2.1.2 /libjpeg-turbo
-mkdir -p /libjpegturbo_build
-cd libjpegturbo_build
-cmake -G"Unix Makefiles" ../libjpeg-turbo
+mkdir -p /libjpeg-turbo/build
+cd /libjpeg-turbo/build
+cmake -G"Unix Makefiles" ..
 make -j12
 make install
-cd ..
+cd /
+ls -l
 #4
 wget -O /opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.5.4.zip > /dev/null
 unzip /opencv.zip  > /dev/null
-mkdir -p opencv_build
-cd opencv_build
-cmake ../opencv-4.5.4 -DBUILD_LIST=core,imgproc,imgcodecs
+mkdir -p /opencv-4.5.4/build
+cd /opencv-4.5.4/build
+cmake .. -DBUILD_LIST=core,imgproc,imgcodecs
 make -j12
 make install
-cd ..
+cd /
+ls -l
 #5
 wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.zip > /dev/null
 unzip abseil.zip > /dev/null
 rm abseil.zip
 mv /abseil-cpp-20211102.0 /abseil
-mkdir -p abseil_build
-cd abseil_build
-cmake ../abseil  -DCMAKE_INSTALL_PREFIX=/abseil/install
+mkdir -p /abseil/build
+cd /abseil/build
+cmake ..  -DCMAKE_INSTALL_PREFIX=/abseil/install
 cmake  --build . --target install
-cd ..
+cd /
+ls -l
 #6
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
@@ -66,7 +69,7 @@ wget https://boostorg.jfrog.io/artifactory/main/release/1.69.0/source/boost_1_69
 tar xvzf boost_1_69_0.tar.gz  > /dev/null
 wget -O dcmtk-3.6.2.zip https://github.com/DCMTK/dcmtk/archive/refs/tags/DCMTK-3.6.2.zip > /dev/null
 unzip dcmtk-3.6.2.zip  > /dev/null
-mv ./dcmtk-DCMTK-3.6.2 ./dcmtk-3.6.2 
+mv ./dcmtk-DCMTK-3.6.2 ./dcmtk-3.6.2
 wget https://github.com/open-source-parsers/jsoncpp/archive/0.10.7.zip > /dev/null
 unzip 0.10.7.zip > /dev/null
 wget https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz > /dev/null
