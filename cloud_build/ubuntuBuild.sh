@@ -30,9 +30,8 @@ ls -l
 #3
 wget -O /libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.2.zip
 unzip /libjpeg_turbo.zip
-mv /libjpeg-turbo-2.1.2 /libjpeg-turbo
-mkdir -p /libjpeg-turbo/build
-cd /libjpeg-turbo/build
+mkdir -p /libjpeg-turbo-2.1.2/build
+cd /libjpeg-turbo-2.1.2/build
 cmake -G"Unix Makefiles" ..
 make -j12
 make install
@@ -52,9 +51,9 @@ ls -l
 wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.zip > /dev/null
 unzip abseil.zip > /dev/null
 rm abseil.zip
-mv /abseil-cpp-20211102.0 /abseil
-mkdir -p /abseil/build
-cd /abseil/build
+mkdir -p /abseil-cpp-20211102.0/build
+mkdir -p /abseil
+cd /abseil-cpp-20211102.0/build
 cmake ..  -DCMAKE_INSTALL_PREFIX=/abseil/install
 cmake  --build . --target install
 cd /
