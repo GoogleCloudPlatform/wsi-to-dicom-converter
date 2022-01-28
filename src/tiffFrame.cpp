@@ -312,7 +312,8 @@ void TiffFrame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
 std::string TiffFrame::derivationDescription() const {
   // Returns frame component of DCM_DerivationDescription
   // describes in text how frame imaging data was saved in frame.
-  return std::string("saved source compressed imageing; bytes unchanged.");
+  return std::string("embedded as encapsulated JPEG; Imaging bytes"
+                     " unchanged.");
 }
 
 void TiffFrame::sliceFrame() {

@@ -135,7 +135,12 @@ void Frame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
 std::string Frame::derivationDescription() const {
   // Returns frame component of DCM_DerivationDescription
   // describes in text how frame imaging data was saved in frame.
-  return std::string("saved ") + compressor_->toString() + ".";
+  if (compressor_->method() != RAW) {
+    return std::string("embedded as encapsulated ") + compressor_->toString() +
+           "; Imaging bytes re-compressed once.";
+  } else {
+    return std::string("embedded as RAW; Imaging bytes unchanged.");
+  }
 }
 
 size_t Frame::dicomFrameBytesSize() const { return size_; }
