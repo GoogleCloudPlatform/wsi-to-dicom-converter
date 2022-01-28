@@ -30,6 +30,8 @@ ls -l
 #3
 wget -O /libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.2.zip
 unzip /libjpeg_turbo.zip
+pwd
+ls -l
 mkdir -p /libjpeg-turbo-2.1.2/build
 cd /libjpeg-turbo-2.1.2/build
 ls /libjpeg-turbo-2.1.2 -l
