@@ -28,38 +28,38 @@ apt-get update
 DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-essential libjsoncpp-dev libgdk-pixbuf2.0-dev libcairo2-dev libsqlite3-dev cmake libglib2.0-dev libxml2-dev libopenjp2-7-dev g++-8 libgtest-dev -y
 ls -l
 #3
-wget -O /libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.2.zip
-unzip /libjpeg_turbo.zip
+wget -O /workspace/libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.2.zip
+unzip /workspace/libjpeg_turbo.zip
 pwd
 ls -l
-mkdir -p /libjpeg-turbo-2.1.2/build
-cd /libjpeg-turbo-2.1.2/build
-ls /libjpeg-turbo-2.1.2 -l
+mkdir -p /workspace/libjpeg-turbo-2.1.2/build
+cd /workspace/libjpeg-turbo-2.1.2/build
+ls /workspace/libjpeg-turbo-2.1.2 -l
 cmake -G"Unix Makefiles" ..
 make -j12
 make install
-cd /
+cd /workspace
 ls -l
 #4
-wget -O /opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.5.4.zip > /dev/null
-unzip /opencv.zip  > /dev/null
-mkdir -p /opencv-4.5.4/build
-cd /opencv-4.5.4/build
+wget -O /workspace/opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.5.4.zip > /dev/null
+unzip /workspace/opencv.zip  > /dev/null
+mkdir -p /workspace/opencv-4.5.4/build
+cd /workspace/opencv-4.5.4/build
 cmake .. -DBUILD_LIST=core,imgproc,imgcodecs
 make -j12
 make install
-cd /
+cd /workspace
 ls -l
 #5
-wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.zip > /dev/null
+wget -O /workspace/abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.zip > /dev/null
 unzip abseil.zip > /dev/null
 rm abseil.zip
-mkdir -p /abseil-cpp-20211102.0/build
-mkdir -p /abseil
-cd /abseil-cpp-20211102.0/build
+mkdir -p /workspace/abseil-cpp-20211102.0/build
+mkdir -p /workspace/abseil
+cd /workspace/abseil-cpp-20211102.0/build
 cmake ..  -DCMAKE_INSTALL_PREFIX=/abseil/install
 cmake  --build . --target install
-cd /
+cd /workspace
 ls -l
 #6
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
