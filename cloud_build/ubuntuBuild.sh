@@ -26,6 +26,7 @@ echo "deb  http://old-releases.ubuntu.com cosmic universe" | tee -a /etc/apt/sou
 apt-get update
 #2
 DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-essential libjsoncpp-dev libgdk-pixbuf2.0-dev libcairo2-dev libsqlite3-dev cmake libglib2.0-dev libxml2-dev libopenjp2-7-dev g++-8 libgtest-dev -y
+ls -l
 #3
 wget -O /libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.2.zip
 unzip /libjpeg_turbo.zip
@@ -65,14 +66,15 @@ wget https://boostorg.jfrog.io/artifactory/main/release/1.69.0/source/boost_1_69
 tar xvzf boost_1_69_0.tar.gz  > /dev/null
 wget -O dcmtk-3.6.2.zip https://github.com/DCMTK/dcmtk/archive/refs/tags/DCMTK-3.6.2.zip > /dev/null
 unzip dcmtk-3.6.2.zip  > /dev/null
-mv ./dcmtk-DCMTK-3.6.2 ./dcmtk-3.6.2
-wget https://github.com/open-source-parsers/jsoncpp/archive/0.10.7.zip
+mv ./dcmtk-DCMTK-3.6.2 ./dcmtk-3.6.2 
+wget https://github.com/open-source-parsers/jsoncpp/archive/0.10.7.zip > /dev/null
 unzip 0.10.7.zip > /dev/null
-wget https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz
+wget https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz > /dev/null
 tar xvzf openslide-3.4.1.tar.gz  > /dev/null
 #7
 pwd
 ls -l
+ls .. -l
 cmake -DSTATIC_BUILD=ON -DTESTS_BUILD=ON ..
 make -j12
 ./gTests
