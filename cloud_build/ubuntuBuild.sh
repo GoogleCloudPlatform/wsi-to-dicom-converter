@@ -64,7 +64,6 @@ unzip v2.3.0.zip  > /dev/null
 wget https://boostorg.jfrog.io/artifactory/main/release/1.69.0/source/boost_1_69_0.tar.gz  > /dev/null
 tar xvzf boost_1_69_0.tar.gz  > /dev/null
 wget -O dcmtk-3.6.2.zip https://github.com/DCMTK/dcmtk/archive/refs/tags/DCMTK-3.6.2.zip > /dev/null
-#wget https://dicom.offis.de/download/dcmtk/dcmtk362/dcmtk-3.6.2.zip  > /dev/null
 unzip dcmtk-3.6.2.zip  > /dev/null
 mv ./dcmtk-DCMTK-3.6.2 ./dcmtk-3.6.2
 wget https://github.com/open-source-parsers/jsoncpp/archive/0.10.7.zip
