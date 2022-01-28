@@ -49,9 +49,10 @@ make install
 cd ..
 cd ..
 #5
-wget -O /abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.zip > /dev/null
+wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.zip > /dev/null
 unzip abseil.zip > /dev/null
 mkdir -p ./abseil-cpp-20211102.0/build
+mkdir -p /abseil/install
 cd ./abseil-cpp-20211102.0/build
 cmake ..  -DCMAKE_INSTALL_PREFIX=/abseil/install
 cmake  --build . --target install
