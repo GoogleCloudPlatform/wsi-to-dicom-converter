@@ -50,11 +50,11 @@ wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/202111
 unzip abseil.zip > /dev/null
 rm abseil.zip
 mv /abseil-cpp-20211102.0 /abseil
-mkdir -p /abseil/build
-cd /abseil/build
-cmake ..  -DCMAKE_INSTALL_PREFIX=/abseil/install
+mkdir -p abseil_build
+cd abseil_build
+cmake ../abseil  -DCMAKE_INSTALL_PREFIX=/abseil/install
 cmake  --build . --target install
-cd /
+cd ..
 #6
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
