@@ -32,7 +32,7 @@ wget -O /libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archiv
 unzip /libjpeg_turbo.zip
 mkdir -p /libjpeg-turbo-2.1.2/build
 cd /libjpeg-turbo-2.1.2/build
-ls ..
+ls /libjpeg-turbo-2.1.2 -l
 cmake -G"Unix Makefiles" ..
 make -j12
 make install
