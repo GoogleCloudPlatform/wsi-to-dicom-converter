@@ -41,7 +41,7 @@ wget -O /opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.5.4.zip
 unzip /opencv.zip  > /dev/null
 mkdir -p opencv_build
 cd opencv_build
-cmake ../opencv-4.5.4 -DBUILD_LIST=core,imgproc
+cmake ../opencv-4.5.4 -DBUILD_LIST=core,imgproc,imgcodecs
 make -j12
 make install
 cd ..
@@ -71,6 +71,8 @@ unzip 0.10.7.zip > /dev/null
 wget https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz
 tar xvzf openslide-3.4.1.tar.gz  > /dev/null
 #7
+pwd
+ls -l
 cmake -DSTATIC_BUILD=ON -DTESTS_BUILD=ON ..
 make -j12
 ./gTests
