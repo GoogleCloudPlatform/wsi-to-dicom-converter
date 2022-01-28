@@ -77,6 +77,11 @@ rm 0.10.7.zip
 wget https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz > /dev/null
 tar xvzf openslide-3.4.1.tar.gz  > /dev/null
 rm openslide-3.4.1.tar.gz
+#remove documentation to remove flagged javascript security issues.
+set +e
+find /workspace/build -path "*/doc/html" -type d -exec rm -rf {} \;
+find /workspace/build -path "*/doc/*" -type f -name "*.js" -exec rm -f {} \;
+set -e
 #7
 cmake -DSTATIC_BUILD=ON -DTESTS_BUILD=ON ..
 make -j12
