@@ -16,6 +16,7 @@
 #include <boost/bind/bind.hpp>
 #include <boost/gil/extension/io/jpeg/old.hpp>
 #include <algorithm>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -26,6 +27,15 @@ JpegCompression::JpegCompression(int quality) {
 }
 
 JpegCompression::~JpegCompression() { jpeg_destroy_compress(&_cinfo); }
+
+DCM_Compression JpegCompression::method() const {
+  return JPEG;
+}
+
+std::string JpegCompression::toString() const {
+  return std::string("JPEG compressed (quality: ") +
+  std::to_string(_quality) + ")";
+}
 
 std::unique_ptr<uint8_t[]> JpegCompression::compress(
     const boost::gil::rgb8_view_t &view, size_t *size) {

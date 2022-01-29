@@ -15,6 +15,9 @@
 #ifndef SRC_RAWCOMPRESSION_H_
 #define SRC_RAWCOMPRESSION_H_
 #include <memory>
+#include <string>
+
+#include "src/enums.h"
 #include "src/compressor.h"
 
 // Implementation of Compressor for raw data
@@ -22,6 +25,9 @@ class RawCompression : public Compressor {
  public:
   virtual std::unique_ptr<uint8_t[]> compress(
                             const boost::gil::rgb8_view_t& view, size_t* size);
+
+  virtual DCM_Compression method() const;
+  virtual std::string toString() const;
 
   // Returns data without compression from rgb view
   std::unique_ptr<uint8_t[]> getRawData(const boost::gil::rgb8_view_t& view,

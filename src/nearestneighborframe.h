@@ -14,7 +14,6 @@
 
 #ifndef SRC_NEARESTNEIGHBORFRAME_H_
 #define SRC_NEARESTNEIGHBORFRAME_H_
-#include <openslide.h>
 #include <stdlib.h>
 
 #include <memory>
@@ -23,6 +22,7 @@
 #include "src/dicom_file_region_reader.h"
 #include "src/compressor.h"
 #include "src/frame.h"
+#include "src/openslideUtil.h"
 
 namespace wsiToDicomConverter {
 
@@ -37,18 +37,19 @@ class NearestNeighborFrame : public Frame {
   // frameWidth, frameHeight_ - size frame needs to be scaled to
   // compression - type of compression
   // quality - compression quality setting
-  // store_raw_bytes - store raw version of frame pixels in frame in addition
+  // storeRawBytes - store raw version of frame pixels in frame in addition
   //                   to compressed pixel bytes. Required for progressive
   //                   downsampling.
   // frame_region_reader - frame reader for raw frame data from prior level.
   //                       Used to generate downsamples directly from prior
   //                       downsampled level.
-  NearestNeighborFrame(openslide_t *osr, int64_t locationX, int64_t locationY,
-                       int64_t level, int64_t frameWidthDownsampled,
+  NearestNeighborFrame(OpenSlidePtr *osptr, int64_t locationX,
+                       int64_t locationY, int64_t level,
+                       int64_t frameWidthDownsampled,
                        int64_t frameHeightDownsampled, double multiplicator,
                        int64_t frameWidth, int64_t frameHeight,
                        DCM_Compression compression, int quality,
-                       bool store_raw_bytes,
+                       bool storeRawBytes,
                        DICOMFileFrameRegionReader *frame_region_reader);
 
   virtual ~NearestNeighborFrame();
@@ -57,7 +58,7 @@ class NearestNeighborFrame : public Frame {
   virtual void incSourceFrameReadCounter();
 
  private:
-  openslide_t *osr_;
+  OpenSlidePtr *osptr_;
   int64_t level_;
   int64_t frameWidthDownsampled_;
   int64_t frameHeightDownsampled_;

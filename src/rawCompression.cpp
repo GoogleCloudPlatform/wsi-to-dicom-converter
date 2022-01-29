@@ -15,6 +15,7 @@
 #include "src/rawCompression.h"
 #include <boost/gil/image.hpp>
 #include <algorithm>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -28,6 +29,14 @@ struct PixelInserter {
     storage->push_back(at_c<2>(p));
   }
 };
+
+std::string RawCompression::toString() const {
+  return std::string("RAW");
+}
+
+DCM_Compression RawCompression::method() const {
+  return RAW;
+}
 
 std::unique_ptr<uint8_t[]> RawCompression::compress(
     const boost::gil::rgb8_view_t &view, size_t *size) {

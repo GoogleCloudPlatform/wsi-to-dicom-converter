@@ -54,21 +54,25 @@ void TestFrame::incSourceFrameReadCounter() {
 
 void TestFrame::sliceFrame() {}
 
-int64_t TestFrame::get_raw_frame_bytes(uint8_t *raw_memory,
-                                       int64_t memorysize) {
-  const int64_t expected_memsize = frameWidth_ *
-                                   frameHeight_ *
-                                   sizeof(uint32_t);
-  if (memorysize != expected_memsize) {
+int64_t TestFrame::rawABGRFrameBytes(uint8_t *rawMemory,
+                                       int64_t memorySize) {
+  const int64_t expectedMemsize = frameWidth_ *
+                                  frameHeight_ *
+                                  sizeof(uint32_t);
+  if (memorySize != expectedMemsize) {
     return 0;
   }
-  uint8_t *ptr_raw_value = reinterpret_cast<uint8_t *>(rawValue_.get());
-  std::memcpy(raw_memory, ptr_raw_value, expected_memsize);
-  return (expected_memsize);
+  uint8_t *ptrRawValue = reinterpret_cast<uint8_t *>(rawValue_.get());
+  std::memcpy(rawMemory, ptrRawValue, expectedMemsize);
+  return (expectedMemsize);
 }
 
-bool TestFrame::has_compressed_raw_bytes() const {
+bool TestFrame::hasRawABGRFrameBytes() const {
   return true;
+}
+
+std::string TestFrame::derivationDescription() const {
+  return std::string("test frame.");
 }
 
 }  // namespace wsiToDicomConverter

@@ -26,28 +26,28 @@ namespace wsiToDicomConverter {
 
 TEST(OpenCVInterpolationFrame, jpeg) {
   DICOMFileFrameRegionReader dicom_frame_reader;
-  openslide_t* osr = openslide_open(tiffFileName);
-  OpenCVInterpolationFrame frame(osr, 0, 0, 0, 100, 100, 100, 100, JPEG, 1,
+  OpenSlidePtr osptr = OpenSlidePtr(tiffFileName);
+  OpenCVInterpolationFrame frame(&osptr, 0, 0, 0, 100, 100, 100, 100, JPEG, 1,
                                    1000, 1000, 2000, 2000,
                                    false, &dicom_frame_reader,
                                    cv::INTER_LANCZOS4);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
-  ASSERT_FALSE(frame.has_compressed_raw_bytes());
-  ASSERT_GE(frame.getSize(), 0);
+  EXPECT_FALSE(frame.hasRawABGRFrameBytes());
+  EXPECT_GE(frame.dicomFrameBytesSize(), 0);
 }
 
 TEST(OpenCVInterpolationFrame, jpeg2000Scaling) {
   DICOMFileFrameRegionReader dicom_frame_reader;
-  openslide_t* osr = openslide_open(tiffFileName);
-  OpenCVInterpolationFrame frame(osr, 0, 0, 0, 1000, 1000, 100, 100, JPEG2000,
-                                   1, 1000, 1000, 2000, 2000,
+  OpenSlidePtr osptr = OpenSlidePtr(tiffFileName);
+  OpenCVInterpolationFrame frame(&osptr, 0, 0, 0, 1000, 1000, 100, 100,
+                                   JPEG2000, 1, 1000, 1000, 2000, 2000,
                                    true, &dicom_frame_reader,
                                    cv::INTER_LANCZOS4);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
-  ASSERT_TRUE(frame.has_compressed_raw_bytes());
-  ASSERT_GE(frame.getSize(), 0);
+  EXPECT_TRUE(frame.hasRawABGRFrameBytes());
+  EXPECT_GE(frame.dicomFrameBytesSize(), 0);
 }
 
 }  // namespace wsiToDicomConverter

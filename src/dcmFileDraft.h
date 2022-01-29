@@ -15,6 +15,7 @@
 #ifndef SRC_DCMFILEDRAFT_H_
 #define SRC_DCMFILEDRAFT_H_
 
+#include <absl/strings/string_view.h>
 #include <dcmtk/dcmdata/dcdatset.h>
 #include <dcmtk/dcmdata/dcofsetl.h>
 #include <dcmtk/dcmdata/dcpixel.h>
@@ -57,27 +58,27 @@ class DcmFileDraft {
   // of first level
 
   DcmFileDraft(std::vector<std::unique_ptr<Frame> > framesData,
-               const std::string& outputFileMask, int64_t imageWidth,
+               absl::string_view outputFileMask, int64_t imageWidth,
                int64_t imageHeight, int64_t level, int64_t row, int64_t column,
-               const std::string& studyId, const std::string& seriesId,
-               const std::string& imageName, DCM_Compression compression,
+               absl::string_view studyId, absl::string_view seriesId,
+               absl::string_view imageName, DCM_Compression compression,
                bool tiled, DcmTags* additionalTags, double firstLevelWidthMm,
                double firstLevelHeightMmm, int64_t downsample,
               const std::vector<std::unique_ptr<DcmFileDraft>>
-              *prior_frame_batches);
+              *prior_frame_batches, absl::string_view sourceImageDescription);
 
   ~DcmFileDraft();
 
   void saveFile();
   void write(DcmOutputStream* outStream);
 
-  int64_t get_frame_width() const;
-  int64_t get_frame_height() const;
-  int64_t get_image_width() const;
-  int64_t get_image_height() const;
-  int64_t get_file_frame_count() const;
-  int64_t get_downsample() const;
-  Frame* get_frame(int64_t idx) const;
+  int64_t frameWidth() const;
+  int64_t frameHeight() const;
+  int64_t imageWidth() const;
+  int64_t imageHeight() const;
+  int64_t fileFrameCount() const;
+  int64_t downsample() const;
+  Frame* frame(int64_t idx) const;
 
  private:
   std::vector<std::unique_ptr<Frame> > framesData_;
@@ -85,6 +86,7 @@ class DcmFileDraft {
   std::string studyId_;
   std::string seriesId_;
   std::string imageName_;
+  std::string sourceImageDescription_;
   DcmTags* additionalTags_;
   DCM_Compression compression_;
   int64_t prior_batch_frames_;

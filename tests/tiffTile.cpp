@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,31 +11,28 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef TESTS_TEST_FRAME_H_
-#define TESTS_TEST_FRAME_H_
-#include <atomic>
-#include <memory>
-#include <string>
+#include <gtest/gtest.h>
 
-#include "src/frame.h"
+#include <memory>
+#include <utility>
+
+#include "src/tiffDirectory.h"
+#include "src/tiffFile.h"
+#include "src/tiffTile.h"
+#include "tests/testUtils.h"
 
 namespace wsiToDicomConverter {
 
-class TestFrame : public Frame {
- public:
-  TestFrame(int64_t width, int64_t height);
-  TestFrame(int64_t width, int64_t height, uint32_t value);
-  virtual void sliceFrame();
-
-  virtual int64_t rawABGRFrameBytes(uint8_t *rawMemory, int64_t memorySize);
-  virtual bool hasRawABGRFrameBytes() const;
-  virtual std::string derivationDescription() const;
-  virtual void incSourceFrameReadCounter();
-
- private:
-  std::unique_ptr<uint32_t[]> rawValue_;
-};
+TEST(TiffTile, getTile) {
+  const int imageIndex = 0;
+  TiffFile tfile(tiffFileName, imageIndex);
+  const TiffDirectory *tdir = tfile.fileDirectory();
+  int tileIndex = 1;
+  std::unique_ptr<TiffTile> tile = std::move(tfile.tile(tileIndex));
+  EXPECT_NE(tile->rawBuffer(), nullptr);
+  EXPECT_EQ(tile->rawBufferSize(), 2345);
+  EXPECT_EQ(tile->index(), tileIndex);
+  EXPECT_EQ(tile->directory(), tdir);
+}
 
 }  // namespace wsiToDicomConverter
-
-#endif  // TESTS_TEST_FRAME_H_

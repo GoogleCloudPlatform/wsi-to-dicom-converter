@@ -32,19 +32,19 @@
 namespace wsiToDicomConverter {
 
 OpenCVInterpolationFrame::OpenCVInterpolationFrame(
-    openslide_t *osr, int64_t locationX, int64_t locationY, int32_t level,
+    OpenSlidePtr *osptr, int64_t locationX, int64_t locationY, int32_t level,
     int64_t frameWidthDownsampled, int64_t frameHeightDownsampled,
     int64_t frameWidth, int64_t frameHeight, DCM_Compression compression,
     int quality, int64_t levelWidth, int64_t levelHeight, int64_t level0Width,
-    int64_t level0Height, bool store_raw_bytes,
+    int64_t level0Height, bool storeRawBytes,
     DICOMFileFrameRegionReader *frame_region_reader,
     const cv::InterpolationFlags openCVInterpolationMethod) : Frame(locationX,
                                                                 locationY,
                                                                 frameWidth,
                                                                frameHeight,
                                                       compression, quality,
-                                                           store_raw_bytes) {
-  osr_ = osr;
+                                                           storeRawBytes) {
+  osptr_ = osptr;
   level_ = level;
   frameWidthDownsampled_ = frameWidthDownsampled;
   frameHeightDownsampled_ = frameHeightDownsampled;
@@ -105,7 +105,7 @@ void OpenCVInterpolationFrame::scalefactorNormPadding(int *padding,
 }
 
 void OpenCVInterpolationFrame::incSourceFrameReadCounter() {
-  if (dcmFrameRegionReader_->dicom_file_count() != 0) {
+  if (dcmFrameRegionReader_->dicomFileCount() != 0) {
     // Computes frames which downsample region will access from and increments
     // source frame counter.
     dcmFrameRegionReader_->incSourceFrameReadCounter(locationX_ - padLeft_,
@@ -132,7 +132,7 @@ void OpenCVInterpolationFrame::sliceFrame() {
   // downsampled or progressive downsampling is not being used. If this is
   // the case the image is retrieved using openslide.
   const bool dcmFrameRegionReaderNotInitalized =
-                                dcmFrameRegionReader_->dicom_file_count() == 0;
+                                dcmFrameRegionReader_->dicomFileCount() == 0;
   if (dcmFrameRegionReaderNotInitalized) {
     // Open slide API samples using xy coordinages from level 0 image.
     // upsample coordinates to level 0 to compute sampleing site.
@@ -144,12 +144,12 @@ void OpenCVInterpolationFrame::sliceFrame() {
     // Open slide read region returns ARGB formated pixels
     // Values are pre-multiplied with alpha
     // https://github.com/openslide/openslide/wiki/PremultipliedARGB
-    openslide_read_region(osr_, buf_bytes.get(), Level0_x,
+    openslide_read_region(osptr_->osr(), buf_bytes.get(), Level0_x,
                           Level0_y, level_,
                           frameWidthDownsampled_ + padWidth_,
                            frameHeightDownsampled_ + padHeight_);
-    if (openslide_get_error(osr_)) {
-       BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
+    if (openslide_get_error(osptr_->osr())) {
+       BOOST_LOG_TRIVIAL(error) << openslide_get_error(osptr_->osr());
        throw 1;
     }
     // Uncommon, openslide C++ API premults RGB by alpha.
@@ -182,11 +182,15 @@ void OpenCVInterpolationFrame::sliceFrame() {
       yoffset += frameWidthDownsampled_ + padWidth_;
     }
   } else {
-    dcmFrameRegionReader_->read_region(locationX_ - padLeft_,
-                                       locationY_ - padTop_,
-                                       frameWidthDownsampled_ + padWidth_,
-                                       frameHeightDownsampled_ + padHeight_,
-                                       buf_bytes.get());
+    if (!dcmFrameRegionReader_->readRegion(locationX_ - padLeft_,
+                                      locationY_ - padTop_,
+                                      frameWidthDownsampled_ + padWidth_,
+                                      frameHeightDownsampled_ + padHeight_,
+                                      buf_bytes.get())) {
+      BOOST_LOG_TRIVIAL(error) << "Error occured decoding previous level "
+                                  "region.";
+      throw 1;
+    }
   }
   const size_t frame_mem_size = static_cast<size_t>(frameWidth_ * frameHeight_);
   std::unique_ptr<uint32_t[]> raw_bytes;
@@ -248,19 +252,23 @@ void OpenCVInterpolationFrame::sliceFrame() {
   boost::gil::rgb8_view_t rgbView = view(exp);
   boost::gil::copy_pixels(gil, rgbView);
   // Compress memory (RAW, jpeg, or jpeg2000)
-  data_ = compressor_->compress(rgbView, &size_);
-  if (!store_raw_bytes_) {
-    raw_compressed_bytes_ = nullptr;
-    raw_compressed_bytes_size_ = 0;
+  uint64_t size;
+  std::unique_ptr<uint8_t[]>mem = std::move(compressor_->compress(rgbView,
+                                                                  &size));
+  setDicomFrameBytes(std::move(mem), size);
+
+  if (!storeRawBytes_) {
+    rawCompressedBytes_ = nullptr;
+    rawCompressedBytesSize_ = 0;
   } else {
-    raw_compressed_bytes_ = std::move(compress_memory(
+    rawCompressedBytes_ = std::move(compress_memory(
                                    reinterpret_cast<uint8_t*>(raw_bytes.get()),
                                    frame_mem_size * sizeof(uint32_t),
-                                   &raw_compressed_bytes_size_));
+                                   &rawCompressedBytesSize_));
     BOOST_LOG_TRIVIAL(debug) << " compressed raw frame size: " <<
-                                raw_compressed_bytes_size_ / 1024 << "kb";
+                                rawCompressedBytesSize_ / 1024 << "kb";
   }
-  BOOST_LOG_TRIVIAL(debug) << " frame size: " << size_ / 1024 << "kb";
+  BOOST_LOG_TRIVIAL(debug) << " frame size: " << size / 1024 << "kb";
   done_ = true;
 }
 

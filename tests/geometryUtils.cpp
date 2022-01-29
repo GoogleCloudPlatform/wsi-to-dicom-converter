@@ -36,10 +36,10 @@ TEST(geometryTest, frameSizeWithoutRetile) {
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
       &level_frameHeight, &level_compression);
-  ASSERT_EQ(100, frameWidthDownsampled);
-  ASSERT_EQ(100, frameHeightDownsampled);
-  ASSERT_EQ(100, level_frameWidth);
-  ASSERT_EQ(100, level_frameHeight);
+  EXPECT_EQ(100, frameWidthDownsampled);
+  EXPECT_EQ(100, frameHeightDownsampled);
+  EXPECT_EQ(100, level_frameWidth);
+  EXPECT_EQ(100, level_frameHeight);
 
   frameWidth = 50;
   frameHeight = 50;
@@ -49,10 +49,10 @@ TEST(geometryTest, frameSizeWithoutRetile) {
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
       &level_frameHeight, &level_compression);
-  ASSERT_EQ(50, frameWidthDownsampled);
-  ASSERT_EQ(50, frameHeightDownsampled);
-  ASSERT_EQ(50, level_frameWidth);
-  ASSERT_EQ(50, level_frameHeight);
+  EXPECT_EQ(50, frameWidthDownsampled);
+  EXPECT_EQ(50, frameHeightDownsampled);
+  EXPECT_EQ(50, level_frameWidth);
+  EXPECT_EQ(50, level_frameHeight);
 }
 
 TEST(geometryTest, frameSizeWithRetile) {
@@ -74,12 +74,12 @@ TEST(geometryTest, frameSizeWithRetile) {
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
       &level_frameHeight, &level_compression);
-  ASSERT_EQ(84, frameWidthDownsampled);
-  ASSERT_EQ(84, frameHeightDownsampled);
-  ASSERT_EQ(50, levelWidthDownsampled);
-  ASSERT_EQ(50, levelHeightDownsampled);
-  ASSERT_EQ(42, level_frameWidth);
-  ASSERT_EQ(42, level_frameHeight);
+  EXPECT_EQ(84, frameWidthDownsampled);
+  EXPECT_EQ(84, frameHeightDownsampled);
+  EXPECT_EQ(50, levelWidthDownsampled);
+  EXPECT_EQ(50, levelHeightDownsampled);
+  EXPECT_EQ(42, level_frameWidth);
+  EXPECT_EQ(42, level_frameHeight);
 
   frameWidth = 55;
   frameHeight = 55;
@@ -89,12 +89,12 @@ TEST(geometryTest, frameSizeWithRetile) {
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
       &level_frameHeight, &level_compression);
-  ASSERT_EQ(50, levelWidthDownsampled);
-  ASSERT_EQ(50, levelHeightDownsampled);
-  ASSERT_EQ(levelWidth, frameWidthDownsampled);
-  ASSERT_EQ(levelHeight, frameHeightDownsampled);
-  ASSERT_EQ(50, level_frameWidth);
-  ASSERT_EQ(50, level_frameHeight);
+  EXPECT_EQ(50, levelWidthDownsampled);
+  EXPECT_EQ(50, levelHeightDownsampled);
+  EXPECT_EQ(levelWidth, frameWidthDownsampled);
+  EXPECT_EQ(levelHeight, frameHeightDownsampled);
+  EXPECT_EQ(50, level_frameWidth);
+  EXPECT_EQ(50, level_frameHeight);
 
   frameHeight = 42;
 
@@ -103,10 +103,10 @@ TEST(geometryTest, frameSizeWithRetile) {
       downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
       &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
       &level_frameHeight, &level_compression);
-  ASSERT_EQ(50, levelWidthDownsampled);
-  ASSERT_EQ(50, levelHeightDownsampled);
-  ASSERT_EQ(100, frameWidthDownsampled);
-  ASSERT_EQ(84, frameHeightDownsampled);
-  ASSERT_EQ(50, level_frameWidth);
-  ASSERT_EQ(42, level_frameHeight);
+  EXPECT_EQ(50, levelWidthDownsampled);
+  EXPECT_EQ(50, levelHeightDownsampled);
+  EXPECT_EQ(100, frameWidthDownsampled);
+  EXPECT_EQ(84, frameHeightDownsampled);
+  EXPECT_EQ(50, level_frameWidth);
+  EXPECT_EQ(42, level_frameHeight);
 }

@@ -15,41 +15,74 @@
 # This script updates environment and build wsi2dcm by steps:
 # 1: update of ubuntu deb repos
 # 2: install of tools and libs for build
-# 3: install opencv
-# 4: download and unpack source code of libs for build
-# 5: build
+# 3: install libjpeg turbo
+# 4: install opencv
+# 5: install abseil
+# 6: download and unpack source code of libs for build
+# 7: build
 
 #1
 echo "deb  http://old-releases.ubuntu.com cosmic universe" | tee -a /etc/apt/sources.list
 apt-get update
 #2
-DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-essential libjsoncpp-dev libjpeg8-dev libgdk-pixbuf2.0-dev libcairo2-dev libsqlite3-dev cmake libglib2.0-dev libxml2-dev libopenjp2-7-dev g++-8 libgtest-dev -y
+DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-essential libjsoncpp-dev libgdk-pixbuf2.0-dev libcairo2-dev libsqlite3-dev cmake libglib2.0-dev libxml2-dev libopenjp2-7-dev g++-8 libgtest-dev -y
+ls -l
 #3
-wget -O /opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.5.4.zip > /dev/null
-unzip /opencv.zip  > /dev/null
-mkdir -p opencv_build
-cd opencv_build
-cmake ../opencv-4.5.4 -DBUILD_LIST=core,imgproc
+# installing in /workspace
+wget -O libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.2.zip
+unzip libjpeg_turbo.zip
+rm libjpeg_turbo.zip
+mkdir -p ./libjpeg-turbo-2.1.2/build
+cd ./libjpeg-turbo-2.1.2/build
+cmake -G"Unix Makefiles" ..
 make -j12
 make install
-cd ..
+cd /workspace
 #4
+wget -O opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.5.4.zip > /dev/null
+unzip opencv.zip  > /dev/null
+rm opencv.zip
+mkdir -p ./opencv-4.5.4/build
+cd ./opencv-4.5.4/build
+cmake .. -DBUILD_LIST=core,imgproc,imgcodecs
+make -j12
+make install
+cd /workspace
+#5
+wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.zip > /dev/null
+unzip abseil.zip > /dev/null
+rm abseil.zip
+mkdir -p ./abseil-cpp-20211102.0/build
+cd ./abseil-cpp-20211102.0/build
+cmake ..  -DCMAKE_INSTALL_PREFIX=/abseil/install
+cmake  --build . --target install
+cd /workspace
+#6
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
 cd build
 wget https://github.com/uclouvain/openjpeg/archive/v2.3.0.zip > /dev/null
 unzip v2.3.0.zip  > /dev/null
+rm v2.3.0.zip
 wget https://boostorg.jfrog.io/artifactory/main/release/1.69.0/source/boost_1_69_0.tar.gz  > /dev/null
 tar xvzf boost_1_69_0.tar.gz  > /dev/null
-wget https://dicom.offis.de/download/dcmtk/dcmtk362/dcmtk-3.6.2.zip  > /dev/null
+rm boost_1_69_0.tar.gz
+wget -O dcmtk-3.6.2.zip https://github.com/DCMTK/dcmtk/archive/refs/tags/DCMTK-3.6.2.zip > /dev/null
 unzip dcmtk-3.6.2.zip  > /dev/null
-wget https://github.com/open-source-parsers/jsoncpp/archive/0.10.7.zip
+rm dcmtk-3.6.2.zip
+mv ./dcmtk-DCMTK-3.6.2 ./dcmtk-3.6.2
+wget https://github.com/open-source-parsers/jsoncpp/archive/0.10.7.zip > /dev/null
 unzip 0.10.7.zip > /dev/null
-wget https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz
+rm 0.10.7.zip
+wget https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz > /dev/null
 tar xvzf openslide-3.4.1.tar.gz  > /dev/null
-wget https://www.ijg.org/files/jpegsr9c.zip
-unzip jpegsr9c.zip > /dev/null
-#5
+rm openslide-3.4.1.tar.gz
+#remove documentation to remove flagged javascript security issues.
+set +e
+find /workspace/build -path "*/doc/html" -type d -exec rm -rf {} \;
+find /workspace/build -path "*/doc/*" -type f -name "*.js" -exec rm -f {} \;
+set -e
+#7
 cmake -DSTATIC_BUILD=ON -DTESTS_BUILD=ON ..
 make -j12
 ./gTests

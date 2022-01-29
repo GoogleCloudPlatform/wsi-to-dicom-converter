@@ -31,17 +31,17 @@
 namespace wsiToDicomConverter {
 
 NearestNeighborFrame::NearestNeighborFrame(
-    openslide_t *osr, int64_t locationX, int64_t locationY, int64_t level,
+    OpenSlidePtr *osptr, int64_t locationX, int64_t locationY, int64_t level,
     int64_t frameWidthDownsampled, int64_t frameHeightDownsampled,
     double multiplicator, int64_t frameWidth, int64_t frameHeight,
-    DCM_Compression compression, int quality, bool store_raw_bytes,
+    DCM_Compression compression, int quality, bool storeRawBytes,
     DICOMFileFrameRegionReader *frame_region_reader): Frame(locationX,
                                                             locationY,
                                                             frameWidth,
                                                              frameHeight,
                                                         compression, quality,
-                                                        store_raw_bytes) {
-  osr_ = osr;
+                                                        storeRawBytes) {
+  osptr_ = osptr;
   level_ = level;
   frameWidthDownsampled_ = frameWidthDownsampled;
   frameHeightDownsampled_ = frameHeightDownsampled;
@@ -69,7 +69,7 @@ class convert_rgba_to_rgb {
 };
 
 void NearestNeighborFrame::incSourceFrameReadCounter() {
-  if (dcmFrameRegionReader_->dicom_file_count() != 0) {
+  if (dcmFrameRegionReader_->dicomFileCount() != 0) {
     dcmFrameRegionReader_->incSourceFrameReadCounter(locationX_, locationY_,
                                         frameWidthDownsampled_,
                                         frameHeightDownsampled_);
@@ -80,21 +80,25 @@ void NearestNeighborFrame::sliceFrame() {
   std::unique_ptr<uint32_t[]>buf =
                           std::make_unique<uint32_t[]>(frameWidthDownsampled_ *
                                                       frameHeightDownsampled_);
-  if (dcmFrameRegionReader_->dicom_file_count() == 0) {
-    openslide_read_region(osr_, buf.get(), static_cast<int64_t>(locationX_ *
-                                                          multiplicator_),
+  if (dcmFrameRegionReader_->dicomFileCount() == 0) {
+    openslide_read_region(osptr_->osr(), buf.get(),
+                          static_cast<int64_t>(locationX_ * multiplicator_),
                           static_cast<int64_t>(locationY_ * multiplicator_),
                           level_, frameWidthDownsampled_,
                           frameHeightDownsampled_);
-    if (openslide_get_error(osr_)) {
-      BOOST_LOG_TRIVIAL(error) << openslide_get_error(osr_);
+    if (openslide_get_error(osptr_->osr())) {
+      BOOST_LOG_TRIVIAL(error) << openslide_get_error(osptr_->osr());
       throw 1;
     }
   } else {
-    dcmFrameRegionReader_->read_region(locationX_, locationY_,
-                                        frameWidthDownsampled_,
-                                        frameHeightDownsampled_,
-                                        buf.get());
+    if (!dcmFrameRegionReader_->readRegion(locationX_, locationY_,
+                                       frameWidthDownsampled_,
+                                       frameHeightDownsampled_,
+                                       buf.get())) {
+      BOOST_LOG_TRIVIAL(error) << "Error occured decoding region from previous"
+                                  " level.";
+      throw 1;
+    }
   }
   boost::gil::rgba8c_view_t gil = boost::gil::interleaved_view(
               frameWidthDownsampled_,
@@ -114,8 +118,8 @@ void NearestNeighborFrame::sliceFrame() {
   boost::gil::rgb8_view_t rgbView = view(exp);
 
   // Create a copy of the pre-compressed downsampled bits
-  if (!store_raw_bytes_) {
-    clear_raw_mem();
+  if (!storeRawBytes_) {
+    clearRawABGRMem();
   } else {
     const int64_t frame_mem_size = frameWidth_ * frameHeight_;
     std::unique_ptr<uint32_t[]>  raw_bytes = std::make_unique<uint32_t[]>(
@@ -126,16 +130,19 @@ void NearestNeighborFrame::sliceFrame() {
         frameWidth_ * sizeof(uint32_t));
     boost::gil::copy_pixels(gil, raw_byte_view);
 
-    raw_compressed_bytes_ = std::move(compress_memory(
+    rawCompressedBytes_ = std::move(compress_memory(
                 reinterpret_cast<uint8_t*>(raw_bytes.get()), frame_mem_size *
-                              sizeof(uint32_t), &raw_compressed_bytes_size_));
+                              sizeof(uint32_t), &rawCompressedBytesSize_));
     BOOST_LOG_TRIVIAL(debug) << " compressed raw frame size: " <<
-                                  raw_compressed_bytes_size_ / 1024 << "kb";
+                                  rawCompressedBytesSize_ / 1024 << "kb";
   }
 
   boost::gil::copy_and_convert_pixels(gil, rgbView, convert_rgba_to_rgb());
-  data_ = compressor_->compress(rgbView, &size_);
-  BOOST_LOG_TRIVIAL(debug) << " frame size: " << size_ / 1024 << "kb";
+  uint64_t size;
+  std::unique_ptr<uint8_t[]>mem = std::move(compressor_->compress(rgbView,
+                                                                  &size));
+  setDicomFrameBytes(std::move(mem), size);
+  BOOST_LOG_TRIVIAL(debug) << " frame size: " << size / 1024 << "kb";
   done_ = true;
 }
 

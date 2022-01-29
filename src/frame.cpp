@@ -13,8 +13,11 @@
 // limitations under the License.
 #include <boost/log/trivial.hpp>
 #include <boost/thread.hpp>
+#include <dcmtk/dcmdata/dcpxitem.h>
+#include <dcmtk/dcmdata/dcdeftag.h>
 
-#include <atomic>
+#include <utility>
+#include <string>
 
 #include "src/enums.h"
 #include "src/frame.h"
@@ -27,14 +30,11 @@ namespace wsiToDicomConverter {
 
 Frame::Frame(int64_t locationX, int64_t locationY, int64_t frameWidth,
              int64_t frameHeight, DCM_Compression compression,
-             int quality, bool store_raw_bytes) : locationX_(locationX),
+             int quality, bool storeRawBytes) : locationX_(locationX),
                                                   locationY_(locationY),
                                                   frameWidth_(frameWidth),
                                                   frameHeight_(frameHeight),
-                                            store_raw_bytes_(store_raw_bytes) {
-    done_ = false;
-    readCounter_ = 0;
-    size_ = 0;
+                                            storeRawBytes_(storeRawBytes) {
     switch (compression) {
         case JPEG:
             compressor_ = std::make_unique<JpegCompression>(quality);
@@ -42,29 +42,36 @@ Frame::Frame(int64_t locationX, int64_t locationY, int64_t frameWidth,
         case JPEG2000:
             compressor_ = std::make_unique<Jpeg2000Compression>();
         break;
+        case NONE:
+          compressor_ = nullptr;
+        break;
         default:
             compressor_ = std::make_unique<RawCompression>();
         break;
     }
 }
 
-int64_t Frame::get_frame_width() const {
+std::string Frame::photoMetrInt() const {
+  return "";
+}
+
+int64_t Frame::frameWidth() const {
   return frameWidth_;
 }
 
-int64_t Frame::get_frame_height() const {
+int64_t Frame::frameHeight() const {
   return frameHeight_;
 }
 
-int64_t Frame::getLocationX() const {
+int64_t Frame::locationX() const {
     return locationX_;
 }
 
-int64_t Frame::getLocationY() const {
+int64_t Frame::locationY() const {
     return locationY_;
 }
 
-void Frame::inc_read_counter() {
+void Frame::incReadCounter() {
     readCounter_ += 1;
 }
 
@@ -72,40 +79,74 @@ bool Frame::isDone() const {
     return done_;
 }
 
-void Frame::clear_dicom_mem() {
+void Frame::clearDicomMem() {
   data_ = nullptr;
 }
 
-int64_t Frame::get_raw_frame_bytes(uint8_t *raw_memory,
-                                                    int64_t memorysize) {
-  int64_t memsize =  decompress_memory(raw_compressed_bytes_.get(),
-                           raw_compressed_bytes_size_,
-                           raw_memory, memorysize);
-  {
+void Frame::decReadCounter() {
     boost::lock_guard<boost::mutex> guard(readCounterMutex_);
     readCounter_ -= 1;
     if (readCounter_ <= 0) {
-      clear_raw_mem();
+      clearRawABGRMem();
     }
   }
-  return memsize;
+
+int64_t Frame::rawABGRFrameBytes(uint8_t *rawMemory, int64_t memorySize) {
+  int64_t memSize =  decompress_memory(rawCompressedBytes_.get(),
+                           rawCompressedBytesSize_,
+                           rawMemory, memorySize);
+  decReadCounter();
+  return memSize;
 }
 
-void Frame::clear_raw_mem() {
-  if (raw_compressed_bytes_ != nullptr) {
-    raw_compressed_bytes_ = nullptr;
-    raw_compressed_bytes_size_ = 0;
+void Frame::clearRawABGRMem() {
+  if (rawCompressedBytes_ != nullptr) {
+    rawCompressedBytes_ = nullptr;
+    rawCompressedBytesSize_ = 0;
   }
 }
 
-uint8_t *Frame::get_dicom_frame_bytes() {
+bool Frame::hasDcmPixelItem() const {
+  return dcmPixelItem_ != nullptr;
+}
+
+DcmPixelItem *Frame::dcmPixelItem() {
+  return dcmPixelItem_.release();
+}
+
+uint8_t *Frame::dicomFrameBytes() {
   return data_.get();
 }
 
-size_t Frame::getSize() const { return size_; }
+void Frame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
+                                               uint64_t size) {
+  size_ = size;
+  if (compressor_->method() == RAW) {
+    data_ = std::move(dcmdata);
+    dcmPixelItem_ = nullptr;
+  } else {
+    data_ = std::move(dcmdata);
+    dcmPixelItem_ = std::make_unique<DcmPixelItem>(DcmTag(DCM_Item, EVR_OB));
+    dcmPixelItem_->putUint8Array(data_.get(), size_);
+    data_ = nullptr;
+  }
+}
 
-bool Frame::has_compressed_raw_bytes() const {
-  return (raw_compressed_bytes_ != nullptr && raw_compressed_bytes_size_ > 0);
+std::string Frame::derivationDescription() const {
+  // Returns frame component of DCM_DerivationDescription
+  // describes in text how frame imaging data was saved in frame.
+  if (compressor_->method() != RAW) {
+    return std::string("embedded as encapsulated ") + compressor_->toString() +
+           "; Imaging bytes re-compressed once.";
+  } else {
+    return std::string("embedded as RAW; Imaging bytes unchanged.");
+  }
+}
+
+size_t Frame::dicomFrameBytesSize() const { return size_; }
+
+bool Frame::hasRawABGRFrameBytes() const {
+  return (rawCompressedBytes_ != nullptr && rawCompressedBytesSize_ > 0);
 }
 
 }  // namespace wsiToDicomConverter

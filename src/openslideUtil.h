@@ -1,4 +1,4 @@
-// Copyright 2019 Google LLC
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SRC_COMPRESSOR_H_
-#define SRC_COMPRESSOR_H_
-#include <boost/gil/typedefs.hpp>
-#include <cstdint>
-#include <memory>
+#ifndef SRC_OPENSLIDEUTIL_H_
+#define SRC_OPENSLIDEUTIL_H_
+
+#include <openslide.h>
+
 #include <string>
 
-// Interface for different type of compressions
-class Compressor {
+namespace wsiToDicomConverter {
+
+/* Wrapper for openslide pointer.
+   closes pointer when object
+   is destructed.
+*/
+class OpenSlidePtr {
  public:
-  virtual std::unique_ptr<uint8_t[]> compress(
-      const boost::gil::rgb8_view_t& view, size_t* size) = 0;
-  virtual DCM_Compression method() const = 0;
-  virtual std::string toString() const = 0;
-  virtual ~Compressor() { }
+  explicit OpenSlidePtr(const char *filename);
+  explicit OpenSlidePtr(const std::string &filename);
+  virtual ~OpenSlidePtr();
+  openslide_t *osr();
+
+ private:
+  openslide_t *osr_;
+  void _open(const char *filename);
 };
-#endif  // SRC_COMPRESSOR_H_
+
+}  // namespace wsiToDicomConverter
+
+#endif  // SRC_OPENSLIDEUTIL_H_

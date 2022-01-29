@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "src/dcmtkUtils.h"
+#include <absl/strings/string_view.h>
 #include <dcmtk/dcmdata/dcdeftag.h>
 #include <dcmtk/dcmdata/dcdict.h>
 #include <dcmtk/dcmdata/dcfilefo.h>
@@ -131,12 +132,13 @@ inline OFCondition generateDimensionIndexSequence(DcmDataset* resultObject) {
   return resultObject->insert(sequence.release());
 }
 
-std::string formatTime(std::string format) {
+std::string formatTime(absl::string_view format) {
+  std::string format_str = std::move(static_cast<std::string>(format));
   std::stringstream stringStream;
   struct tm utcTime;
   time_t timeNow = time(nullptr);
   gmtime_r(&timeNow, &utcTime);
-  stringStream << std::put_time(&utcTime, format.c_str());
+  stringStream << std::put_time(&utcTime, format_str.c_str());
   return stringStream.str();
 }
 
@@ -179,10 +181,28 @@ OFCondition insertPixelMetadata(DcmDataset* dataset,
     cond = dataset->putAndInsertOFStringArray(DCM_NumberOfFrames, buf);
     if (cond.bad()) return cond;
 
-    cond = dataset->putAndInsertString(DCM_FrameIncrementPointer, "");
+    std::string lossy = "00";
+    if (imgInfo.transSyn == EXS_JPEGProcess1) {
+      lossy = "01";
+      cond = dataset->putAndInsertOFStringArray(DCM_LossyImageCompressionMethod,
+                                                  "ISO_10918_1", true);
+      if (cond.bad()) return cond;
+      cond = dataset->putAndInsertOFStringArray(DCM_LossyImageCompressionRatio,
+                                        imgInfo.compressionRatio.c_str());
+      if (cond.bad()) return cond;
+    }
+    cond = dataset->putAndInsertOFStringArray(DCM_LossyImageCompression,
+                                                lossy.c_str(), true);
+
+    // DerivationDescription is text constructed from image source
+    // and frame generation text.  See dcmFileDraft.cpp for
+    // construction of image source and frame representation components.
+    if (cond.bad()) return cond;
+    cond = dataset->putAndInsertOFStringArray(DCM_DerivationDescription,
+                                         imgInfo.derivationDescription.c_str(),
+                                         true);
     if (cond.bad()) return cond;
   }
-
   return dataset->putAndInsertUint16(DCM_PixelRepresentation,
                                      imgInfo.pixelRepr);
 }
@@ -198,15 +218,6 @@ OFCondition generateDcmDataset(I2DOutputPlug* outPlug, DcmDataset* resultDset,
     return cond;
   }
 
-  std::string lossy = "00";
-  if (imgInfo.transSyn == EXS_JPEGProcess1) {
-    lossy = "01";
-  }
-  cond = resultDset->putAndInsertOFStringArray(DCM_LossyImageCompression,
-                                               lossy.c_str(), true);
-
-  if (cond.bad()) return cond;
-
   cond = outPlug->convert(*resultDset);
   if (cond.bad()) {
     return cond;
@@ -219,9 +230,10 @@ OFCondition generateDcmDataset(I2DOutputPlug* outPlug, DcmDataset* resultDset,
 }
 
 OFCondition DcmtkUtils::populateDataSet(
-    const int64_t imageHeight, const int64_t imageWidth, const uint32_t rowSize,
-    const std::string& studyId, const std::string& seriesId,
-    const std::string& imageName, std::unique_ptr<DcmPixelData> pixelData,
+    const int64_t imageHeight, const int64_t imageWidth,
+    const uint32_t rowSize, absl::string_view studyId,
+    absl::string_view seriesId, absl::string_view imageName,
+    std::unique_ptr<DcmPixelData> pixelData,
     const DcmtkImgDataInfo& imgInfo, const uint32_t numberOfFrames,
     const uint32_t row, const uint32_t column, const int level,
     const int batchNumber, const uint32_t offset,
@@ -322,30 +334,34 @@ OFCondition DcmtkUtils::insertStaticTags(DcmDataset* dataSet, int level) {
   return cond;
 }
 
-OFCondition DcmtkUtils::insertIds(const std::string& studyId,
-                                  const std::string& seriesId,
+OFCondition DcmtkUtils::insertIds(absl::string_view studyId,
+                                  absl::string_view seriesId,
                                   DcmDataset* dataSet) {
   char instanceUidGenerated[100];
   dcmGenerateUniqueIdentifier(instanceUidGenerated, SITE_INSTANCE_UID_ROOT);
   OFCondition cond = dataSet->putAndInsertOFStringArray(DCM_SOPInstanceUID,
                                                         instanceUidGenerated);
   if (cond.bad()) return cond;
+  std::string studyId_str = std::move(static_cast<std::string>(studyId));
   cond =
-      dataSet->putAndInsertOFStringArray(DCM_StudyInstanceUID, studyId.c_str());
+      dataSet->putAndInsertOFStringArray(DCM_StudyInstanceUID,
+                                         studyId_str.c_str());
   if (cond.bad()) return cond;
+  std::string seriesId_str = std::move(static_cast<std::string>(seriesId));
   cond = dataSet->putAndInsertOFStringArray(DCM_SeriesInstanceUID,
-                                            seriesId.c_str());
+                                            seriesId_str.c_str());
   return cond;
 }
 
-OFCondition DcmtkUtils::insertBaseImageTags(const std::string& imageName,
+OFCondition DcmtkUtils::insertBaseImageTags(absl::string_view imageName,
                                             const int64_t imageHeight,
                                             const int64_t imageWidth,
                                             const double firstLevelWidthMm,
                                             const double firstLevelHeightMm,
                                             DcmDataset* dataSet) {
+  std::string imageName_str = std::move(static_cast<std::string>(imageName));
   OFCondition cond = dataSet->putAndInsertOFStringArray(DCM_SeriesDescription,
-                                                        imageName.c_str());
+                                                        imageName_str.c_str());
   if (cond.bad()) return cond;
   cond = dataSet->putAndInsertUint32(DCM_TotalPixelMatrixColumns, imageWidth);
   if (cond.bad()) return cond;
@@ -365,8 +381,9 @@ OFCondition DcmtkUtils::insertMultiFrameTags(
     const uint32_t rowSize, const uint32_t row, const uint32_t column,
     const int level, const int batchNumber, const uint32_t offset,
     const uint32_t totalNumberOfFrames, const bool tiled,
-    const std::string& seriesId, DcmDataset* dataSet) {
+    absl::string_view seriesId, DcmDataset* dataSet) {
   unsigned int concatenationTotalNumber;
+  std::string seriesId_str = std::move(static_cast<std::string>(seriesId));
 
   if (totalNumberOfFrames - offset == numberOfFrames) {
     concatenationTotalNumber = batchNumber + 1;
@@ -390,12 +407,12 @@ OFCondition DcmtkUtils::insertMultiFrameTags(
     if (cond.bad()) return cond;
     cond = dataSet->putAndInsertOFStringArray(
         DCM_ConcatenationUID,
-        (seriesId + "." + std::to_string(level + 1)).c_str());
+        (seriesId_str + "." + std::to_string(level + 1)).c_str());
   }
   if (cond.bad()) return cond;
   cond = dataSet->putAndInsertOFStringArray(
       DCM_FrameOfReferenceUID,
-      (seriesId + "." + std::to_string(level + 1)).c_str());
+      (seriesId_str + "." + std::to_string(level + 1)).c_str());
   if (cond.bad()) return cond;
   if (tiled) {
     cond = dataSet->putAndInsertOFStringArray(DCM_DimensionOrganizationType,
@@ -412,8 +429,8 @@ OFCondition DcmtkUtils::insertMultiFrameTags(
 
 OFCondition DcmtkUtils::startConversion(
     int64_t imageHeight, int64_t imageWidth, uint32_t rowSize,
-    const std::string& studyId, const std::string& seriesId,
-    const std::string& imageName, std::unique_ptr<DcmPixelData> pixelData,
+    absl::string_view studyId, absl::string_view seriesId,
+    absl::string_view imageName, std::unique_ptr<DcmPixelData> pixelData,
     const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
     uint32_t column, int level, int batchNumber, uint32_t offset,
     uint32_t totalNumberOfFrames, bool tiled, DcmOutputStream* outStream) {
@@ -426,8 +443,8 @@ OFCondition DcmtkUtils::startConversion(
 
 OFCondition DcmtkUtils::startConversion(
     int64_t imageHeight, int64_t imageWidth, uint32_t rowSize,
-    const std::string& studyId, const std::string& seriesId,
-    const std::string& imageName, std::unique_ptr<DcmPixelData> pixelData,
+    absl::string_view studyId, absl::string_view seriesId,
+    absl::string_view imageName, std::unique_ptr<DcmPixelData> pixelData,
     const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
     uint32_t column, int level, int batchNumber, unsigned int offset,
     uint32_t totalNumberOfFrames, bool tiled, DcmTags* additionalTags,

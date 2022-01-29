@@ -14,7 +14,6 @@
 
 #ifndef SRC_OPENCVINTERPOLATIONFRAME_H_
 #define SRC_OPENCVINTERPOLATIONFRAME_H_
-#include <openslide.h>
 #include <stdlib.h>
 #include <opencv2/opencv.hpp>
 
@@ -24,7 +23,7 @@
 #include "src/dicom_file_region_reader.h"
 #include "src/compressor.h"
 #include "src/frame.h"
-
+#include "src/openslideUtil.h"
 
 namespace wsiToDicomConverter {
 
@@ -41,7 +40,7 @@ class OpenCVInterpolationFrame : public Frame {
   //                                                level being generated.
   // levelWidth, levelHeight - dimensions of source level being downsampled.
   // level0Width, level0Height - dimensions of base level (highest mag)
-  OpenCVInterpolationFrame(openslide_t *osr, int64_t locationX,
+  OpenCVInterpolationFrame(OpenSlidePtr *osptr, int64_t locationX,
                        int64_t locationY, int32_t level,
                        int64_t frameWidthDownsampled,
                        int64_t frameHeightDownsampled, int64_t frameWidth,
@@ -49,7 +48,7 @@ class OpenCVInterpolationFrame : public Frame {
                        int quality, int64_t levelWidth,
                        int64_t levelHeight, int64_t level0Width,
                        int64_t level0Height,
-                       bool store_raw_bytes,
+                       bool storeRawBytes,
                        DICOMFileFrameRegionReader* frame_region_reader,
                        const cv::InterpolationFlags openCVInterpolationMethod);
 
@@ -59,7 +58,7 @@ class OpenCVInterpolationFrame : public Frame {
   virtual void incSourceFrameReadCounter();
 
  private:
-  openslide_t *osr_;
+  OpenSlidePtr *osptr_;
   int64_t level_;
   int64_t frameWidthDownsampled_;
   int64_t frameHeightDownsampled_;

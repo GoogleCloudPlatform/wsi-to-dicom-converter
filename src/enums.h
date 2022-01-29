@@ -18,7 +18,11 @@
 #include <algorithm>
 #include <string>
 
-typedef enum { UNKNOWN = -1, JPEG2000 = 0, JPEG = 1, RAW = 2 } DCM_Compression;
+typedef enum { UNKNOWN = -1,
+               JPEG2000 = 0,
+               JPEG = 1,
+               RAW = 2,
+               NONE = 3 } DCM_Compression;
 
 inline DCM_Compression dcmCompressionFromString(std::string compressionStr) {
   DCM_Compression compression = UNKNOWN;

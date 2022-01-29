@@ -15,9 +15,18 @@
 #include "src/jpeg2000Compression.h"
 #include <openjpeg.h>
 #include <boost/gil/image.hpp>
+#include <string>
 #include <vector>
 
 Jpeg2000Compression::~Jpeg2000Compression() {}
+
+DCM_Compression Jpeg2000Compression::method() const {
+  return JPEG2000;
+}
+
+std::string Jpeg2000Compression::toString() const {
+  return std::string("lossless JPEG2000 compressed");
+}
 
 std::unique_ptr<uint8_t[]> Jpeg2000Compression::writeToMemory(
     unsigned int width, unsigned int height, unsigned int pitch,

@@ -15,8 +15,9 @@
 #ifndef SRC_FRAME_H_
 #define SRC_FRAME_H_
 #include <boost/thread/mutex.hpp>
+#include <dcmtk/dcmdata/dcpxitem.h>
 
-#include <atomic>
+#include <string>
 #include <memory>
 
 #include "src/enums.h"
@@ -29,45 +30,64 @@ class Frame {
  public:
   Frame(int64_t locationX, int64_t locationY, int64_t frameWidth,
         int64_t frameHeight, DCM_Compression compression, int quality,
-        bool store_raw_bytes);
+        bool storeRawBytes);
   virtual ~Frame() {}
 
   // Gets frame by openslide library, performs scaling it and compressing
   virtual void sliceFrame() = 0;
   virtual bool isDone() const;
-  virtual uint8_t *get_dicom_frame_bytes();
-  virtual size_t getSize() const;
-  virtual void inc_read_counter();
-  virtual int64_t get_raw_frame_bytes(uint8_t *raw_memory,
-                                      int64_t memorysize);
-  virtual int64_t get_frame_width() const;
-  virtual int64_t get_frame_height() const;
-  virtual void clear_dicom_mem();
-  virtual void clear_raw_mem();
-  virtual bool has_compressed_raw_bytes() const;
+  virtual uint8_t *dicomFrameBytes();
+  virtual size_t dicomFrameBytesSize() const;
+  virtual void incReadCounter();
+  virtual void decReadCounter();
+  virtual int64_t rawABGRFrameBytes(uint8_t *rawMemory, int64_t memorySize);
+  virtual int64_t frameWidth() const;
+  virtual int64_t frameHeight() const;
+  virtual void clearDicomMem();
+  virtual void clearRawABGRMem();
+  virtual bool hasRawABGRFrameBytes() const;
   virtual void incSourceFrameReadCounter() = 0;
-  virtual int64_t getLocationX() const;
-  virtual int64_t getLocationY() const;
+  virtual int64_t locationX() const;
+  virtual int64_t locationY() const;
+  virtual std::string photoMetrInt() const;
+  virtual bool hasDcmPixelItem() const;
+  virtual DcmPixelItem *dcmPixelItem();
+  virtual void setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
+                                  uint64_t size);
+
+  // Returns frame component of DCM_DerivationDescription
+  // describes in text how frame imaging data was saved in frame.
+  virtual std::string derivationDescription() const;
 
  protected:
-  std::atomic_bool done_;
-  std::unique_ptr<uint8_t[]> data_;
+  bool done_ = false;
+
+  // data to be written to dicom file
+  std::unique_ptr<uint8_t[]> data_;  // raw compression
+
+  // jpeg or jpeg2000 compression data
+  // to be written to dicom.  Pointer
+  // Allocated on assignment and then
+  // passed to DCMTK where its deleted.
+  // when the dicom is written.
+  std::unique_ptr<DcmPixelItem> dcmPixelItem_;
+
   const int64_t locationX_;
   const int64_t locationY_;
-  size_t size_;
+  size_t size_ = 0;
   const int64_t frameWidth_;
   const int64_t frameHeight_;
   boost::mutex readCounterMutex_;
-  std::atomic_int readCounter_;
+  int64_t readCounter_ = 0;
 
   std::unique_ptr<Compressor> compressor_;
 
   // flag indicates if raw frame bytes should be retained.
   // required for to enable progressive downsampling.
-  const bool store_raw_bytes_;
+  const bool storeRawBytes_;
 
-  std::unique_ptr<uint8_t[]> raw_compressed_bytes_;
-  int64_t raw_compressed_bytes_size_;
+  std::unique_ptr<uint8_t[]> rawCompressedBytes_;
+  int64_t rawCompressedBytesSize_ = 0;
 };
 
 }  // namespace wsiToDicomConverter
