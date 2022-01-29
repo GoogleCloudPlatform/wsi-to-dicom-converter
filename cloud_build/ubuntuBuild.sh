@@ -37,7 +37,8 @@ cd ./libjpeg-turbo-2.1.2/build
 cmake -G"Unix Makefiles" ..
 make -j12
 make install
-cd /workspace
+cd ..
+cd ..
 #4
 wget -O opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.5.4.zip > /dev/null
 unzip opencv.zip  > /dev/null
@@ -47,7 +48,8 @@ cd ./opencv-4.5.4/build
 cmake .. -DBUILD_LIST=core,imgproc,imgcodecs
 make -j12
 make install
-cd /workspace
+cd ..
+cd ..
 #5
 wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.zip > /dev/null
 unzip abseil.zip > /dev/null
@@ -56,7 +58,8 @@ mkdir -p ./abseil-cpp-20211102.0/build
 cd ./abseil-cpp-20211102.0/build
 cmake ..  -DCMAKE_INSTALL_PREFIX=/abseil/install
 cmake  --build . --target install
-cd /workspace
+cd ..
+cd ..
 #6
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
