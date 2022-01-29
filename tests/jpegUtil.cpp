@@ -30,9 +30,9 @@ TEST(jpegUtil, canDecodeJpegValidJpeg) {
   uint64_t lSize = ftell(file);
   rewind(file);
   std::unique_ptr<uint8_t[]> jpegMem = std::make_unique<uint8_t[]>(lSize);
-  const size_t bytesRead = fread(jpegMem.get(), lSize, 1, file);
+  const size_t readCount = fread(jpegMem.get(), lSize, 1, file);
   fclose(file);
-  ASSERT_EQ(bytesRead, lSize);
+  ASSERT_EQ(readCount, 1);
   ASSERT_TRUE(jpegUtil::canDecodeJpeg(957, 715, JCS_RGB, jpegMem.get(), lSize));
 }
 
@@ -43,9 +43,9 @@ TEST(jpegUtil, detectInvalidJpeg) {
   uint64_t lSize = ftell(file);
   rewind(file);
   std::unique_ptr<uint8_t[]> jpegMem = std::make_unique<uint8_t[]>(lSize);
-  const size_t bytesRead = fread(jpegMem.get(), lSize, 1, file);
+  const size_t readCount = fread(jpegMem.get(), lSize, 1, file);
   fclose(file);
-  ASSERT_EQ(bytesRead, lSize);
+  ASSERT_EQ(readCount, 1);
   ASSERT_TRUE(!jpegUtil::canDecodeJpeg(957, 715, JCS_RGB, &(jpegMem[100]),
                                                           lSize-100));
 }
@@ -57,9 +57,9 @@ TEST(jpegUtil, decodeJpegValidJpeg) {
   uint64_t lSize = ftell(file);
   rewind(file);
   std::unique_ptr<uint8_t[]> jpegMem = std::make_unique<uint8_t[]>(lSize);
-  const size_t bytesRead = fread(jpegMem.get(), lSize, 1, file);
+  const size_t readCount = fread(jpegMem.get(), lSize, 1, file);
   fclose(file);
-  ASSERT_EQ(bytesRead, lSize);
+  ASSERT_EQ(readCount, 1);
   uint64_t *decodedImageSizeBytes;
   std::unique_ptr<uint8_t[]> returnMemoryBuffer =
                                     std::make_unique<uint8_t[]>(4*957*715 + 3);
