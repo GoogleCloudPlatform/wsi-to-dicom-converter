@@ -188,7 +188,7 @@ TEST(getSmallestSlideDim, smallest_slide) {
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
   wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
   slide_dim = std::move(converter.getSmallestSlideDim(&osptr, &levels,
-                                                     &saveLevelCompressedRaw));
+                                              &saveLevelCompressedRaw));
   ASSERT_EQ(6, levels.size());
   for (int level = 0; level < 6; ++level) {
       EXPECT_EQ(level, levels[level]);
@@ -238,7 +238,7 @@ TEST(getSmallestSlideDim, smallest_slide_middle) {
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
   wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
   slide_dim = std::move(converter.getSmallestSlideDim(&osptr, &levels,
-                                                     &saveLevelCompressedRaw));
+                                              &saveLevelCompressedRaw));
   EXPECT_EQ(slide_dim->levelWidthDownsampled, 69);
   EXPECT_EQ(slide_dim->levelHeightDownsampled, 92);
   ASSERT_EQ(6, levels.size());
@@ -333,7 +333,8 @@ TEST(getSlideLevelDim, no_cropping_no_progressive) {
   request.debug = true;
   wsiToDicomConverter::WsiToDcm converter(&request);
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
-  slide_dim = std::move(converter.getSlideLevelDim(1, NULL, NULL, false));
+  slide_dim = std::move(converter.getSlideLevelDim(1, nullptr, nullptr,
+                                                   false, nullptr));
   EXPECT_EQ(slide_dim->levelWidthDownsampled, 1110);
   EXPECT_EQ(slide_dim->levelHeightDownsampled, 1483);
   EXPECT_EQ(slide_dim->levelToGet, 0);
@@ -378,14 +379,14 @@ TEST(getSlideLevelDim, croping_no_progressive) {
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
   wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
   smallestSlideDim = std::move(converter.getSmallestSlideDim(&osptr, &levels,
-                                                     &saveLevelCompressedRaw));
+                                              &saveLevelCompressedRaw));
   EXPECT_EQ(levels.size(), 6);
   EXPECT_EQ(smallestSlideDim->levelWidthDownsampled, 69);
   EXPECT_EQ(smallestSlideDim->levelHeightDownsampled, 92);
   slide_dim = std::move(converter.getSlideLevelDim(1,
-                                                   NULL,
+                                                   nullptr,
                                                    smallestSlideDim.get(),
-                                                   false));
+                                                   false, nullptr));
   EXPECT_EQ(slide_dim->levelWidthDownsampled, 1104);
   EXPECT_EQ(slide_dim->levelHeightDownsampled, 1472);
   EXPECT_EQ(slide_dim->levelToGet, 0);
@@ -437,18 +438,18 @@ TEST(getSlideLevelDim, cropping_progressive) {
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
   wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
   smallestSlideDim = std::move(converter.getSmallestSlideDim(&osptr, &levels,
-                                                     &saveLevelCompressedRaw));
+                                              &saveLevelCompressedRaw));
   EXPECT_EQ(levels.size(), 8);
   EXPECT_EQ(smallestSlideDim->levelWidthDownsampled, 17);
   EXPECT_EQ(smallestSlideDim->levelHeightDownsampled, 23);
   slide_dim = std::move(converter.getSlideLevelDim(0,
-                                                   NULL,
+                                                   nullptr,
                                                    smallestSlideDim.get(),
-                                                   false));
+                                                   false, nullptr));
   slide_dim = std::move(converter.getSlideLevelDim(1,
                                                    slide_dim.get(),
                                                    smallestSlideDim.get(),
-                                                   true));
+                                                   true, nullptr));
   EXPECT_EQ(slide_dim->levelWidthDownsampled,  1088);
   EXPECT_EQ(slide_dim->levelHeightDownsampled, 1472);
   EXPECT_EQ(slide_dim->levelToGet, 0);
@@ -501,7 +502,7 @@ TEST(getSlideLevelDim, largest_when_levels_are_out_of_order) {
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> smallestSlideDim;
   wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
   smallestSlideDim = std::move(converter.getSmallestSlideDim(&osptr, &levels,
-                                                     &saveLevelCompressedRaw));
+                                              &saveLevelCompressedRaw));
   ASSERT_EQ(levels.size(), 6);
   // levels correspond to position in downsamples vector
   int expected_levels[] = {4, 5, 2, 1, 0, 3};
@@ -512,9 +513,9 @@ TEST(getSlideLevelDim, largest_when_levels_are_out_of_order) {
   EXPECT_EQ(smallestSlideDim->levelWidthDownsampled, 69);
   EXPECT_EQ(smallestSlideDim->levelHeightDownsampled, 92);
   slide_dim = std::move(converter.getSlideLevelDim(-1,
-                                                   NULL,
+                                                   nullptr,
                                                    smallestSlideDim.get(),
-                                                   false));
+                                                   false, nullptr));
   EXPECT_EQ(slide_dim->levelWidthDownsampled, 2208);
   EXPECT_EQ(slide_dim->levelHeightDownsampled, 2944);
   EXPECT_EQ(slide_dim->levelToGet, 0);

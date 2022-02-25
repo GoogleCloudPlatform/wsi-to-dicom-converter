@@ -208,8 +208,8 @@ class WsiToDcm {
                                       int32_t level,
                                       SlideLevelDim *priorLevel,
                                       SlideLevelDim * smallestSlideDim,
-                                      bool enableProgressiveDownsample = true,
-                                      OpenSlidePtr *osptr = nullptr);
+                                      bool enableProgressiveDownsample,
+                                      OpenSlidePtr *osptr);
 
   int32_t getOpenslideLevelForDownsample(OpenSlidePtr *osr, int64_t downsample);
 

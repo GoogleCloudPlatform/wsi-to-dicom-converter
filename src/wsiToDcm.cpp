@@ -488,7 +488,11 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSmallestSlideDim(
            (wsiRequest_->stopOnLevel < wsiRequest_->startOnLevel ||
                                  level <= wsiRequest_->stopOnLevel); level++) {
       std::unique_ptr<SlideLevelDim> tempSlideLevelDim =
-    std::move(getSlideLevelDim(level, smallestSlideDim.get(), nullptr, osptr));
+    std::move(getSlideLevelDim(level,
+                               smallestSlideDim.get(),
+                               nullptr,
+                               true,
+                               osptr));
       if (tempSlideLevelDim->levelWidthDownsampled == 0 ||
           tempSlideLevelDim->levelHeightDownsampled == 0) {
         // frame is being downsampled to nothing skip file.
@@ -636,7 +640,6 @@ int WsiToDcm::dicomizeTiff() {
   if (wsiRequest_->threads > 0) {
     threadsForPool = std::min(wsiRequest_->threads, threadsForPool);
   }
-
   // Initalize openslide
   std::unique_ptr<OpenSlidePtr> osptr = std::move(initOpenslide());
   // Determine smallest_slide downsample dimensions to enable
@@ -656,7 +659,7 @@ int WsiToDcm::dicomizeTiff() {
     // image dimensions a.k.a. largest image from openslide.
     std::unique_ptr<SlideLevelDim> largestDimensions =
               std::move(getSlideLevelDim(-1, nullptr, smallestSlideDim.get(),
-                                         osptr->osr()));
+                                         true, osptr.get()));
     largestSlideWidthCrop = largestDimensions->cropSourceLevelWidth;
     largestSlideHeightCrop = largestDimensions->cropSourceLevelHeight;
   } else {
@@ -680,12 +683,13 @@ int WsiToDcm::dicomizeTiff() {
   const double levelHeightMM = getDimensionMM(
                         largestSlideLevelHeight_ - largestSlideHeightCrop -
                         initialY_, openslideMPP_Y_);
-
   for (size_t levelIndex = 0; levelIndex < slideLevels.size(); ++levelIndex) {
     const int32_t level = slideLevels[levelIndex];
     slideLevelDim = std::move(getSlideLevelDim(level,
                                                slideLevelDim.get(),
                                                smallestSlideDim.get(),
+                                               true,
+                                               nullptr,
                         higherMagnifcationDicomFiles.dicomFileCount() > 0));
 
     const int64_t downsample = slideLevelDim->downsample;
