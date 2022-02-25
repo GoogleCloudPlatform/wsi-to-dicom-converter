@@ -360,7 +360,7 @@ OFCondition DcmtkUtils::insertBaseImageTags(absl::string_view imageName,
                                             const double firstLevelHeightMm,
                                             DcmDataset* dataSet) {
   std::string imageName_str = std::move(static_cast<std::string>(imageName));
-  OFCondition cond
+  OFCondition cond;
   if (imageName_str.length() > 0) {
     cond = dataSet->putAndInsertOFStringArray(DCM_SeriesDescription,
                                               imageName_str.c_str());
