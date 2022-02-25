@@ -688,7 +688,7 @@ int WsiToDcm::dicomizeTiff() {
     slideLevelDim = std::move(getSlideLevelDim(level,
                                                slideLevelDim.get(),
                                                smallestSlideDim.get(),
-                                               higherMagnifcationDicomFiles.dicomFileCount() > 0,
+                            higherMagnifcationDicomFiles.dicomFileCount() > 0,
                                                nullptr));
 
     const int64_t downsample = slideLevelDim->downsample;
