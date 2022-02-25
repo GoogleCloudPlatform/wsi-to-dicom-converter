@@ -94,7 +94,8 @@ int main(int argc, char *argv[]) {
         "compression, supported compressions: jpeg, jpeg2000, raw")
         (
         "seriesDescription",
-        programOptions::value<std::string>(&seriesDescription)->required(),
+        programOptions::value<std::string>(&seriesDescription)->
+                                                      default_value(""),
         "series description in SeriesDescription tag")(
         "studyId",
         programOptions::value<std::string>(&studyId)->required()->default_value(

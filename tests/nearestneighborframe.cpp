@@ -37,7 +37,6 @@ TEST(NearestNeighborFrame, jpeg) {
 
 TEST(NearestNeighborFrame, jpeg2000Scaling) {
   DICOMFileFrameRegionReader dicom_frame_reader;
-  std::vector<std::unique_ptr<DcmFileDraft>> higher_magnifcation_dicom_files;
   OpenSlidePtr osptr = OpenSlidePtr(tiffFileName);
   NearestNeighborFrame frame(&osptr, 0, 0, 0, 1000, 1000, 1, 100, 100, JPEG2000,
                              1, true, &dicom_frame_reader);
