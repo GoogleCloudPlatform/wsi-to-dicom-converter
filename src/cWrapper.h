@@ -40,8 +40,7 @@ int wsi2dcm(const char* inputFile, const char* outputFileMask,
             int retileLevels, int* downsamples, bool tiled, int batchLimit,
             int threads, bool debug, bool stopDownsamplingAtSingleFrame,
             bool useOpenCVDownsampling, bool floorCorrectDownsampling,
-            bool progressiveDownsample,
-            bool cropFrameToGenerateUniformPixelSpacing);
+            bool progressiveDownsample);
 
 // Performs file checks and generation of tasks
 // for generation of frames and DICOM files
@@ -54,8 +53,7 @@ int wsi2dcmJson(const char* inputFile, const char* outputFileMask,
                 int* downsamples, bool tiled, int batchLimit, int threads,
                 bool debug, bool stopDownsamplingAtSingleFrame,
                 bool useOpenCVDownsampling, bool floorCorrectDownsampling,
-                bool progressiveDownsample,
-                bool cropFrameToGenerateUniformPixelSpacing);
+                bool progressiveDownsample);
 #ifdef __cplusplus
 }
 #endif
