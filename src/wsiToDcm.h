@@ -198,7 +198,6 @@ class WsiToDcm {
   std::unique_ptr<SlideLevelDim> getSlideLevelDim(
                                       int32_t level,
                                       SlideLevelDim *priorLevel,
-                                      SlideLevelDim * smallestSlideDim,
                                       bool enableProgressiveDownsample,
                                       OpenSlidePtr *osptr);
 
