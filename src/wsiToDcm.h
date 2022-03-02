@@ -71,12 +71,6 @@ class SlideLevelDim {
   // frame height in level being generated (pixels)
   int64_t levelFrameHeight;
 
-  // Pixels to crop source level width.
-  int64_t cropSourceLevelWidth;
-
-  // Pixels to crop source level height.
-  int64_t cropSourceLevelHeight;
-
   // Compression to use to generate output
   DCM_Compression levelCompression;
 
@@ -168,9 +162,6 @@ struct WsiRequest {
   // prefer progressive downsampling.
   bool preferProgressiveDownsampling = false;
 
-  // crop frame so downsampleing generates uniform pixel spacing.
-  bool cropFrameToGenerateUniformPixelSpacing = false;
-
   cv::InterpolationFlags openCVInterpolationMethod = cv::INTER_LANCZOS4;
 
   DCM_Compression firstlevelCompression = JPEG;
@@ -198,8 +189,8 @@ class WsiToDcm {
   double  getDimensionMM(const int64_t adjustedFirstLevelDim,
                          const double firstLevelMpp);
 
-  std::unique_ptr<SlideLevelDim>  getSmallestSlideDim(OpenSlidePtr *osptr,
-                                          std::vector<int32_t> *slideLevels,
+  void  getOptimalDownSamplingOrder(OpenSlidePtr *osptr,
+                                    std::vector<int32_t> *slideLevels,
                                     std::vector<bool> *saveLevelCompressedRaw);
 
   // level = downsampled slide level to return. level < 0 forces to return
@@ -207,7 +198,6 @@ class WsiToDcm {
   std::unique_ptr<SlideLevelDim> getSlideLevelDim(
                                       int32_t level,
                                       SlideLevelDim *priorLevel,
-                                      SlideLevelDim * smallestSlideDim,
                                       bool enableProgressiveDownsample,
                                       OpenSlidePtr *osptr);
 

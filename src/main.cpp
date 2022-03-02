@@ -48,7 +48,6 @@ int main(int argc, char *argv[]) {
   bool stopDownsamplingAtSingleFrame;
   bool floorCorrectDownsampling;
   bool preferProgressiveDownsampling;
-  bool cropFrameToGenerateUniformPixelSpacing;
   bool SVSImportPreferScannerTileingForLargestLevel;
   bool SVSImportPreferScannerTileingForAllLevels;
   int compressionQuality;
@@ -146,13 +145,6 @@ int main(int argc, char *argv[]) {
         programOptions::value<int>(
         &compressionQuality)->default_value(80),
         "Compression quality range(0 - 100")
-        ("uniformPixelSpacing",
-        programOptions::bool_switch(
-        &cropFrameToGenerateUniformPixelSpacing)->default_value(false),
-        "Crop imaging to generate downsampled images with unifrom pixel "
-        "spacing. Not compatiable with dropFirstRowAndColumn. Recommended, "
-        "use uniformPixelSpacing in combination with both "
-        "--stopDownsamplingAtSingleFrame --progressiveDownsample")
         ("opencvDownsampling",
         programOptions::value<std::string>(
         &downsamplingAlgorithm)->default_value("NONE"),
@@ -204,15 +196,10 @@ int main(int argc, char *argv[]) {
               << exception.what() << ", application will now exit" << std::endl;
     return ERROR_UNHANDLED_EXCEPTION;
   }
-  if (cropFrameToGenerateUniformPixelSpacing && dropFirstRowAndColumn) {
-     std::cerr << "Options: uniformPixelSpacing and dropFirstRowAndColumn are"
-              << " not compatible." << std::endl;
-      return 1;
-  }
-  if ((cropFrameToGenerateUniformPixelSpacing || dropFirstRowAndColumn) &&
+  if (dropFirstRowAndColumn &&
      (SVSImportPreferScannerTileingForLargestLevel ||
       SVSImportPreferScannerTileingForAllLevels)) {
-     std::cerr << "Options: uniformPixelSpacing and dropFirstRowAndColumn are"
+     std::cerr << "Options: dropFirstRowAndColumn is"
               << " not compatible with Options: " <<
               "SVSImportPreferScannerTileingForLargestLevel and " <<
               "SVSImportPreferScannerTileingForAllLevels." << std::endl;
@@ -254,8 +241,6 @@ int main(int argc, char *argv[]) {
   request.stopDownsamplingAtSingleFrame = stopDownsamplingAtSingleFrame;
   request.floorCorrectDownsampling = floorCorrectDownsampling;
   request.preferProgressiveDownsampling = preferProgressiveDownsampling;
-  request.cropFrameToGenerateUniformPixelSpacing =
-                                      cropFrameToGenerateUniformPixelSpacing;
   request.SVSImportPreferScannerTileingForLargestLevel =
           SVSImportPreferScannerTileingForLargestLevel;
   request.SVSImportPreferScannerTileingForAllLevels =

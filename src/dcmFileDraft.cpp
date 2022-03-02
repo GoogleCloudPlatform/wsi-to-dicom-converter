@@ -44,7 +44,7 @@ DcmFileDraft::DcmFileDraft(
     absl::string_view seriesId, absl::string_view imageName,
     DCM_Compression compression, bool tiled, DcmTags* additionalTags,
     double firstLevelWidthMm, double firstLevelHeightMm, int64_t downsample,
-    const std::vector<std::unique_ptr<DcmFileDraft>> * prior_frame_batches,
+    const std::vector<std::unique_ptr<AbstractDcmFile>> * prior_frame_batches,
     absl::string_view sourceImageDescription) {
   framesData_ = std::move(framesData);
   outputFileMask_ = std::move(static_cast<std::string>(outputFileMask));

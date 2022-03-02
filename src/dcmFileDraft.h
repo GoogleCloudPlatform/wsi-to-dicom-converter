@@ -24,6 +24,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "src/abstractDcmFile.h"
 #include "src/dcmTags.h"
 #include "src/dcmtkImgDataInfo.h"
 #include "src/enums.h"
@@ -32,7 +33,7 @@
 namespace wsiToDicomConverter {
 
 // Represents single DICOM file with metadata
-class DcmFileDraft {
+class DcmFileDraft : public AbstractDcmFile {
  public:
   // DcmTags* additionalTags - is read-only input, but can't be marked const
   // since contains and using dcmtk objects
@@ -64,21 +65,19 @@ class DcmFileDraft {
                absl::string_view imageName, DCM_Compression compression,
                bool tiled, DcmTags* additionalTags, double firstLevelWidthMm,
                double firstLevelHeightMmm, int64_t downsample,
-              const std::vector<std::unique_ptr<DcmFileDraft>>
+              const std::vector<std::unique_ptr<AbstractDcmFile>>
               *prior_frame_batches, absl::string_view sourceImageDescription);
 
-  ~DcmFileDraft();
-
-  void saveFile();
-  void write(DcmOutputStream* outStream);
-
-  int64_t frameWidth() const;
-  int64_t frameHeight() const;
-  int64_t imageWidth() const;
-  int64_t imageHeight() const;
-  int64_t fileFrameCount() const;
-  int64_t downsample() const;
-  Frame* frame(int64_t idx) const;
+  virtual ~DcmFileDraft();
+  virtual void saveFile();
+  virtual void write(DcmOutputStream* outStream);
+  virtual int64_t frameWidth() const;
+  virtual int64_t frameHeight() const;
+  virtual int64_t imageWidth() const;
+  virtual int64_t imageHeight() const;
+  virtual int64_t fileFrameCount() const;
+  virtual int64_t downsample() const;
+  virtual Frame* frame(int64_t idx) const;
 
  private:
   std::vector<std::unique_ptr<Frame> > framesData_;
