@@ -355,15 +355,15 @@ TEST(getSlideLevelDim, progressive) {
   slide_dim = std::move(converter.getSlideLevelDim(1,
                                                    slide_dim.get(),
                                                    true, nullptr));
-  EXPECT_EQ(slide_dim->levelWidthDownsampled,  1088);
-  EXPECT_EQ(slide_dim->levelHeightDownsampled, 1472);
+  EXPECT_EQ(slide_dim->levelWidthDownsampled,  1110);
+  EXPECT_EQ(slide_dim->levelHeightDownsampled, 1483);
   EXPECT_EQ(slide_dim->levelToGet, 0);
   EXPECT_EQ(slide_dim->level, 1);
   EXPECT_EQ(slide_dim->downsample, 2);
   EXPECT_EQ(slide_dim->multiplicator, 1);
   EXPECT_EQ(slide_dim->downsampleOfLevel, 2);
-  EXPECT_EQ(slide_dim->levelWidth, 2176);
-  EXPECT_EQ(slide_dim->levelHeight, 2944);
+  EXPECT_EQ(slide_dim->levelWidth, 2220);
+  EXPECT_EQ(slide_dim->levelHeight, 2967);
   EXPECT_EQ(slide_dim->levelFrameWidth, 25);
   EXPECT_EQ(slide_dim->levelFrameHeight, 25);
   EXPECT_EQ(slide_dim->frameWidthDownsampled, 50);
@@ -414,8 +414,8 @@ TEST(getSlideLevelDim, largest_when_levels_are_out_of_order) {
   slide_dim = std::move(converter.getSlideLevelDim(-1,
                                                    nullptr,
                                                    false, nullptr));
-  EXPECT_EQ(slide_dim->levelWidthDownsampled, 2208);
-  EXPECT_EQ(slide_dim->levelHeightDownsampled, 2944);
+  EXPECT_EQ(slide_dim->levelWidthDownsampled, 2220);
+  EXPECT_EQ(slide_dim->levelHeightDownsampled, 2967);
   EXPECT_EQ(slide_dim->levelToGet, 0);
   EXPECT_EQ(slide_dim->downsample, 1);
   EXPECT_EQ(slide_dim->level, 0);
