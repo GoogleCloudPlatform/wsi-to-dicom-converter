@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
   bool dropFirstRowAndColumn;
   bool stopDownsamplingAtSingleFrame;
   bool floorCorrectDownsampling;
-  bool preferProgressiveDownsampling;  
+  bool preferProgressiveDownsampling;
   bool SVSImportPreferScannerTileingForLargestLevel;
   bool SVSImportPreferScannerTileingForAllLevels;
   int compressionQuality;

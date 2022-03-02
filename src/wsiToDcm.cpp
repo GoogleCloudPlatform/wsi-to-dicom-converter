@@ -548,7 +548,7 @@ void WsiToDcm::getOptimalDownSamplingOrder(
                 levelProcessOrder.end(), downsample_order);
 
       for (size_t idx = 0; idx < levelProcessOrder.size(); ++idx) {
-        const int32_t level = std::get<0>(levelProcessOrder[idx]);        
+        const int32_t level = std::get<0>(levelProcessOrder[idx]);
         slideLevels->push_back(level);
         if (level == smallestSlideDim->level) {
           // if last slice do not save raw
@@ -579,7 +579,7 @@ void WsiToDcm::getOptimalDownSamplingOrder(
           saveLevelCompressedRaw->push_back(progDS);
         }
       }
-    }    
+    }
   }
 
 int WsiToDcm::dicomizeTiff() {
@@ -596,10 +596,11 @@ int WsiToDcm::dicomizeTiff() {
   std::unique_ptr<OpenSlidePtr> osptr = std::move(initOpenslide());
   // Determine smallest_slide downsample dimensions to enable
   // slide pixel spacing normalization croping to ensure pixel
-  // spacing across all downsample images is uniform.  
-  std::vector<int32_t> slideLevels;  
-  std::vector<bool> saveLevelCompressedRaw;  
-  getOptimalDownSamplingOrder(osptr.get(), &slideLevels, &saveLevelCompressedRaw);
+  // spacing across all downsample images is uniform.
+  std::vector<int32_t> slideLevels;
+  std::vector<bool> saveLevelCompressedRaw;
+  getOptimalDownSamplingOrder(osptr.get(), &slideLevels,
+                              &saveLevelCompressedRaw);
   osptr = nullptr;
 
   DICOMFileFrameRegionReader higherMagnifcationDicomFiles;
@@ -629,7 +630,7 @@ int WsiToDcm::dicomizeTiff() {
     const int64_t levelHeightDownsampled =
                                        slideLevelDim->levelHeightDownsampled;
     const int64_t levelFrameWidth = slideLevelDim->levelFrameWidth;
-    const int64_t levelFrameHeight = slideLevelDim->levelFrameHeight;    
+    const int64_t levelFrameHeight = slideLevelDim->levelFrameHeight;
     const std::string sourceDerivationDescription =
                                     slideLevelDim->sourceDerivationDescription;
 
