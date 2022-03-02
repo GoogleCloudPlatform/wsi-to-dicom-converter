@@ -37,7 +37,7 @@ namespace wsiToDicomConverter {
 static int bufferSize = 10000;
 
 TEST(fileGeneration, withoutConcatenation) {
-  std::vector<std::unique_ptr<DcmFileDraft>> empty_dicom_file_vec;
+  std::vector<std::unique_ptr<AbstractDcmFile>> empty_dicom_file_vec;
   // emptyPixelData
   std::vector<std::unique_ptr<Frame>> framesData;
   for (int idx = 0; idx < 100; ++idx) {
@@ -73,7 +73,7 @@ TEST(fileGeneration, withoutConcatenation) {
 }
 
 TEST(fileGeneration, withConcatenation) {
-  std::vector<std::unique_ptr<DcmFileDraft>> dicom_file_vec;
+  std::vector<std::unique_ptr<AbstractDcmFile>> dicom_file_vec;
   std::vector<std::unique_ptr<Frame>> framesData;
   for (int idx = 0; idx < 50; ++idx) {
       framesData.push_back(std::make_unique<TestFrame>(500, 500));
@@ -127,7 +127,7 @@ TEST(fileGeneration, fileSave) {
 
 TEST(fileGeneration, fileSaveBatch) {
   // emptyPixelData
-  std::vector<std::unique_ptr<DcmFileDraft>> dicom_file_vec;
+  std::vector<std::unique_ptr<AbstractDcmFile>> dicom_file_vec;
   std::vector<std::unique_ptr<Frame>> framesData;
   for (int count = 0; count < 9; ++count) {
     for (int idx = 0; idx < 100; ++idx) {

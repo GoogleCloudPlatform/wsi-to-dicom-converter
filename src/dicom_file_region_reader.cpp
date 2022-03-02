@@ -27,12 +27,12 @@ DICOMFileFrameRegionReader::~DICOMFileFrameRegionReader() {
   clearDicomFiles();
 }
 
-DcmFileDraft * DICOMFileFrameRegionReader::dicomFile(size_t index) {
+AbstractDcmFile * DICOMFileFrameRegionReader::dicomFile(size_t index) {
   return dcmFiles_.at(index).get();
 }
 
 void DICOMFileFrameRegionReader::setDicomFiles(
-                      std::vector<std::unique_ptr<DcmFileDraft>> dcmFiles,
+                      std::vector<std::unique_ptr<AbstractDcmFile>> dcmFiles,
                       std::unique_ptr<TiffFile> tiffFile) {
   // all files should have frames with same dimensions
   clearDicomFiles();
@@ -44,7 +44,7 @@ void DICOMFileFrameRegionReader::setDicomFiles(
     clearDicomFiles();
     return;
   }
-  const DcmFileDraft & first_dcm_file = (*dcmFiles_.at(0));
+  const AbstractDcmFile & first_dcm_file = (*dcmFiles_.at(0));
   if (!first_dcm_file.frame(0)->hasRawABGRFrameBytes()) {
     clearDicomFiles();
     return;
@@ -88,7 +88,7 @@ Frame* DICOMFileFrameRegionReader::framePtr(int64_t index) {
     //   pointer to frame
     const int64_t fileCount = dcmFiles_.size();
     for (int64_t fileIdx = 0; fileIdx < fileCount; ++fileIdx) {
-      const DcmFileDraft & dcmFile = (*dcmFiles_.at(fileIdx));
+      const AbstractDcmFile & dcmFile = (*dcmFiles_.at(fileIdx));
       const int64_t frameCount = dcmFile.fileFrameCount();
       if (index >= frameCount) {
         index -= frameCount;
