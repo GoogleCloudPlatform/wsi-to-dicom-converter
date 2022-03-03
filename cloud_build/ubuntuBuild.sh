@@ -64,9 +64,10 @@ cd ..
 #6
 wget -O dcmtk-3.6.6.zip https://github.com/DCMTK/dcmtk/archive/refs/tags/DCMTK-3.6.6.zip > /dev/null
 unzip dcmtk-3.6.6.zip > /dev/null
-rm dcmtk-3.6.6.zip.zip
-mkdir -p ./dcmtk-3.6.6/build
-cd ./dcmtk-3.6.6/build
+rm dcmtk-3.6.6.zip
+mv ./dcmtk-DCMTK-3.6.6 ./dcmtk
+mkdir -p ./dcmtk/build
+cd ./dcmtk/build
 cmake -DDCMTK_FORCE_FPIC_ON_UNIX:BOOL=TRUE -DDCMTK_ENABLE_CXX11:BOOL=TRUE -DDCMTK_ENABLE_CHARSET_CONVERSION:BOOL=FALSE ..
 make -j12
 make DESTDIR=/dcmtk install
