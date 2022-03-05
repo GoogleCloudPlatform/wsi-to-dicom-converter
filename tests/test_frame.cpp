@@ -15,6 +15,7 @@
 
 #include <cstring>
 #include <memory>
+#include <utility>
 
 #include "tests/test_frame.h"
 
@@ -35,9 +36,10 @@ TestFrame::TestFrame(int64_t width, int64_t height) : Frame(0,
   for (size_t idx = 0; idx < width * height; ++idx) {
       rawValue_[idx] = 0;
   }
-  std::unique_ptr<uint8_t[]> dicom_mem_ = std::make_unique<uint8_t[]>(width * height * sizeof (uint32_t));
-  std::memcpy(dicom_mem_.get(), rawValue_.get(), width * height * sizeof (uint32_t));
-  setDicomFrameBytes(std::move(dicom_mem_), width * height * sizeof (uint32_t));
+  const uint64_t memSize = width * height * sizeof(uint32_t);
+  std::unique_ptr<uint8_t[]> dicom_mem_ = std::make_unique<uint8_t[]>(memSize);
+  std::memcpy(dicom_mem_.get(), rawValue_.get(), memSize);
+  setDicomFrameBytes(std::move(dicom_mem_), memSize);
 }
 
 TestFrame::TestFrame(int64_t width, int64_t height, uint32_t value) : Frame(0,
@@ -54,11 +56,10 @@ TestFrame::TestFrame(int64_t width, int64_t height, uint32_t value) : Frame(0,
   for (size_t idx = 0; idx < width * height; ++idx) {
       rawValue_[idx] = value;
   }
-  std::unique_ptr<uint8_t[]> dicom_mem_ = std::make_unique<uint8_t[]>(width * height * sizeof (uint32_t));
-  std::memcpy(dicom_mem_.get(), rawValue_.get(), width * height * sizeof (uint32_t));
-  setDicomFrameBytes(std::move(dicom_mem_), width * height * sizeof (uint32_t));
-  
-
+  const uint64_t memSize = width * height * sizeof(uint32_t);
+  std::unique_ptr<uint8_t[]> dicom_mem_ = std::make_unique<uint8_t[]>(memSize);
+  std::memcpy(dicom_mem_.get(), rawValue_.get(), memSize);
+  setDicomFrameBytes(std::move(dicom_mem_), memSize);
 }
 
 void TestFrame::incSourceFrameReadCounter() {
