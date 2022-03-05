@@ -27,8 +27,6 @@ compare () {
 
 #building binaries
 bash ./cloud_build/ubuntuBuild.sh
-#installing dcmtk tools
-apt-get install wget dcmtk -y
 
 fileName=./tests/CMU-1-Small-Region.svs
 
