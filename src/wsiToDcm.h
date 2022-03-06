@@ -36,8 +36,6 @@ class SlideLevelDim {
   // level being downsampled from
   int32_t levelToGet;
 
-  std::unique_ptr<OpenSlidePtr> osptr;
-
   // total downsample being done from highest mag (level 0)
   int64_t downsample;
 
@@ -182,26 +180,23 @@ class WsiToDcm {
   int wsi2dcm();
 
   // Generates tasks and handling thread pool
-  double  getOpenSlideDimensionMM(OpenSlidePtr *osr,
-                                  const char* openSlideLevelDimProperty);
-  std::unique_ptr<OpenSlidePtr> initOpenslide();
+  double getOpenSlideDimensionMM(const char* openSlideProperty);
+  void initOpenSlide();
 
-  double  getDimensionMM(const int64_t adjustedFirstLevelDim,
-                         const double firstLevelMpp);
+  double getDimensionMM(const int64_t adjustedFirstLevelDim,
+                        const double firstLevelMpp);
 
-  void  getOptimalDownSamplingOrder(OpenSlidePtr *osptr,
-                                    std::vector<int32_t> *slideLevels,
-                                    std::vector<bool> *saveLevelCompressedRaw);
+  void getOptimalDownSamplingOrder(std::vector<int32_t> *slideLevels,
+                                   std::vector<bool> *saveLevelCompressedRaw,
+                                   SlideLevelDim *startPyramidCreationDim);
 
   // level = downsampled slide level to return. level < 0 forces to return
   // dimensions of largest level, 0
   std::unique_ptr<SlideLevelDim> getSlideLevelDim(
                                       int32_t level,
-                                      SlideLevelDim *priorLevel,
-                                      bool enableProgressiveDownsample,
-                                      OpenSlidePtr *osptr);
+                                      SlideLevelDim *priorLevel);
 
-  int32_t getOpenslideLevelForDownsample(OpenSlidePtr *osr, int64_t downsample);
+  int32_t getOpenslideLevelForDownsample(int64_t downsample);
 
   int dicomizeTiff();
   void checkArguments();
@@ -217,7 +212,11 @@ class WsiToDcm {
   double openslideMPP_X_;
   double openslideMPP_Y_;
   bool customDownSampleFactorsDefined_;
+  std::unique_ptr<OpenSlidePtr> osptr_;
   std::unique_ptr<TiffFile> tiffFile_;
+
+  openslide_t* getOpenSlidePtr();
+  void clearOpenSlidePtr();
 };
 
 }  // namespace wsiToDicomConverter
