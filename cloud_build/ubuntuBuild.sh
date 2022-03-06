@@ -72,7 +72,7 @@ cmake -DDCMTK_FORCE_FPIC_ON_UNIX:BOOL=TRUE -DDCMTK_ENABLE_CXX11:BOOL=TRUE -DDCMT
 make -j12
 make DESTDIR=/dcmtk install
 export DCMDICTPATH=/dcmtk/usr/local/share/dcmtk/dicom.dic
-export PATH=/dcmtk/build/bin:$PATH
+export PATH=/dcmtk/usr/local/bin:$PATH
 cd ..
 cd ..
 #7

@@ -133,8 +133,6 @@ void NearestNeighborFrame::sliceFrame() {
     rawCompressedBytes_ = std::move(compress_memory(
                 reinterpret_cast<uint8_t*>(raw_bytes.get()), frame_mem_size *
                               sizeof(uint32_t), &rawCompressedBytesSize_));
-    BOOST_LOG_TRIVIAL(debug) << " compressed raw frame size: " <<
-                                  rawCompressedBytesSize_ / 1024 << "kb";
   }
 
   boost::gil::copy_and_convert_pixels(gil, rgbView, convert_rgba_to_rgb());
@@ -142,7 +140,6 @@ void NearestNeighborFrame::sliceFrame() {
   std::unique_ptr<uint8_t[]>mem = std::move(compressor_->compress(rgbView,
                                                                   &size));
   setDicomFrameBytes(std::move(mem), size);
-  BOOST_LOG_TRIVIAL(debug) << " frame size: " << size / 1024 << "kb";
   done_ = true;
 }
 

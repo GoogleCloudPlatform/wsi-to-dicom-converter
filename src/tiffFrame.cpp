@@ -258,7 +258,6 @@ bool TiffFrame::canDecodeJpeg() {
                                               jpegBytes.compressedJpeg(),
                                               jpegBytes.compressedJpegSize());
   if (result) {
-    BOOST_LOG_TRIVIAL(info) << "Decoded jpeg in TIFF file.";
     return true;
   }
   BOOST_LOG_TRIVIAL(error) << "Error occured decoding jpeg in TIFF file.";

@@ -265,10 +265,7 @@ void OpenCVInterpolationFrame::sliceFrame() {
                                    reinterpret_cast<uint8_t*>(raw_bytes.get()),
                                    frame_mem_size * sizeof(uint32_t),
                                    &rawCompressedBytesSize_));
-    BOOST_LOG_TRIVIAL(debug) << " compressed raw frame size: " <<
-                                rawCompressedBytesSize_ / 1024 << "kb";
-  }
-  BOOST_LOG_TRIVIAL(debug) << " frame size: " << size / 1024 << "kb";
+  }  
   done_ = true;
 }
 
