@@ -159,9 +159,8 @@ TEST(getOpenslideLevelForDownsample, image_with_one_level) {
   wsiToDicomConverter::WsiToDcm converter(&request);
 
   // Not great test. Image has one level.
-  wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
-  EXPECT_EQ(0, converter.getOpenslideLevelForDownsample(&osptr, 1));
-  EXPECT_EQ(0, converter.getOpenslideLevelForDownsample(&osptr, 99));
+  EXPECT_EQ(0, converter.getOpenslideLevelForDownsample(1));
+  EXPECT_EQ(0, converter.getOpenslideLevelForDownsample(99));
 }
 
 TEST(getOptimalDownSamplingOrder, smallest_slide) {
@@ -185,9 +184,9 @@ TEST(getOptimalDownSamplingOrder, smallest_slide) {
   wsiToDicomConverter::WsiToDcm converter(&request);
   std::vector<int32_t> levels;
   std::vector<bool> saveLevelCompressedRaw;
-  wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
-  converter.getOptimalDownSamplingOrder(&osptr, &levels,
-                                        &saveLevelCompressedRaw);
+  converter.getOptimalDownSamplingOrder(&levels,
+                                        &saveLevelCompressedRaw,
+                                        nullptr);
   ASSERT_EQ(6, levels.size());
   for (int level = 0; level < 6; ++level) {
       EXPECT_EQ(level, levels[level]);
@@ -222,9 +221,9 @@ TEST(getOptimalDownSamplingOrder, smallest_slide_middle) {
   wsiToDicomConverter::WsiToDcm converter(&request);
   std::vector<int32_t> levels;
   std::vector<bool> saveLevelCompressedRaw;
-  wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
-  converter.getOptimalDownSamplingOrder(&osptr, &levels,
-                                        &saveLevelCompressedRaw);
+  converter.getOptimalDownSamplingOrder(&levels,
+                                        &saveLevelCompressedRaw,
+                                        nullptr);
   ASSERT_EQ(6, levels.size());
   // levels correspond to position in downsamples vector
   // level 64 ignored due to stopDownsamplingAtSingleFrame = true
@@ -253,8 +252,7 @@ TEST(getDownsampledLevelDimensionMM, width) {
   request.downsamples = std::move(downsamples);
   request.debug = true;
   wsiToDicomConverter::WsiToDcm converter(&request);
-  wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
-  double osDim = converter.getOpenSlideDimensionMM(&osptr, "openslide.mpp-x");
+  double osDim = converter.getOpenSlideDimensionMM("openslide.mpp-x");
   double dimX = converter.getDimensionMM(2220, osDim);
   ASSERT_TRUE(std::abs(dimX - 1.10778) < 0.0001);
 }
@@ -278,8 +276,7 @@ TEST(getDownsampledLevelDimensionMM, height) {
   request.downsamples = std::move(downsamples);
   request.debug = true;
   wsiToDicomConverter::WsiToDcm converter(&request);
-  wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
-  double osDim = converter.getOpenSlideDimensionMM(&osptr, "openslide.mpp-y");
+  double osDim = converter.getOpenSlideDimensionMM("openslide.mpp-y");
   double dimY = converter.getDimensionMM(2967, osDim);
   ASSERT_TRUE(std::abs(dimY - 1.48053) < 0.0001);
 }
@@ -304,8 +301,7 @@ TEST(getSlideLevelDim, no_progressive) {
   request.debug = true;
   wsiToDicomConverter::WsiToDcm converter(&request);
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
-  slide_dim = std::move(converter.getSlideLevelDim(1, nullptr,
-                                                   false, nullptr));
+  slide_dim = std::move(converter.getSlideLevelDim(1, nullptr));
   EXPECT_EQ(slide_dim->levelWidthDownsampled, 1110);
   EXPECT_EQ(slide_dim->levelHeightDownsampled, 1483);
   EXPECT_EQ(slide_dim->levelToGet, 0);
@@ -345,16 +341,11 @@ TEST(getSlideLevelDim, progressive) {
   std::vector<int32_t> levels;
   std::vector<bool> saveLevelCompressedRaw;
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
-  wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
-  converter.getOptimalDownSamplingOrder(&osptr, &levels,
-                                        &saveLevelCompressedRaw);
+  converter.getOptimalDownSamplingOrder(&levels,
+                                        &saveLevelCompressedRaw, nullptr);
   EXPECT_EQ(levels.size(), 8);
-  slide_dim = std::move(converter.getSlideLevelDim(0,
-                                                   nullptr,
-                                                   false, nullptr));
-  slide_dim = std::move(converter.getSlideLevelDim(1,
-                                                   slide_dim.get(),
-                                                   true, nullptr));
+  slide_dim = std::move(converter.getSlideLevelDim(0, nullptr));
+  slide_dim = std::move(converter.getSlideLevelDim(1, slide_dim.get()));
   EXPECT_EQ(slide_dim->levelWidthDownsampled,  1110);
   EXPECT_EQ(slide_dim->levelHeightDownsampled, 1483);
   EXPECT_EQ(slide_dim->levelToGet, 0);
@@ -369,64 +360,5 @@ TEST(getSlideLevelDim, progressive) {
   EXPECT_EQ(slide_dim->frameWidthDownsampled, 50);
   EXPECT_EQ(slide_dim->frameHeightDownsampled, 50);
   EXPECT_FALSE(slide_dim->readOpenslide);
-}
-
-
-TEST(getSlideLevelDim, largest_when_levels_are_out_of_order) {
-  std::vector<int>  downsamples;
-  downsamples.push_back(16);  // Level = 0
-  downsamples.push_back(8);   // Level = 1
-  downsamples.push_back(4);   // Level = 2
-  downsamples.push_back(32);  // Level = 3
-  downsamples.push_back(1);   // Level = 4
-  downsamples.push_back(2);   // Level = 5
-  wsiToDicomConverter::WsiRequest request;
-  request.inputFile = tiffFileName;
-  request.outputFileMask = testPath;
-  request.frameSizeX = 100;
-  request.frameSizeY = 100;
-  request.startOnLevel = 0;
-  request.compression = dcmCompressionFromString("jpeg");
-  request.quality = 80;
-  request.imageName = "image";
-  request.studyId = "study";
-  request.seriesId = "series";
-  request.batchLimit = 100;
-  request.retileLevels = 6;
-  request.stopDownsamplingAtSingleFrame = true;
-  request.preferProgressiveDownsampling = true;
-  request.downsamples = std::move(downsamples);
-  request.debug = true;
-  wsiToDicomConverter::WsiToDcm converter(&request);
-  std::vector<int32_t> levels;
-  std::vector<bool> saveLevelCompressedRaw;
-  std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
-  wsiToDicomConverter::OpenSlidePtr osptr(tiffFileName);
-  converter.getOptimalDownSamplingOrder(&osptr, &levels,
-                                        &saveLevelCompressedRaw);
-  ASSERT_EQ(levels.size(), 6);
-  // levels correspond to position in downsamples vector
-  int expected_levels[] = {4, 5, 2, 1, 0, 3};
-  for (int level = 0; level < 4; ++level) {
-      EXPECT_EQ(expected_levels[level], levels[level]);
-  }
-  // -1 = get largest slice.
-  slide_dim = std::move(converter.getSlideLevelDim(-1,
-                                                   nullptr,
-                                                   false, nullptr));
-  EXPECT_EQ(slide_dim->levelWidthDownsampled, 2220);
-  EXPECT_EQ(slide_dim->levelHeightDownsampled, 2967);
-  EXPECT_EQ(slide_dim->levelToGet, 0);
-  EXPECT_EQ(slide_dim->downsample, 1);
-  EXPECT_EQ(slide_dim->level, 0);
-  EXPECT_EQ(slide_dim->multiplicator, 1);
-  EXPECT_EQ(slide_dim->downsampleOfLevel, 1);
-  EXPECT_EQ(slide_dim->levelWidth, 2220);
-  EXPECT_EQ(slide_dim->levelHeight, 2967);
-  EXPECT_EQ(slide_dim->levelFrameWidth, 100);
-  EXPECT_EQ(slide_dim->levelFrameHeight, 100);
-  EXPECT_EQ(slide_dim->frameWidthDownsampled, 100);
-  EXPECT_EQ(slide_dim->frameHeightDownsampled, 100);
-  EXPECT_TRUE(slide_dim->readOpenslide);
 }
 
