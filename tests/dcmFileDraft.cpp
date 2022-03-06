@@ -80,7 +80,7 @@ TEST(fileGeneration, withConcatenation) {
   }
   std::unique_ptr<DcmFileDraft> batch_0_dicom = std::make_unique<DcmFileDraft>(
       std::move(framesData), "./", 50000, 50000, 0, 0, 0,
-      "study", "series", "image", JPEG2000, true, nullptr, 0.0, 0.0, 1,
+      "study", "series", "image", RAW, true, nullptr, 0.0, 0.0, 1,
       &dicom_file_vec, "FileGeneration with concatenation 1");
   dicom_file_vec.push_back(std::move(batch_0_dicom));
 
@@ -89,7 +89,7 @@ TEST(fileGeneration, withConcatenation) {
       framesData.push_back(std::make_unique<TestFrame>(500, 500));
   }
   DcmFileDraft draft(std::move(framesData), "./", 50000, 50000, 0, 0, 0,
-      "study", "series", "image", JPEG2000, true, nullptr, 0.0, 0.0, 1,
+      "study", "series", "image", RAW, true, nullptr, 0.0, 0.0, 1,
       &dicom_file_vec, "FileGeneration with concatenation 2");
 
   OFVector<Uint8> writeBuffer(bufferSize);

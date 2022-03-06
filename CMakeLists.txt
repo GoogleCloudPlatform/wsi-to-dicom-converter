@@ -24,9 +24,9 @@ AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/src/ DICOMIZER_SOURCES)
 include_directories(wsi2dcmCli PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/)
 include_directories(wsi2dcmCli PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/)
 include_directories(wsi2dcmCli PUBLIC /usr/local/include/opencv4/)
-include_directories(wsi2dcmCli PUBLIC /usr/local/include/opencv4/)
 include_directories(wsi2dcmCli PUBLIC ${TURBOJPEG_INCLUDE_DIRS})
 include_directories(wsi2dcmCli PUBLIC /abseil/install/include/)
+include_directories(wsi2dcmCli PUBLIC /dcmtk/usr/local/include/)
 
 link_directories(${TURBOJPEG_LIBDIR})
 
@@ -35,7 +35,6 @@ set(TESTS_BUILD OFF CACHE BOOL ON)
 
 include(CMake/Boost.cmake)
 include(CMake/OpenJpeg.cmake)
-include(CMake/Dcmtk.cmake)
 include(CMake/OpenSlide.cmake)
 include(CMake/JsonCpp.cmake)
 
@@ -46,7 +45,6 @@ FIND_PACKAGE(OpenCV REQUIRED)
 FIND_PACKAGE(JPEG REQUIRED)
 
 add_library(wsi2dcm SHARED
-    ${DCMTK_SOURCES}
     ${BOOST_SOURCES}
     ${OPENSLIDE_SOURCES}
     ${OPENJPEG_SRCS}
@@ -70,7 +68,8 @@ set_target_properties(wsi2dcm PROPERTIES
 set_target_properties(wsi2dcmCli PROPERTIES
                         OUTPUT_NAME wsi2dcm
                       )
-
+target_link_libraries(wsi2dcm libofstd.a libdcmdata.a libdcmjpeg.a libdcmimgle.a libdcmimage.a libijg12.a libijg16.a libijg8.a libi2d.a liboflog.a libicuuc.so)
+target_link_libraries(wsi2dcm -L/dcmtk/usr/local/lib)
 target_link_libraries(wsi2dcm pthread ${STATIC_LIBS} z m lzma xml2 ${OpenCV_LIBS} ${TURBOJPEG_LIBRARIES})
 target_link_libraries(wsi2dcmCli wsi2dcm)
 

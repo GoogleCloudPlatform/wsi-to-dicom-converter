@@ -255,7 +255,7 @@ OFCondition DcmtkUtils::populateDataSet(
 
   if (!dcmDataDict.isDictionaryLoaded()) {
     dcmDataDict.wrlock().reloadDictionaries(true, false);
-    dcmDataDict.unlock();
+    dcmDataDict.wrunlock();
   }
 
   OFCondition cond =
@@ -456,8 +456,8 @@ OFCondition DcmtkUtils::startConversion(
   E_GrpLenEncoding grpLenEncoding = EGL_recalcGL;
   E_EncodingType encodingType = EET_ExplicitLength;
   E_PaddingEncoding paddingEncoding = EPD_noChange;
-  OFCmdUnsignedInt filepad = 0;
-  OFCmdUnsignedInt itempad = 0;
+  uint8_t filepad = 0;
+  uint8_t itempad = 0;
   E_FileWriteMode writeMode = EWM_fileformat;
 
   std::unique_ptr<DcmDataset> resultObject = std::make_unique<DcmDataset>();
