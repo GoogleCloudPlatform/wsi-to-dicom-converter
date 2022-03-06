@@ -155,6 +155,25 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
     // subtracting 1 to allow for null.
     derivationDescription = std::move(derivationDescription.substr(0, 1023));
   }
+
+  // if image is encoded as raw compute total size of all frames and reserve
+  // memory to speed addition of data to raw write buffer.
+  uint64_t totalFrameByteSize = 0;
+  for (size_t frameNumber = 0; frameNumber < frameDataSize; ++frameNumber) {
+    while (!framesData_[frameNumber]->isDone()) {
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+    }
+    Frame *frame = framesData_[frameNumber].get();
+    if (frame->hasDcmPixelItem()) {
+      break;  // Jpeg or JPeg2000 encoded data.
+    } else {
+      totalFrameByteSize += frame->dicomFrameBytesSize();
+    }
+  }
+  if (totalFrameByteSize > 0) {
+    frames.reserve(totalFrameByteSize);
+  }
+
   for (size_t frameNumber = 0; frameNumber < frameDataSize; ++frameNumber) {
     while (!framesData_[frameNumber]->isDone()) {
       boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
