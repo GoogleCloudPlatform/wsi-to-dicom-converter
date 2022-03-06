@@ -265,7 +265,7 @@ void OpenCVInterpolationFrame::sliceFrame() {
                                    reinterpret_cast<uint8_t*>(raw_bytes.get()),
                                    frame_mem_size * sizeof(uint32_t),
                                    &rawCompressedBytesSize_));
-  }  
+  }
   done_ = true;
 }
 
