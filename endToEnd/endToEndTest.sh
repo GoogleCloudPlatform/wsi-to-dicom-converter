@@ -28,6 +28,10 @@ compare () {
 #building binaries
 bash ./cloud_build/ubuntuBuild.sh
 
+#set enviromnental vars for DCMTK
+export DCMDICTPATH=/dcmtk/usr/local/share/dcmtk/dicom.dic
+export PATH=/dcmtk/usr/local/bin:$PATH
+
 fileName=./tests/CMU-1-Small-Region.svs
 
 #test - use nearest neighbor downsampling,  generate jpeg2000 DICOM, read by dcmtk and check with expected tags
