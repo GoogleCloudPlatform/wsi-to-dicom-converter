@@ -85,6 +85,14 @@ DcmFileDraft::DcmFileDraft(
 
 DcmFileDraft::~DcmFileDraft() {}
 
+double DcmFileDraft::imageHeightMM() const {
+  return firstLevelHeightMm_;
+}
+
+double DcmFileDraft::imageWidthMM() const {
+  return firstLevelWidthMm_;
+}
+
 int64_t DcmFileDraft::downsample() const {
   return downsample_;
 }

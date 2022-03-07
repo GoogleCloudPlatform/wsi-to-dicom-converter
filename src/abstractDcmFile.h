@@ -29,6 +29,8 @@ class AbstractDcmFile {
   virtual int64_t imageHeight() const = 0;
   virtual int64_t fileFrameCount() const = 0;
   virtual int64_t downsample() const = 0;
+  virtual double imageHeightMM() const = 0;
+  virtual double imageWidthMM() const = 0;
   virtual Frame* frame(int64_t idx) const = 0;
 };
 

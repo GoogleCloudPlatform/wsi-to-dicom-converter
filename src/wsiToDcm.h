@@ -25,6 +25,7 @@
 #include "src/openslideUtil.h"
 #include "src/enums.h"
 #include "src/tiffFile.h"
+#include "src/imageFilePyramidSource.h"
 
 namespace wsiToDicomConverter {
 
@@ -80,6 +81,7 @@ class SlideLevelDim {
   // Source component of DCM_DerivationDescription
   // describes in text where imaging data was acquired from.
   std::string sourceDerivationDescription;
+  bool useSourceDerivationDescriptionForDerivedImage = false;
 };
 
 // Structure for wsi2dcm settings
@@ -166,6 +168,8 @@ struct WsiRequest {
 
   bool SVSImportPreferScannerTileingForLargestLevel = false;
   bool SVSImportPreferScannerTileingForAllLevels = false;
+  bool genPyramidFromUntiledImage = false;
+  double untiledImageHeightMM = 0.0;
 };
 
 // Contains static methods for generation DICOM files
@@ -182,6 +186,9 @@ class WsiToDcm {
   // Generates tasks and handling thread pool
   double getOpenSlideDimensionMM(const char* openSlideProperty);
   void initOpenSlide();
+  std::unique_ptr<ImageFilePyramidSource> initUntiledImageIngest();
+  std::unique_ptr<SlideLevelDim> initAbstractDicomFileSourceLevelDim(
+                                                absl::string_view description);
 
   double getDimensionMM(const int64_t adjustedFirstLevelDim,
                         const double firstLevelMpp);
@@ -209,8 +216,6 @@ class WsiToDcm {
   int64_t largestSlideLevelWidth_;
   int64_t largestSlideLevelHeight_;
   int32_t svsLevelCount_;
-  double openslideMPP_X_;
-  double openslideMPP_Y_;
   bool customDownSampleFactorsDefined_;
   std::unique_ptr<OpenSlidePtr> osptr_;
   std::unique_ptr<TiffFile> tiffFile_;

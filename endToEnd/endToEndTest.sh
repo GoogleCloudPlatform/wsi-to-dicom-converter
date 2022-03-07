@@ -33,6 +33,7 @@ export DCMDICTPATH=/dcmtk/usr/local/share/dcmtk/dicom.dic
 export PATH=/dcmtk/usr/local/bin:$PATH
 
 fileName=./tests/CMU-1-Small-Region.svs
+jpegFileName=./tests/bone.jpeg
 
 #test - use nearest neighbor downsampling,  generate jpeg2000 DICOM, read by dcmtk and check with expected tags
 echo "Test 1"
@@ -111,3 +112,10 @@ rm ./endToEnd/*.dcm -f
 ./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test11  --levels 6 --tileHeight 100  --tileWidth 100 --progressiveDownsample --jpegCompressionQuality 95 --SVSImportPreferScannerTileingForLargestLevel --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame
 dcmj2pnm +cl ./endToEnd/level-4-frames-0-1.dcm ./endToEnd/test11GeneratedImage.ppm
 diff ./endToEnd/test11GeneratedImage.ppm ./endToEnd/test11ExpectedImage.ppm
+
+#test - test create image pyrmaid from JPEG
+echo "Test 12"
+rm ./endToEnd/*.dcm -f
+./build/wsi2dcm $jpegFileName ./endToEnd/ --seriesDescription test12  --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame --readImage --untiledImageHeightMM 12.0
+dcm2json ./endToEnd/level-2-frames-0-1.dcm ./endToEnd/test12GeneratedTags.json
+compare ./endToEnd/test12GeneratedTags.json ./endToEnd/test12ExpectedTags.json
