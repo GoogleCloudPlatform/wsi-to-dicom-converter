@@ -77,6 +77,8 @@ class DcmFileDraft : public AbstractDcmFile {
   virtual int64_t imageHeight() const;
   virtual int64_t fileFrameCount() const;
   virtual int64_t downsample() const;
+  virtual double imageHeightMM() const;
+  virtual double imageWidthMM() const;
   virtual Frame* frame(int64_t idx) const;
 
  private:

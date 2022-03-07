@@ -51,6 +51,9 @@ int main(int argc, char *argv[]) {
   bool SVSImportPreferScannerTileingForLargestLevel;
   bool SVSImportPreferScannerTileingForAllLevels;
   int compressionQuality;
+  bool readUntiledImage;
+  double untiledImageHeightMM;
+
   std::vector<int> downsamples;
   downsamples.resize(1, 0);
   bool sparse;
@@ -168,7 +171,14 @@ int main(int argc, char *argv[]) {
         "Optimization for jpeg encoded SVS. Use jpeg images encoded in SVS at "
         "all levels preferentially. Same limitations as "
         "SVSImportPreferScannerTileingForLargestLevel. Compression settings "
-        "apply to generated levels only.");
+        "apply to generated levels only.")
+        ("readImage",
+        programOptions::bool_switch(&readUntiledImage)->default_value(false),
+        "Generate DICOM Pyramid from untiled image.")
+        ("untiledImageHeightMM",
+        programOptions::value<double>(&untiledImageHeightMM)->default_value(
+          0.0), "Height in mm of untiled image (assumed square pixel"
+                " aspect ratio).");
 
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
@@ -203,9 +213,16 @@ int main(int argc, char *argv[]) {
               << " not compatible with Options: " <<
               "SVSImportPreferScannerTileingForLargestLevel and " <<
               "SVSImportPreferScannerTileingForAllLevels." << std::endl;
-      return 1;
+      return ERROR_IN_COMMAND_LINE;
+  }
+  if (readUntiledImage & !preferProgressiveDownsampling) {
+    std::cerr << "Generating WSI Pyramids from un-tiled images requires "
+                 "enabling progressive downsampling." << std::endl;
+    return ERROR_IN_COMMAND_LINE;
   }
   wsiToDicomConverter::WsiRequest request;
+  request.genPyramidFromUntiledImage = readUntiledImage;
+  request.untiledImageHeightMM = untiledImageHeightMM;
   request.inputFile = inputFile;
   request.outputFileMask = outputFolder;
   request.frameSizeX = std::max(tileWidth, 1);
@@ -240,7 +257,11 @@ int main(int argc, char *argv[]) {
   request.dropFirstRowAndColumn = dropFirstRowAndColumn;
   request.stopDownsamplingAtSingleFrame = stopDownsamplingAtSingleFrame;
   request.floorCorrectDownsampling = floorCorrectDownsampling;
-  request.preferProgressiveDownsampling = preferProgressiveDownsampling;
+  if (request.genPyramidFromUntiledImage) {
+    request.preferProgressiveDownsampling = true;
+  } else {
+    request.preferProgressiveDownsampling = preferProgressiveDownsampling;
+  }
   request.SVSImportPreferScannerTileingForLargestLevel =
           SVSImportPreferScannerTileingForLargestLevel;
   request.SVSImportPreferScannerTileingForAllLevels =
