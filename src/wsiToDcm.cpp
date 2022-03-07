@@ -34,6 +34,7 @@
 
 #include "src/abstractDcmFile.h"
 #include "src/dcmFileDraft.h"
+#include "src/dcmFilePyramidSource.h"
 #include "src/dcmTags.h"
 #include "src/dicom_file_region_reader.h"
 #include "src/geometryUtils.h"
@@ -86,7 +87,8 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
     dcmGenerateUniqueIdentifier(seriesIdGenerated, SITE_SERIES_UID_ROOT);
     wsiRequest_->seriesId = seriesIdGenerated;
   }
-  if (!wsiRequest_->genPyramidFromUntiledImage) {
+  if (!wsiRequest_->genPyramidFromDicom &&
+      !wsiRequest_->genPyramidFromUntiledImage) {
     const char *slideFile = wsiRequest_->inputFile.c_str();
     if (!openslide_detect_vendor(slideFile)) {
       BOOST_LOG_TRIVIAL(error) << "File format is not supported by openslide";
@@ -151,6 +153,17 @@ void WsiToDcm::checkArguments() {
     BOOST_LOG_TRIVIAL(warning)
         << "batch parameter is not set, batch is unlimited";
   }
+}
+
+std::unique_ptr<DcmFilePyramidSource> WsiToDcm::initDicomIngest() {
+  std::unique_ptr<DcmFilePyramidSource> dicomFile =
+                std::make_unique<DcmFilePyramidSource>(wsiRequest_->inputFile);
+  svsLevelCount_ = 1;
+  largestSlideLevelWidth_ = dicomFile->imageWidth();
+  largestSlideLevelHeight_ = dicomFile->imageHeight();
+  wsiRequest_->frameSizeX = dicomFile->frameWidth();
+  wsiRequest_->frameSizeY = dicomFile->frameHeight();
+  return std::move(dicomFile);
 }
 
 std::unique_ptr<ImageFilePyramidSource> WsiToDcm::initUntiledImageIngest() {
@@ -675,6 +688,13 @@ int WsiToDcm::dicomizeTiff() {
       " values extracted from un-tiled image (" +
       wsiRequest_->inputFile + ") and ";
     abstractDicomFile = std::move(initUntiledImageIngest());
+    slideLevelDim = std::move(initAbstractDicomFileSourceLevelDim(
+                                                         description.c_str()));
+  } else if (wsiRequest_->genPyramidFromDicom) {
+    std::string description = "Image frames generated from "
+      " values extracted from DICOM(" +
+      wsiRequest_->inputFile + ") and ";
+    abstractDicomFile = std::move(initDicomIngest());
     slideLevelDim = std::move(initAbstractDicomFileSourceLevelDim(
                                                          description.c_str()));
   }
