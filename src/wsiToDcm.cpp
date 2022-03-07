@@ -29,7 +29,6 @@
 #include <fstream>
 #include <memory>
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -465,36 +464,64 @@ double  WsiToDcm::getDimensionMM(const int64_t adjustedFirstLevelDim,
   return static_cast<double>(adjustedFirstLevelDim) * firstLevelMpp / 1000;
 }
 
-bool downsample_order(const std::tuple<int32_t, int64_t, bool> &i,
-                      const std::tuple<int32_t, int64_t, bool> &j) {
-  const int64_t iDownsample = std::get<1>(i);
-  const int64_t jDownsample = std::get<1>(j);
+struct LevelProcessOrder {
+ public:
+  LevelProcessOrder(int32_t level, int64_t downsample, bool readLevelFromTiff);
+  int32_t level() const;
+  int64_t downsample() const;
+  bool readLevelFromTiff() const;
+
+ private:
+  const int32_t level_;
+  const int64_t downsample_;
+  const bool readLevelFromTiff_;
+};
+
+LevelProcessOrder::LevelProcessOrder(int32_t level, int64_t downsample,
+                                     bool readLevelFromTiff) :
+                                     level_(level), downsample_(downsample),
+                                     readLevelFromTiff_(readLevelFromTiff) {
+}
+
+int32_t LevelProcessOrder::level() const {
+  return level_;
+}
+
+int64_t LevelProcessOrder::downsample() const {
+  return downsample_;
+}
+
+bool LevelProcessOrder::readLevelFromTiff() const {
+  return readLevelFromTiff_;
+}
+
+bool downsample_order(const std::unique_ptr<LevelProcessOrder> &i,
+                      const std::unique_ptr<LevelProcessOrder> &j) {
+  const int64_t iDownsample = i->downsample();
+  const int64_t jDownsample = j->downsample();
   if (iDownsample != jDownsample) {
     // Sort on downsample: e.g. 1, 2, 4, 8, 16 (highest to lowest mag.)
     return iDownsample < jDownsample;
   }
-  const int32_t iLevel = std::get<0>(i);
-  const int32_t jLevel = std::get<0>(j);
   // Sort by level e.g., 1, 2, 3, 4
-  return iLevel < jLevel;
+  return i->level() < j->level();
 }
 
 void WsiToDcm::getOptimalDownSamplingOrder(
                                   std::vector<int32_t> *slideLevels,
                                   std::vector<bool> *saveLevelCompressedRaw,
                                   SlideLevelDim *startPyramidCreationDim) {
-  std::unique_ptr<SlideLevelDim> smallestSlideDim = nullptr;
   int32_t levels;
   if (retile_) {
     levels = wsiRequest_->retileLevels;
   } else {
     levels = svsLevelCount_;
   }
+  std::unique_ptr<SlideLevelDim> smallestSlideDim = nullptr;
   bool smallestLevelIsSingleFrame = false;
-  std::vector<std::tuple<int32_t, int64_t, bool>> levelProcessOrder;
+  std::vector<std::unique_ptr<LevelProcessOrder>> levelOrderVec;
   int64_t smallestDownsample;
   bool layerHasShownZeroLengthDimMsg = false;
-
   SlideLevelDim *priorSlideLevelDim;
   if (startPyramidCreationDim == nullptr) {
     priorSlideLevelDim = nullptr;
@@ -565,9 +592,9 @@ void WsiToDcm::getOptimalDownSamplingOrder(
       BOOST_LOG_TRIVIAL(debug) << "Set Smallest";
     }
     if (tempDownsample <= smallestDownsample) {
-      std::tuple<int32_t, int64_t, bool> tpl(level, tempDownsample,
-                                             readSlideLevelFromTiff);
-      levelProcessOrder.push_back(tpl);
+      levelOrderVec.push_back(std::make_unique<LevelProcessOrder>(level,
+                                                tempDownsample,
+                                                readSlideLevelFromTiff));
       BOOST_LOG_TRIVIAL(debug) << "Level[" <<level << "] frames:" <<
                                   frameX << ", " << frameY;
     }
@@ -583,29 +610,29 @@ void WsiToDcm::getOptimalDownSamplingOrder(
   }
   // Process process levels in order of area largest to smallest.
   if (smallestSlideDim != nullptr) {
-    std::sort(levelProcessOrder.begin(),
-              levelProcessOrder.end(), downsample_order);
-     for (size_t idx = 0; idx < levelProcessOrder.size(); ++idx) {
-      const int32_t level = std::get<0>(levelProcessOrder[idx]);
+    std::sort(levelOrderVec.begin(),
+              levelOrderVec.end(), downsample_order);
+     for (size_t idx = 0; idx < levelOrderVec.size(); ++idx) {
+      const int32_t level = levelOrderVec[idx]->level();
       slideLevels->push_back(level);
       if (level == smallestSlideDim->level) {
         // if last slice do not save raw
         saveLevelCompressedRaw->push_back(false);
         break;
       }
-      if (std::get<2>(levelProcessOrder[idx+1])) {
+      if (levelOrderVec[idx+1]->readLevelFromTiff()) {
         // memory & comput optimization
         // if next slice reads from tiff do save raw
         saveLevelCompressedRaw->push_back(false);
       } else if ((startPyramidCreationDim == nullptr) &&
                  (slideLevels->size() == 1) &&
-                 !std::get<2>(levelProcessOrder[idx]) &&
+                 !levelOrderVec[idx]->readLevelFromTiff() &&
                  (0 == getOpenslideLevelForDownsample(
-                  std::get<1>(levelProcessOrder[idx+1])))) {
+                  levelOrderVec[idx+1]->downsample()))) {
         // Memory optimization, not reading from dicom.
         // if processing an image without downsampling &
         // openslide is being used to read the imaging
-        // (!std::get<2>(levelProcessOrder[idx])
+        // (!levelOrderVec[idx]->readLevelFromTiff()
         // no downsamples and reading downsample at level will also read the
         // highest resolution image.  Do not save compressed raw versions of
         // the highest resolution.  Start progressive downsampling from
