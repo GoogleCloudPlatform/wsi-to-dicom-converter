@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
   bool preferProgressiveDownsampling;
   bool SVSImportPreferScannerTileingForLargestLevel;
   bool SVSImportPreferScannerTileingForAllLevels;
+  bool readDICOM;
   int compressionQuality;
   bool readUntiledImage;
   double untiledImageHeightMM;
@@ -172,6 +173,10 @@ int main(int argc, char *argv[]) {
         "all levels preferentially. Same limitations as "
         "SVSImportPreferScannerTileingForLargestLevel. Compression settings "
         "apply to generated levels only.")
+        ("readDICOM",
+        programOptions::bool_switch(&readDICOM)->default_value(false),
+        "Generate DICOM Pyramid from Dicom file (level 0). "
+        "Output starts at Level 1.")
         ("readImage",
         programOptions::bool_switch(&readUntiledImage)->default_value(false),
         "Generate DICOM Pyramid from untiled image.")
@@ -215,27 +220,36 @@ int main(int argc, char *argv[]) {
               "SVSImportPreferScannerTileingForAllLevels." << std::endl;
       return ERROR_IN_COMMAND_LINE;
   }
+  if (readDICOM & !preferProgressiveDownsampling) {
+    std::cerr << "Generating WSI Pyramids from DICOM requires enabling "
+                 "progressive downsampling." << std::endl;
+    return ERROR_IN_COMMAND_LINE;
+  }
   if (readUntiledImage & !preferProgressiveDownsampling) {
     std::cerr << "Generating WSI Pyramids from un-tiled images requires "
                  "enabling progressive downsampling." << std::endl;
     return ERROR_IN_COMMAND_LINE;
   }
+  if (readUntiledImage && readDICOM) {
+    std::cerr << "Invalid configuration cannot use both "
+                 "readUntiledImage and readDICOM" << std::endl;
+    return ERROR_IN_COMMAND_LINE;
+  }
   wsiToDicomConverter::WsiRequest request;
   request.genPyramidFromUntiledImage = readUntiledImage;
   request.untiledImageHeightMM = untiledImageHeightMM;
+  request.genPyramidFromDicom = readDICOM;
   request.inputFile = inputFile;
   request.outputFileMask = outputFolder;
   request.frameSizeX = std::max(tileWidth, 1);
   request.frameSizeY = std::max(tileHeight, 1);
-  if (firstlevelCompression == "default") {
-    request.firstlevelCompression = dcmCompressionFromString(compression);
-  } else {
-    request.firstlevelCompression =
-                              dcmCompressionFromString(firstlevelCompression);
-  }
+  request.firstlevelCompression = (firstlevelCompression == "default") ?
+                               dcmCompressionFromString(compression) :
+                               dcmCompressionFromString(firstlevelCompression);
   request.compression = dcmCompressionFromString(compression);
   request.quality = std::max(std::min(100, compressionQuality), 0);
-  request.startOnLevel = std::max(start, 0);
+  request.startOnLevel = request.genPyramidFromDicom ? std::max(start, 1) :
+                                                       std::max(start, 0);
   request.stopOnLevel =  std::max(stop, -1);
   request.imageName = seriesDescription;
   request.studyId = studyId;
@@ -257,7 +271,7 @@ int main(int argc, char *argv[]) {
   request.dropFirstRowAndColumn = dropFirstRowAndColumn;
   request.stopDownsamplingAtSingleFrame = stopDownsamplingAtSingleFrame;
   request.floorCorrectDownsampling = floorCorrectDownsampling;
-  if (request.genPyramidFromUntiledImage) {
+  if (request.genPyramidFromDicom || request.genPyramidFromUntiledImage) {
     request.preferProgressiveDownsampling = true;
   } else {
     request.preferProgressiveDownsampling = preferProgressiveDownsampling;

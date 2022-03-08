@@ -25,6 +25,7 @@
 #include "src/openslideUtil.h"
 #include "src/enums.h"
 #include "src/tiffFile.h"
+#include "src/dcmFilePyramidSource.h"
 #include "src/imageFilePyramidSource.h"
 
 namespace wsiToDicomConverter {
@@ -170,6 +171,7 @@ struct WsiRequest {
   bool SVSImportPreferScannerTileingForAllLevels = false;
   bool genPyramidFromUntiledImage = false;
   double untiledImageHeightMM = 0.0;
+  bool genPyramidFromDicom = false;
 };
 
 // Contains static methods for generation DICOM files
@@ -186,6 +188,7 @@ class WsiToDcm {
   // Generates tasks and handling thread pool
   double getOpenSlideDimensionMM(const char* openSlideProperty);
   void initOpenSlide();
+  std::unique_ptr<DcmFilePyramidSource> initDicomIngest();
   std::unique_ptr<ImageFilePyramidSource> initUntiledImageIngest();
   std::unique_ptr<SlideLevelDim> initAbstractDicomFileSourceLevelDim(
                                                 absl::string_view description);

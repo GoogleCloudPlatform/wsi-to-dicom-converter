@@ -69,7 +69,7 @@ class ImageFilePyramidSource : public AbstractDcmFile {
   virtual double imageWidthMM() const;
   virtual std::string photometricInterpretation() const;
   void debugLog() const;
-  const char *filename() const;
+  absl::string_view filename() const;
   cv::Mat *image();
 
  private:

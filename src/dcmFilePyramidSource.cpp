@@ -1,0 +1,470 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+#include "src/dcmFilePyramidSource.h"
+#include <dcmtk/dcmdata/dcdeftag.h>
+#include <dcmtk/dcmdata/dcfilefo.h>
+#include <dcmtk/dcmdata/dcpixel.h>
+#include <dcmtk/dcmdata/dcpixseq.h>
+#include <dcmtk/dcmdata/dcrledrg.h>
+#include <dcmtk/dcmjpeg/djdecode.h>
+#include <dcmtk/dcmimage/diregist.h>
+#include <dcmtk/dcmimgle/diutils.h>
+#include <dcmtk/dcmimgle/dcmimage.h>
+#include <boost/log/trivial.hpp>
+#include <boost/thread.hpp>
+#include <opencv2/opencv.hpp>
+#include <string>
+#include <memory>
+#include "src/jpegUtil.h"
+
+namespace wsiToDicomConverter {
+
+AbstractDicomFileFrame::AbstractDicomFileFrame(
+                               int64_t locationX,
+                               int64_t locationY,
+                               DcmFilePyramidSource* pyramidSource) :
+         Frame(locationX, locationY, pyramidSource->frameWidth(),
+               pyramidSource->frameHeight(), NONE, -1, true),
+         pyramidSource_(pyramidSource) {
+  size_ = 0;
+  dcmPixelItem_ = nullptr;
+  rawCompressedBytes_ = nullptr;
+  rawCompressedBytesSize_ = 0;
+  done_ = true;
+}
+
+AbstractDicomFileFrame::~AbstractDicomFileFrame() {}
+
+void AbstractDicomFileFrame::sliceFrame() {}
+
+void AbstractDicomFileFrame::debugLog() const {
+  BOOST_LOG_TRIVIAL(info) << "AbstractDICOM File Frame: ";
+}
+
+std::string AbstractDicomFileFrame::photoMetrInt() const {
+  return pyramidSource_->photometricInterpretation();
+}
+
+bool AbstractDicomFileFrame::hasRawABGRFrameBytes() const {
+  return true;
+}
+
+void AbstractDicomFileFrame::incSourceFrameReadCounter() {
+  // Reads from DICOM FILE no source frame counter to increment.
+}
+
+void AbstractDicomFileFrame::setDicomFrameBytes(
+                           std::unique_ptr<uint8_t[]> dcmdata, uint64_t size) {
+}
+
+// Returns frame component of DCM_DerivationDescription
+// describes in text how frame imaging data was saved in frame.
+std::string AbstractDicomFileFrame::derivationDescription() const {
+  // todo fix
+  return "Generated from DICOM";
+}
+
+DICOMImageFrame::DICOMImageFrame(int64_t frameNumber,
+                                 int64_t locationX,
+                                 int64_t locationY,
+                                 uint64_t dicomMemSize,
+                                 DcmFilePyramidSource *pyramidSource) :
+                  AbstractDicomFileFrame(locationX, locationY, pyramidSource),
+                  frameNumber_(frameNumber) {
+  size_ = dicomMemSize;
+}
+
+DICOMImageFrame::~DICOMImageFrame() {
+}
+
+int64_t DICOMImageFrame::rawABGRFrameBytes(uint8_t *rawMemory,
+                                          int64_t memorySize) {
+  // DICOM frame data in native format is jpeg encoded.
+  // uncompress and return # of bytes read.
+  // return 0 if error occures.
+  const uint64_t width = frameWidth();
+  const uint64_t height = frameHeight();
+  const uint64_t flags = CIF_UsePartialAccessToPixelData;
+  const uint64_t frameCount = 1;
+  const uint64_t bufferSize = size_;
+  std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(bufferSize);
+  {
+    boost::lock_guard<boost::mutex> guard(*pyramidSource_->datasetMutex());
+    DicomImage img(pyramidSource_->dataset(),
+                   pyramidSource_->transferSyntax(), flags,
+                   static_cast<uint64_t>(frameNumber_), frameCount);
+    if (!img.getOutputData(buffer.get(), bufferSize)) {
+      return 0;
+    }
+  }
+  cv::Mat bgr(height, width, CV_8UC3, buffer.get());
+  cv::Mat bgra(height, width, CV_8UC4, rawMemory);
+  cv::cvtColor(bgr, bgra, cv::COLOR_BGR2BGRA);
+  return width * height * 4;
+}
+
+JpegDicomFileFrame::JpegDicomFileFrame(int64_t locationX,
+                                       int64_t locationY,
+                                       uint8_t *dicomMem,
+                                       uint64_t dicomMemSize,
+                                       DcmFilePyramidSource *pyramidSource) :
+                  AbstractDicomFileFrame(locationX, locationY, pyramidSource),
+                  dicomFrameMemory_(dicomMem) {
+  size_ = dicomMemSize;
+}
+
+JpegDicomFileFrame::~JpegDicomFileFrame() {
+}
+
+J_COLOR_SPACE JpegDicomFileFrame::jpegDecodeColorSpace() const {
+  return photoMetrInt() == "RGB" ? JCS_RGB : JCS_YCbCr;
+}
+
+int64_t JpegDicomFileFrame::rawABGRFrameBytes(uint8_t *rawMemory,
+                                          int64_t memorySize) {
+  const uint64_t width = frameWidth();
+  const uint64_t height = frameHeight();
+  if (jpegUtil::decodeJpeg(width, height, jpegDecodeColorSpace(),
+                       dicomFrameMemory_,
+                       size_, rawMemory, memorySize)) {
+    return width * height * 4;
+  }
+  return 0;
+}
+
+Jp2KDicomFileFrame::Jp2KDicomFileFrame(int64_t locationX,
+                                       int64_t locationY,
+                                       uint8_t *dicomMem,
+                                       uint64_t dicomMemSize,
+                                       DcmFilePyramidSource *pyramidSource) :
+                   AbstractDicomFileFrame(locationX, locationY, pyramidSource),
+                   dicomFrameMemory_(dicomMem) {
+  size_ = dicomMemSize;
+}
+
+Jp2KDicomFileFrame::~Jp2KDicomFileFrame() {
+}
+
+int64_t Jp2KDicomFileFrame::rawABGRFrameBytes(uint8_t *rawMemory,
+                                              int64_t memorySize) {
+  cv::Mat rawData(1, size_, CV_8UC1,
+                  reinterpret_cast<void*>(dicomFrameMemory_));
+  cv::Mat decodedImage = cv::imdecode(rawData, cv::IMREAD_COLOR);
+  if ( decodedImage.data == NULL ) {
+    return 0;
+  }
+  const uint64_t width = frameWidth();
+  const uint64_t height = frameHeight();
+  cv::Mat bgra(height, width, CV_8UC4, rawMemory);
+  cv::cvtColor(decodedImage, bgra, cv::COLOR_RGB2BGRA);
+  return width * height * 4;
+}
+
+DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) {
+  xfer_ = EXS_Unknown;
+  dcmtkCodecRegistered_ = false;
+  frameWidth_ = 0;
+  frameHeight_ = 0;
+  imageWidth_ = 0;
+  imageHeight_ = 0;
+  firstLevelWidthMm_ = 0;
+  firstLevelHeightMm_ = 0;
+  photometric_ = "";
+  dimensionalOrganization_ = "";
+  studyInstanceUID_ = "";
+  seriesInstanceUID_ = "";
+  seriesDescription_ = "";
+  filename_ = static_cast<std::string>(filePath);
+  dcmFile_.loadFile(filename_.c_str());
+  dataset_ = dcmFile_.getDataset();
+  DcmStack stack;
+  if (!dataset_->search(DCM_PixelData, stack, ESM_fromHere, OFFalse).good()) {
+    return;
+  }
+  DcmPixelData *pixelData = reinterpret_cast<DcmPixelData *>(stack.top());
+  if (pixelData == nullptr) {
+    return;
+  }
+  frameWidth_ = getTagValueUI16(DCM_Columns);
+  frameHeight_ = getTagValueUI16(DCM_Rows);
+  imageWidth_ = getTagValueUI32(DCM_TotalPixelMatrixColumns);
+  imageHeight_ = getTagValueUI32(DCM_TotalPixelMatrixRows);
+  frameCount_  = getTagValueI64(DCM_NumberOfFrames);
+
+  photometric_ = getTagValueString(DCM_PhotometricInterpretation);
+  samplesPerPixel_ = getTagValueUI16(DCM_SamplesPerPixel);
+  planarConfiguration_ = getTagValueUI16(DCM_PlanarConfiguration);
+
+  bitsAllocated_ = getTagValueUI16(DCM_BitsAllocated);
+  bitsStored_ = getTagValueUI16(DCM_BitsStored);
+  highBit_ = getTagValueUI16(DCM_HighBit);
+  pixelRepresentation_ = getTagValueUI16(DCM_PixelRepresentation);
+
+  firstLevelWidthMm_ = getTagValueFloat32(DCM_ImagedVolumeWidth);
+  firstLevelHeightMm_ = getTagValueFloat32(DCM_ImagedVolumeHeight);
+  dimensionalOrganization_ = getTagValueStringArray(
+                                                DCM_DimensionOrganizationType);
+  studyInstanceUID_ = getTagValueStringArray(DCM_StudyInstanceUID);
+  seriesInstanceUID_ = getTagValueStringArray(DCM_SeriesInstanceUID);
+  seriesDescription_ = getTagValueStringArray(DCM_SeriesDescription);
+
+  framesData_.reserve(frameCount_);
+  /* get pixel data sequence (if available) */
+  const DcmRepresentationParameter *repParam = nullptr;
+  pixelData->getOriginalRepresentationKey(xfer_, repParam);
+  if (xfer_ == EXS_Unknown) {
+    BOOST_LOG_TRIVIAL(error) << "Unknown transfer syntax";
+    return;
+  }
+  bool DecodeLossyJPEG  = false;
+  bool DecodeJPEG2K = false;
+  DcmPixelSequence *pixelSeq = nullptr;
+  if (DcmXfer(xfer_).isEncapsulated()) {
+    if (!pixelData->getEncapsulatedRepresentation(xfer_,
+                                                repParam,
+                                                pixelSeq).good() ||
+      (pixelSeq == nullptr)) {
+      return;
+    }
+    DecodeLossyJPEG = (EXS_JPEGProcess1 == xfer_ &&
+      3 == samplesPerPixel_ &&
+      0 == planarConfiguration_ &&
+      0 == pixelRepresentation_ &&
+      8 == bitsAllocated_ &&
+      24 == bitsStored_ &&
+      7 == highBit_ &&
+      (photometric_ == "RGB" ||
+       photometric_ == "YBR_FULL" ||
+       photometric_ == "YBR_FULL_422"));
+    DecodeJPEG2K = (EXS_JPEG2000LosslessOnly == xfer_ ||
+      EXS_JPEG2000 == xfer_ ||
+      EXS_JPEG2000MulticomponentLosslessOnly == xfer_ ||
+      EXS_JPEG2000Multicomponent == xfer_);
+    if (!DecodeLossyJPEG && !DecodeJPEG2K) {
+      DJDecoderRegistration::registerCodecs();
+      DcmRLEDecoderRegistration::registerCodecs();
+      dcmtkCodecRegistered_ = true;
+    }
+  }
+  int outputDicomImageSize = 0;
+  if (!DecodeLossyJPEG && !DecodeJPEG2K) {
+    const uint64_t flags = CIF_UsePartialAccessToPixelData;
+    DicomImage img(dataset_, xfer_, flags, static_cast<uint64_t>(0),
+                   static_cast<uint64_t>(1));
+    outputDicomImageSize = img.getOutputDataSize();
+  }
+  uint64_t locationX = 0;
+  uint64_t locationY = 0;
+  for (size_t idx = 0; idx < frameCount_; ++idx) {
+    if (locationX > imageWidth_) {
+      locationX = 0;
+      locationY += frameHeight_;
+    }
+    if (DecodeLossyJPEG || DecodeJPEG2K) {
+      DcmPixelItem *pixelItem;
+      pixelSeq->getItem(pixelItem, idx+1);
+      uint64_t dicomFrameMemorySize = pixelItem->getLength();
+      uint8_t *dicomFrameMemory;
+      pixelItem->getUint8Array(dicomFrameMemory);
+      if (DecodeLossyJPEG) {
+        framesData_.push_back(std::make_unique<JpegDicomFileFrame>(locationX,
+                                                          locationY,
+                                                          dicomFrameMemory,
+                                                          dicomFrameMemorySize,
+                                                          this));
+      } else {
+        framesData_.push_back(std::make_unique<Jp2KDicomFileFrame>(locationX,
+                                                          locationY,
+                                                          dicomFrameMemory,
+                                                          dicomFrameMemorySize,
+                                                          this));
+      }
+    } else {
+      framesData_.push_back(std::make_unique<DICOMImageFrame>(idx,
+                                                          locationX,
+                                                          locationY,
+                                                          outputDicomImageSize,
+                                                          this));
+    }
+    locationX += frameWidth_;
+  }
+  BOOST_LOG_TRIVIAL(info) << "Done Queueing Frames";
+}
+
+DcmFilePyramidSource::~DcmFilePyramidSource() {
+  if (dcmtkCodecRegistered_) {
+    DJDecoderRegistration::cleanup();
+    DcmRLEDecoderRegistration::cleanup();
+  }
+}
+
+absl::string_view DcmFilePyramidSource::filename() const {
+  return filename_.c_str();
+}
+
+DcmDataset *DcmFilePyramidSource::dataset() {
+  return dataset_;
+}
+
+boost::mutex* DcmFilePyramidSource::datasetMutex() {
+  return &datasetMutex_;
+}
+
+bool DcmFilePyramidSource::tiledFull() const {
+  return dimensionalOrganization_.find("TILED_FULL") != std::string::npos;
+}
+
+bool DcmFilePyramidSource::tiledSparse() const {
+  return dimensionalOrganization_.find("TILED_SPARSE") != std::string::npos;
+}
+
+double DcmFilePyramidSource::getTagValueFloat32(const DcmTagKey &dcmTag) {
+  Float32 value;
+  if (dcmFile_.getDataset()->findAndGetFloat32(dcmTag, value, 0,
+                                 OFFalse /*searchIntoSub*/).good()) {
+    return value;
+  }
+  return 0.0;
+}
+
+int64_t DcmFilePyramidSource::getTagValueUI16(const DcmTagKey &dcmTag) {
+  uint16_t value;
+  if (dcmFile_.getDataset()->findAndGetUint16(dcmTag, value, 0,
+                                OFFalse /*searchIntoSub*/).good()) {
+    return value;
+  }
+  return 0;
+}
+
+int64_t DcmFilePyramidSource::getTagValueUI32(const DcmTagKey &dcmTag) {
+  uint32_t value;
+  if (dcmFile_.getDataset()->findAndGetUint32(dcmTag, value, 0,
+                                OFFalse /*searchIntoSub*/).good()) {
+    return value;
+  }
+  return 0;
+}
+
+int64_t DcmFilePyramidSource::getTagValueI64(const DcmTagKey &dcmTag) {
+  int64_t value;
+  if (dcmFile_.getDataset()->findAndGetLongInt(dcmTag, value, 0,
+                                OFFalse /*searchIntoSub*/).good()) {
+    return value;
+  }
+  return 0;
+}
+
+std::string DcmFilePyramidSource::getTagValueString(const DcmTagKey &dcmTag) {
+  OFString value;
+  if (dcmFile_.getDataset()->findAndGetOFString(dcmTag, value, 0,
+                                  OFFalse /*searchIntoSub*/).good()) {
+    return value.c_str();
+  }
+  return "";
+}
+
+std::string DcmFilePyramidSource::getTagValueStringArray(
+                                                     const DcmTagKey &dcmTag) {
+  OFString value;
+  if (dcmFile_.getDataset()->findAndGetOFStringArray(dcmTag, value,
+                                       OFFalse /*searchIntoSub*/).good()) {
+    return value.c_str();
+  }
+  return "";
+}
+
+int64_t DcmFilePyramidSource::frameWidth() const {
+  return frameWidth_;
+}
+
+int64_t DcmFilePyramidSource::frameHeight() const {
+  return frameHeight_;
+}
+
+int64_t DcmFilePyramidSource::imageWidth() const {
+  return imageWidth_;
+}
+
+int64_t DcmFilePyramidSource::imageHeight() const {
+  return imageHeight_;
+}
+
+int64_t DcmFilePyramidSource::fileFrameCount() const {
+  return framesData_.size();
+}
+
+int64_t DcmFilePyramidSource::downsample() const {
+  return 1;
+}
+
+double DcmFilePyramidSource::imageWidthMM() const {
+  return firstLevelWidthMm_;
+}
+
+double DcmFilePyramidSource::imageHeightMM() const {
+  return firstLevelHeightMm_;
+}
+
+AbstractDicomFileFrame* DcmFilePyramidSource::frame(int64_t idx) const {
+  return framesData_[idx].get();
+}
+
+E_TransferSyntax DcmFilePyramidSource::transferSyntax() const {
+  return xfer_;
+}
+
+DcmXfer DcmFilePyramidSource::transferSyntaxDcmXfer() const {
+  return DcmXfer(xfer_);
+}
+
+std::string DcmFilePyramidSource::photometricInterpretation() const {
+  return photometric_;
+}
+
+std::string DcmFilePyramidSource::studyInstanceUID() const {
+  return studyInstanceUID_;
+}
+
+std::string DcmFilePyramidSource::seriesInstanceUID() const {
+  return seriesInstanceUID_;
+}
+
+std::string DcmFilePyramidSource::seriesDescription() const {
+  return seriesDescription_;
+}
+
+void DcmFilePyramidSource::debugLog() const {
+  std::string tile = "";
+  if (tiledFull()) {
+      tile += "tile_full";
+  }
+  if (tiledSparse()) {
+      tile += "tile_sparse";
+  }
+  if (tile == "") {
+    tile = "unknown";
+  }
+  BOOST_LOG_TRIVIAL(info) << "Image Dim: " << imageWidth() << ", " <<
+                             imageHeight() <<  "\n" << "Dim mm: " <<
+                             imageHeightMM() << ", " << imageWidthMM() <<
+                             "\n" << "Downsample: " << downsample() << "\n" <<
+                             "Photometric: " << photometricInterpretation() <<
+                             "\n" << "Frame Count: " << fileFrameCount() <<
+                             "\n" << "Tile: " << tile << "\n" <<
+                             "Frame Dim: " << frameWidth() << ", " <<
+                             frameHeight() <<  "\n"  << "Transfer Syntax: " <<
+                             transferSyntax();
+  }
+
+}  // namespace wsiToDicomConverter

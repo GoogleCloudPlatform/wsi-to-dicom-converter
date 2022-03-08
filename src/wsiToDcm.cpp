@@ -34,6 +34,7 @@
 
 #include "src/abstractDcmFile.h"
 #include "src/dcmFileDraft.h"
+#include "src/dcmFilePyramidSource.h"
 #include "src/dcmTags.h"
 #include "src/dicom_file_region_reader.h"
 #include "src/geometryUtils.h"
@@ -75,18 +76,8 @@ inline DCM_Compression compressionFromString(std::string compressionStr) {
 }
 
 WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
-  if (wsiRequest_->studyId.size() < 1) {
-    char studyIdGenerated[100];
-    dcmGenerateUniqueIdentifier(studyIdGenerated, SITE_STUDY_UID_ROOT);
-    wsiRequest_->studyId = studyIdGenerated;
-  }
-
-  if (wsiRequest_->seriesId.size() < 1) {
-    char seriesIdGenerated[100];
-    dcmGenerateUniqueIdentifier(seriesIdGenerated, SITE_SERIES_UID_ROOT);
-    wsiRequest_->seriesId = seriesIdGenerated;
-  }
-  if (!wsiRequest_->genPyramidFromUntiledImage) {
+  if (!wsiRequest_->genPyramidFromDicom &&
+      !wsiRequest_->genPyramidFromUntiledImage) {
     const char *slideFile = wsiRequest_->inputFile.c_str();
     if (!openslide_detect_vendor(slideFile)) {
       BOOST_LOG_TRIVIAL(error) << "File format is not supported by openslide";
@@ -151,6 +142,26 @@ void WsiToDcm::checkArguments() {
     BOOST_LOG_TRIVIAL(warning)
         << "batch parameter is not set, batch is unlimited";
   }
+}
+
+std::unique_ptr<DcmFilePyramidSource> WsiToDcm::initDicomIngest() {
+  std::unique_ptr<DcmFilePyramidSource> dicomFile =
+                std::make_unique<DcmFilePyramidSource>(wsiRequest_->inputFile);
+  svsLevelCount_ = 1;
+  largestSlideLevelWidth_ = dicomFile->imageWidth();
+  largestSlideLevelHeight_ = dicomFile->imageHeight();
+  wsiRequest_->frameSizeX = dicomFile->frameWidth();
+  wsiRequest_->frameSizeY = dicomFile->frameHeight();
+  if (wsiRequest_->studyId.size() < 1) {
+    wsiRequest_->studyId = dicomFile->studyInstanceUID();
+  }
+  if (wsiRequest_->seriesId.size() < 1) {
+    wsiRequest_->seriesId = dicomFile->seriesInstanceUID();
+  }
+  if (wsiRequest_->imageName.size() < 1) {
+    wsiRequest_->imageName = dicomFile->seriesDescription();
+  }
+  return std::move(dicomFile);
 }
 
 std::unique_ptr<ImageFilePyramidSource> WsiToDcm::initUntiledImageIngest() {
@@ -677,6 +688,13 @@ int WsiToDcm::dicomizeTiff() {
     abstractDicomFile = std::move(initUntiledImageIngest());
     slideLevelDim = std::move(initAbstractDicomFileSourceLevelDim(
                                                          description.c_str()));
+  } else if (wsiRequest_->genPyramidFromDicom) {
+    std::string description = "Image frames generated from "
+      " values extracted from DICOM(" +
+      wsiRequest_->inputFile + ") and ";
+    abstractDicomFile = std::move(initDicomIngest());
+    slideLevelDim = std::move(initAbstractDicomFileSourceLevelDim(
+                                                         description.c_str()));
   }
   if (largestSlideLevelWidth_ <= initialX_ ||
       largestSlideLevelHeight_ <= initialY_) {
@@ -700,6 +718,16 @@ int WsiToDcm::dicomizeTiff() {
                                   openslideMPP_X);
     levelHeightMM = getDimensionMM(largestSlideLevelHeight_ - initialY_,
                                    openslideMPP_Y);
+  }
+  if (wsiRequest_->studyId.size() < 1) {
+    char studyIdGenerated[100];
+    dcmGenerateUniqueIdentifier(studyIdGenerated, SITE_STUDY_UID_ROOT);
+    wsiRequest_->studyId = studyIdGenerated;
+  }
+  if (wsiRequest_->seriesId.size() < 1) {
+    char seriesIdGenerated[100];
+    dcmGenerateUniqueIdentifier(seriesIdGenerated, SITE_SERIES_UID_ROOT);
+    wsiRequest_->seriesId = seriesIdGenerated;
   }
   // Determine smallest_slide downsample dimensions to enable
   // slide pixel spacing normalization croping to ensure pixel
