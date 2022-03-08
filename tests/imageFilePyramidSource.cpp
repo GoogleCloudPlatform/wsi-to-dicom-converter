@@ -28,8 +28,7 @@ TEST(imageFilePyramidSource, readJpeg) {
   EXPECT_EQ(img.imageHeightMM(), 12.0);
   EXPECT_TRUE(std::abs(img.imageWidthMM() - 16.06153846153846) <= 0.001);
   EXPECT_EQ(img.photometricInterpretation(), "RGB");
-  std::string str = img.filename();
-  EXPECT_EQ(str, "../tests/bone.jpeg");
+  EXPECT_EQ(img.filename(), "../tests/bone.jpeg");
   EXPECT_TRUE(img.image() != nullptr);
   for (size_t idx = 0; idx < img.fileFrameCount(); ++idx) {
     EXPECT_TRUE(img.frame(idx) != nullptr);

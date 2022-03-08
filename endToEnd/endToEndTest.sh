@@ -113,28 +113,28 @@ rm ./endToEnd/*.dcm -f
 dcmj2pnm +cl ./endToEnd/level-4-frames-0-1.dcm ./endToEnd/test11GeneratedImage.ppm
 diff ./endToEnd/test11GeneratedImage.ppm ./endToEnd/test11ExpectedImage.ppm
 
-#test - test create image pyrmaid from JPEG
+#test - test create image pyramid from JPEG
 echo "Test 12"
 rm ./endToEnd/*.dcm -f
 ./build/wsi2dcm $jpegFileName ./endToEnd/ --seriesDescription test12  --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame --readImage --untiledImageHeightMM 12.0
 dcm2json ./endToEnd/level-2-frames-0-1.dcm ./endToEnd/test12GeneratedTags.json
 compare ./endToEnd/test12GeneratedTags.json ./endToEnd/test12ExpectedTags.json
 
-#test - test create image pyrmaid from RawDICOM
+#test - test create image pyramid from RawDICOM
 echo "Test 13"
 rm ./endToEnd/*.dcm -f
 ./build/wsi2dcm ./tests/raw.dicom ./endToEnd/ --seriesDescription test13  --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame --readDICOM
 dcm2json ./endToEnd/level-2-frames-0-1.dcm ./endToEnd/test13GeneratedTags.json
 compare ./endToEnd/test13GeneratedTags.json ./endToEnd/test13ExpectedTags.json
 
-#test - test create image pyrmaid from JpegDICOM 
+#test - test create image pyramid from JpegDICOM 
 echo "Test 14"
 rm ./endToEnd/*.dcm -f
 ./build/wsi2dcm ./tests/jpeg.dicom ./endToEnd/ --seriesDescription test14  --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame --readDICOM
 dcm2json ./endToEnd/level-2-frames-0-1.dcm ./endToEnd/test14GeneratedTags.json
 compare ./endToEnd/test14GeneratedTags.json ./endToEnd/test14ExpectedTags.json
 
-#test - test create image pyrmaid from Jpeg2000
+#test - test create image pyramid from Jpeg2000
 echo "Test 15"
 rm ./endToEnd/*.dcm -f
 ./build/wsi2dcm ./tests/jpeg2000.dicom ./endToEnd/ --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame --readDICOM

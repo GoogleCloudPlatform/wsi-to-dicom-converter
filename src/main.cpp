@@ -243,19 +243,13 @@ int main(int argc, char *argv[]) {
   request.outputFileMask = outputFolder;
   request.frameSizeX = std::max(tileWidth, 1);
   request.frameSizeY = std::max(tileHeight, 1);
-  if (firstlevelCompression == "default") {
-    request.firstlevelCompression = dcmCompressionFromString(compression);
-  } else {
-    request.firstlevelCompression =
-                              dcmCompressionFromString(firstlevelCompression);
-  }
+  request.firstlevelCompression = (firstlevelCompression == "default") ?
+                               dcmCompressionFromString(compression) :
+                               dcmCompressionFromString(firstlevelCompression);
   request.compression = dcmCompressionFromString(compression);
   request.quality = std::max(std::min(100, compressionQuality), 0);
-  if (request.genPyramidFromDicom) {
-    request.startOnLevel = std::max(start, 1);
-  } else {
-    request.startOnLevel = std::max(start, 0);
-  }
+  request.startOnLevel = request.genPyramidFromDicom ? std::max(start, 1) :
+                                                       std::max(start, 0);
   request.stopOnLevel =  std::max(stop, -1);
   request.imageName = seriesDescription;
   request.studyId = studyId;

@@ -29,8 +29,7 @@ TEST(dcmFilePyramidSource, readJpegDicom) {
   EXPECT_EQ(img.imageHeightMM(), 12.0);
   EXPECT_TRUE(std::abs(img.imageWidthMM() - 16.06153846153846) <= 0.001);
   EXPECT_EQ(img.photometricInterpretation(), "YBR_FULL_422");
-  std::string str = img.filename();
-  EXPECT_EQ(str, "../tests/jpeg.dicom");
+  EXPECT_EQ(img.filename(), "../tests/jpeg.dicom");
   EXPECT_TRUE(img.tiledFull());
   EXPECT_TRUE(!img.tiledSparse());
   EXPECT_EQ(img.transferSyntax(), EXS_JPEGProcess1);
@@ -57,8 +56,7 @@ TEST(dcmFilePyramidSource, readJpeg2kDicom) {
   EXPECT_EQ(img.imageHeightMM(), 12.0);
   EXPECT_TRUE(std::abs(img.imageWidthMM() - 16.06153846153846) <= 0.001);
   EXPECT_EQ(img.photometricInterpretation(), "RGB");
-  std::string str = img.filename();
-  EXPECT_EQ(str, "../tests/jpeg2000.dicom");
+  EXPECT_EQ(img.filename(), "../tests/jpeg2000.dicom");
   EXPECT_TRUE(img.tiledFull());
   EXPECT_TRUE(!img.tiledSparse());
   EXPECT_EQ(img.transferSyntax(), EXS_JPEG2000LosslessOnly);
@@ -85,8 +83,7 @@ TEST(dcmFilePyramidSource, readRAWDicom) {
   EXPECT_EQ(img.imageHeightMM(), 12.0);
   EXPECT_TRUE(std::abs(img.imageWidthMM() - 16.06153846153846) <= 0.001);
   EXPECT_EQ(img.photometricInterpretation(), "RGB");
-  std::string str = img.filename();
-  EXPECT_EQ(str, "../tests/raw.dicom");
+  EXPECT_EQ(img.filename(), "../tests/raw.dicom");
   EXPECT_TRUE(img.tiledFull());
   EXPECT_TRUE(!img.tiledSparse());
   EXPECT_EQ(img.transferSyntax(), EXS_LittleEndianExplicit);

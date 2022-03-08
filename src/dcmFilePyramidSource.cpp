@@ -309,7 +309,7 @@ DcmFilePyramidSource::~DcmFilePyramidSource() {
   }
 }
 
-const char *DcmFilePyramidSource::filename() const {
+absl::string_view DcmFilePyramidSource::filename() const {
   return filename_.c_str();
 }
 

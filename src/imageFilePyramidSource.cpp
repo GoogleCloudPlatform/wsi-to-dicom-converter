@@ -130,7 +130,7 @@ ImageFilePyramidSource::ImageFilePyramidSource(absl::string_view filePath,
   }
 }
 
-const char *ImageFilePyramidSource::filename() const {
+absl::string_view ImageFilePyramidSource::filename() const {
   return filename_.c_str();
 }
 

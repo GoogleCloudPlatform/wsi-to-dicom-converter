@@ -28,6 +28,7 @@
 
 namespace wsiToDicomConverter {
 
+// DcmFilePyramidSource forward declared. Defined below in header file.
 class DcmFilePyramidSource;
 
 class AbstractDicomFileFrame : public Frame {
@@ -121,7 +122,7 @@ class DcmFilePyramidSource : public AbstractDcmFile {
   virtual bool tiledFull() const;
   virtual bool tiledSparse() const;
   void debugLog() const;
-  const char *filename() const;
+  absl::string_view filename() const;
   DcmDataset *dataset();
   boost::mutex *datasetMutex();
 
