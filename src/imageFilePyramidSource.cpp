@@ -52,9 +52,9 @@ int64_t ImageFileFrame::rawABGRFrameBytes(uint8_t *rawMemory,
     cv::Mat paddedPatch(fHeight, fWidth, patch.depth());
     cv::copyMakeBorder(patch, paddedPatch, 0, padbottom, 0, padright,
                        cv::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
-    cv::cvtColor(paddedPatch, bgraMemory, cv::COLOR_BGR2BGRA);
+    cv::cvtColor(paddedPatch, bgraMemory, cv::COLOR_RGB2BGRA);
   } else {
-    cv::cvtColor(patch, bgraMemory, cv::COLOR_BGR2BGRA);
+    cv::cvtColor(patch, bgraMemory, cv::COLOR_RGB2BGRA);
   }
   return memorySize;
 }
