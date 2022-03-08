@@ -137,6 +137,6 @@ compare ./endToEnd/test14GeneratedTags.json ./endToEnd/test14ExpectedTags.json
 #test - test create image pyrmaid from Jpeg2000
 echo "Test 15"
 rm ./endToEnd/*.dcm -f
-./build/wsi2dcm ./tests/jpeg2000.dicom ./endToEnd/ --seriesDescription test15  --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame --readDICOM
+./build/wsi2dcm ./tests/jpeg2000.dicom ./endToEnd/ --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame --readDICOM
 dcm2json ./endToEnd/level-2-frames-0-1.dcm ./endToEnd/test15GeneratedTags.json
 compare ./endToEnd/test15GeneratedTags.json ./endToEnd/test15ExpectedTags.json

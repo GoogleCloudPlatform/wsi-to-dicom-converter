@@ -110,6 +110,9 @@ class DcmFilePyramidSource : public AbstractDcmFile {
   virtual double imageHeightMM() const;
   virtual double imageWidthMM() const;
   virtual std::string photometricInterpretation() const;
+  virtual std::string studyInstanceUID() const;
+  virtual std::string seriesInstanceUID() const;
+  virtual std::string seriesDescription() const;
 
   // DICOM transfer syntax objs
   virtual E_TransferSyntax transferSyntax() const;
@@ -145,6 +148,9 @@ class DcmFilePyramidSource : public AbstractDcmFile {
   int64_t bitsStored_;
   int64_t highBit_;
   int64_t pixelRepresentation_;
+  std::string studyInstanceUID_;
+  std::string seriesInstanceUID_;
+  std::string seriesDescription_;
 
   double getTagValueFloat32(const DcmTagKey &dcmTag);
   int64_t getTagValueUI16(const DcmTagKey &dcmTag);

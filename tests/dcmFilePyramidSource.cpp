@@ -39,6 +39,11 @@ TEST(dcmFilePyramidSource, readJpegDicom) {
   }
   EXPECT_TRUE(img.dataset() != nullptr);
   EXPECT_TRUE(img.datasetMutex() != nullptr);
+  EXPECT_EQ(img.studyInstanceUID(),
+    "1.2.276.0.7230010.3.1.2.296485632.4444.1646683084.97877");
+  EXPECT_EQ(img.seriesInstanceUID(),
+    "1.2.276.0.7230010.3.1.3.296485632.4444.1646683084.97878");
+  EXPECT_EQ(img.seriesDescription(), "test13");
 }
 
 TEST(dcmFilePyramidSource, readJpeg2kDicom) {
@@ -62,6 +67,11 @@ TEST(dcmFilePyramidSource, readJpeg2kDicom) {
   }
   EXPECT_TRUE(img.dataset() != nullptr);
   EXPECT_TRUE(img.datasetMutex() != nullptr);
+  EXPECT_EQ(img.studyInstanceUID(),
+    "1.2.276.0.7230010.3.1.2.296485632.4407.1646682987.791295");
+  EXPECT_EQ(img.seriesInstanceUID(),
+    "1.2.276.0.7230010.3.1.3.296485632.4407.1646682987.791296");
+  EXPECT_EQ(img.seriesDescription(), "test13");
 }
 
 TEST(dcmFilePyramidSource, readRAWDicom) {
@@ -85,6 +95,11 @@ TEST(dcmFilePyramidSource, readRAWDicom) {
   }
   EXPECT_TRUE(img.dataset() != nullptr);
   EXPECT_TRUE(img.datasetMutex() != nullptr);
+  EXPECT_EQ(img.studyInstanceUID(),
+    "1.2.276.0.7230010.3.1.2.296485376.51.1646689307.999330");
+  EXPECT_EQ(img.seriesInstanceUID(),
+    "1.2.276.0.7230010.3.1.3.296485376.51.1646689307.999331");
+  EXPECT_EQ(img.seriesDescription(), "test12");
 }
 
 }  // namespace wsiToDicomConverter

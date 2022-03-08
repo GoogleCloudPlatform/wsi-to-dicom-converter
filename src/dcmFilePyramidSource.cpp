@@ -182,6 +182,9 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) {
   firstLevelHeightMm_ = 0;
   photometric_ = "";
   dimensionalOrganization_ = "";
+  studyInstanceUID_ = "";
+  seriesInstanceUID_ = "";
+  seriesDescription_ = "";
   filename_ = static_cast<std::string>(filePath);
   dcmFile_.loadFile(filename_.c_str());
   dataset_ = dcmFile_.getDataset();
@@ -212,6 +215,10 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) {
   firstLevelHeightMm_ = getTagValueFloat32(DCM_ImagedVolumeHeight);
   dimensionalOrganization_ = getTagValueStringArray(
                                                 DCM_DimensionOrganizationType);
+  studyInstanceUID_ = getTagValueStringArray(DCM_StudyInstanceUID);
+  seriesInstanceUID_ = getTagValueStringArray(DCM_SeriesInstanceUID);
+  seriesDescription_ = getTagValueStringArray(DCM_SeriesDescription);
+
   framesData_.reserve(frameCount_);
   /* get pixel data sequence (if available) */
   const DcmRepresentationParameter *repParam = nullptr;
@@ -423,6 +430,18 @@ DcmXfer DcmFilePyramidSource::transferSyntaxDcmXfer() const {
 
 std::string DcmFilePyramidSource::photometricInterpretation() const {
   return photometric_;
+}
+
+std::string DcmFilePyramidSource::studyInstanceUID() const {
+  return studyInstanceUID_;
+}
+
+std::string DcmFilePyramidSource::seriesInstanceUID() const {
+  return seriesInstanceUID_;
+}
+
+std::string DcmFilePyramidSource::seriesDescription() const {
+  return seriesDescription_;
 }
 
 void DcmFilePyramidSource::debugLog() const {

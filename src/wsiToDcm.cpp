@@ -76,17 +76,6 @@ inline DCM_Compression compressionFromString(std::string compressionStr) {
 }
 
 WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
-  if (wsiRequest_->studyId.size() < 1) {
-    char studyIdGenerated[100];
-    dcmGenerateUniqueIdentifier(studyIdGenerated, SITE_STUDY_UID_ROOT);
-    wsiRequest_->studyId = studyIdGenerated;
-  }
-
-  if (wsiRequest_->seriesId.size() < 1) {
-    char seriesIdGenerated[100];
-    dcmGenerateUniqueIdentifier(seriesIdGenerated, SITE_SERIES_UID_ROOT);
-    wsiRequest_->seriesId = seriesIdGenerated;
-  }
   if (!wsiRequest_->genPyramidFromDicom &&
       !wsiRequest_->genPyramidFromUntiledImage) {
     const char *slideFile = wsiRequest_->inputFile.c_str();
@@ -163,6 +152,15 @@ std::unique_ptr<DcmFilePyramidSource> WsiToDcm::initDicomIngest() {
   largestSlideLevelHeight_ = dicomFile->imageHeight();
   wsiRequest_->frameSizeX = dicomFile->frameWidth();
   wsiRequest_->frameSizeY = dicomFile->frameHeight();
+  if (wsiRequest_->studyId.size() < 1) {
+    wsiRequest_->studyId = dicomFile->studyInstanceUID();
+  }
+  if (wsiRequest_->seriesId.size() < 1) {
+    wsiRequest_->seriesId = dicomFile->seriesInstanceUID();
+  }
+  if (wsiRequest_->imageName.size() < 1) {
+    wsiRequest_->imageName = dicomFile->seriesDescription();
+  }
   return std::move(dicomFile);
 }
 
@@ -720,6 +718,16 @@ int WsiToDcm::dicomizeTiff() {
                                   openslideMPP_X);
     levelHeightMM = getDimensionMM(largestSlideLevelHeight_ - initialY_,
                                    openslideMPP_Y);
+  }
+  if (wsiRequest_->studyId.size() < 1) {
+    char studyIdGenerated[100];
+    dcmGenerateUniqueIdentifier(studyIdGenerated, SITE_STUDY_UID_ROOT);
+    wsiRequest_->studyId = studyIdGenerated;
+  }
+  if (wsiRequest_->seriesId.size() < 1) {
+    char seriesIdGenerated[100];
+    dcmGenerateUniqueIdentifier(seriesIdGenerated, SITE_SERIES_UID_ROOT);
+    wsiRequest_->seriesId = seriesIdGenerated;
   }
   // Determine smallest_slide downsample dimensions to enable
   // slide pixel spacing normalization croping to ensure pixel
