@@ -264,12 +264,8 @@ bool TiffFrame::canDecodeJpeg() {
   return false;
 }
 
-std::string TiffFrame::photoMetrInt() const {
-  if (tiffDirectory()->isPhotoMetricRGB()) {
-      return "RGB";
-  } else {
-      return "YBR_FULL_422";
-  }
+absl::string_view TiffFrame::photoMetrInt() const {
+  return tiffDirectory()->photoMetrIntStr();
 }
 
 void TiffFrame::incSourceFrameReadCounter() {

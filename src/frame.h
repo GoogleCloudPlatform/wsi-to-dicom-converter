@@ -14,6 +14,7 @@
 
 #ifndef SRC_FRAME_H_
 #define SRC_FRAME_H_
+#include <absl/strings/string_view.h>
 #include <boost/thread/mutex.hpp>
 #include <dcmtk/dcmdata/dcpxitem.h>
 
@@ -49,7 +50,7 @@ class Frame {
   virtual void incSourceFrameReadCounter() = 0;
   virtual int64_t locationX() const;
   virtual int64_t locationY() const;
-  virtual std::string photoMetrInt() const;
+  virtual absl::string_view photoMetrInt() const;
   virtual bool hasDcmPixelItem() const;
   virtual DcmPixelItem *dcmPixelItem();
   virtual void setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,

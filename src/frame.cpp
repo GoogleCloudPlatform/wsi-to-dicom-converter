@@ -51,10 +51,6 @@ Frame::Frame(int64_t locationX, int64_t locationY, int64_t frameWidth,
     }
 }
 
-std::string Frame::photoMetrInt() const {
-  return "";
-}
-
 int64_t Frame::frameWidth() const {
   return frameWidth_;
 }
@@ -104,6 +100,12 @@ void Frame::clearRawABGRMem() {
     rawCompressedBytes_ = nullptr;
     rawCompressedBytesSize_ = 0;
   }
+}
+
+absl::string_view Frame::photoMetrInt() const {
+  // if undefined frame photometricInterprecation determined
+  //  by compression in dcmFileDraft.
+  return absl::string_view(nullptr, 0);
 }
 
 bool Frame::hasDcmPixelItem() const {

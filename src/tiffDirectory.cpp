@@ -85,6 +85,7 @@ TiffDirectory::TiffDirectory(const TiffDirectory &dir) {
   jpegQuality_ = dir.jpegQuality_;
   jpegColorMode_ = dir.jpegColorMode_;
   jpegTableMode_ = dir.jpegTableMode_;
+  photoMetricStr_ = isPhotoMetricRGB() ? "RGB" : "YBR_FULL_422";
 }
 
 TiffDirectory::~TiffDirectory() {}
@@ -146,6 +147,10 @@ int64_t TiffDirectory::tileDepth() const { return tileDepth_; }  // 32998
 double TiffDirectory::xResolution() const { return xResolution_; }  // 282
 
 double TiffDirectory::yResolution() const { return yResolution_; }   // 283
+
+absl::string_view TiffDirectory::photoMetrIntStr() const {
+  return photoMetricStr_.c_str();
+}
 
 int64_t TiffDirectory::tilesPerRow() const {
   if ((imageWidth_ == -1) || (tileWidth_ <= 0)) {

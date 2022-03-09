@@ -34,44 +34,16 @@ AbstractDicomFileFrame::AbstractDicomFileFrame(
                                int64_t locationX,
                                int64_t locationY,
                                DcmFilePyramidSource* pyramidSource) :
-         Frame(locationX, locationY, pyramidSource->frameWidth(),
-               pyramidSource->frameHeight(), NONE, -1, true),
-         pyramidSource_(pyramidSource) {
-  size_ = 0;
-  dcmPixelItem_ = nullptr;
-  rawCompressedBytes_ = nullptr;
-  rawCompressedBytesSize_ = 0;
-  done_ = true;
+                            BaseFileFrame(locationX, locationY, pyramidSource) {
 }
-
-AbstractDicomFileFrame::~AbstractDicomFileFrame() {}
-
-void AbstractDicomFileFrame::sliceFrame() {}
 
 void AbstractDicomFileFrame::debugLog() const {
   BOOST_LOG_TRIVIAL(info) << "AbstractDICOM File Frame: ";
 }
 
-std::string AbstractDicomFileFrame::photoMetrInt() const {
-  return pyramidSource_->photometricInterpretation();
-}
-
-bool AbstractDicomFileFrame::hasRawABGRFrameBytes() const {
-  return true;
-}
-
-void AbstractDicomFileFrame::incSourceFrameReadCounter() {
-  // Reads from DICOM FILE no source frame counter to increment.
-}
-
-void AbstractDicomFileFrame::setDicomFrameBytes(
-                           std::unique_ptr<uint8_t[]> dcmdata, uint64_t size) {
-}
-
 // Returns frame component of DCM_DerivationDescription
 // describes in text how frame imaging data was saved in frame.
 std::string AbstractDicomFileFrame::derivationDescription() const {
-  // todo fix
   return "Generated from DICOM";
 }
 
@@ -83,9 +55,6 @@ DICOMImageFrame::DICOMImageFrame(int64_t frameNumber,
                   AbstractDicomFileFrame(locationX, locationY, pyramidSource),
                   frameNumber_(frameNumber) {
   size_ = dicomMemSize;
-}
-
-DICOMImageFrame::~DICOMImageFrame() {
 }
 
 int64_t DICOMImageFrame::rawABGRFrameBytes(uint8_t *rawMemory,
@@ -124,9 +93,6 @@ JpegDicomFileFrame::JpegDicomFileFrame(int64_t locationX,
   size_ = dicomMemSize;
 }
 
-JpegDicomFileFrame::~JpegDicomFileFrame() {
-}
-
 J_COLOR_SPACE JpegDicomFileFrame::jpegDecodeColorSpace() const {
   return photoMetrInt() == "RGB" ? JCS_RGB : JCS_YCbCr;
 }
@@ -153,9 +119,6 @@ Jp2KDicomFileFrame::Jp2KDicomFileFrame(int64_t locationX,
   size_ = dicomMemSize;
 }
 
-Jp2KDicomFileFrame::~Jp2KDicomFileFrame() {
-}
-
 int64_t Jp2KDicomFileFrame::rawABGRFrameBytes(uint8_t *rawMemory,
                                               int64_t memorySize) {
   cv::Mat rawData(1, size_, CV_8UC1,
@@ -171,22 +134,16 @@ int64_t Jp2KDicomFileFrame::rawABGRFrameBytes(uint8_t *rawMemory,
   return width * height * 4;
 }
 
-DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) {
+DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
+                      BaseFilePyramidSource<AbstractDicomFileFrame>(filePath) {
   xfer_ = EXS_Unknown;
   dcmtkCodecRegistered_ = false;
-  frameWidth_ = 0;
-  frameHeight_ = 0;
-  imageWidth_ = 0;
-  imageHeight_ = 0;
-  firstLevelWidthMm_ = 0;
-  firstLevelHeightMm_ = 0;
-  photometric_ = "";
   dimensionalOrganization_ = "";
   studyInstanceUID_ = "";
   seriesInstanceUID_ = "";
   seriesDescription_ = "";
-  filename_ = static_cast<std::string>(filePath);
-  dcmFile_.loadFile(filename_.c_str());
+  std::string filename = static_cast<std::string>(filePath);
+  dcmFile_.loadFile(filename.c_str());
   dataset_ = dcmFile_.getDataset();
   DcmStack stack;
   if (!dataset_->search(DCM_PixelData, stack, ESM_fromHere, OFFalse).good()) {
@@ -200,7 +157,7 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) {
   frameHeight_ = getTagValueUI16(DCM_Rows);
   imageWidth_ = getTagValueUI32(DCM_TotalPixelMatrixColumns);
   imageHeight_ = getTagValueUI32(DCM_TotalPixelMatrixRows);
-  frameCount_  = getTagValueI64(DCM_NumberOfFrames);
+  int64_t frameCount  = getTagValueI64(DCM_NumberOfFrames);
 
   photometric_ = getTagValueString(DCM_PhotometricInterpretation);
   samplesPerPixel_ = getTagValueUI16(DCM_SamplesPerPixel);
@@ -219,7 +176,7 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) {
   seriesInstanceUID_ = getTagValueStringArray(DCM_SeriesInstanceUID);
   seriesDescription_ = getTagValueStringArray(DCM_SeriesDescription);
 
-  framesData_.reserve(frameCount_);
+  framesData_.reserve(frameCount);
   /* get pixel data sequence (if available) */
   const DcmRepresentationParameter *repParam = nullptr;
   pixelData->getOriginalRepresentationKey(xfer_, repParam);
@@ -266,7 +223,7 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) {
   }
   uint64_t locationX = 0;
   uint64_t locationY = 0;
-  for (size_t idx = 0; idx < frameCount_; ++idx) {
+  for (size_t idx = 0; idx < frameCount; ++idx) {
     if (locationX > imageWidth_) {
       locationX = 0;
       locationY += frameHeight_;
@@ -307,10 +264,6 @@ DcmFilePyramidSource::~DcmFilePyramidSource() {
     DJDecoderRegistration::cleanup();
     DcmRLEDecoderRegistration::cleanup();
   }
-}
-
-absl::string_view DcmFilePyramidSource::filename() const {
-  return filename_.c_str();
 }
 
 DcmDataset *DcmFilePyramidSource::dataset() {
@@ -384,42 +337,6 @@ std::string DcmFilePyramidSource::getTagValueStringArray(
   return "";
 }
 
-int64_t DcmFilePyramidSource::frameWidth() const {
-  return frameWidth_;
-}
-
-int64_t DcmFilePyramidSource::frameHeight() const {
-  return frameHeight_;
-}
-
-int64_t DcmFilePyramidSource::imageWidth() const {
-  return imageWidth_;
-}
-
-int64_t DcmFilePyramidSource::imageHeight() const {
-  return imageHeight_;
-}
-
-int64_t DcmFilePyramidSource::fileFrameCount() const {
-  return framesData_.size();
-}
-
-int64_t DcmFilePyramidSource::downsample() const {
-  return 1;
-}
-
-double DcmFilePyramidSource::imageWidthMM() const {
-  return firstLevelWidthMm_;
-}
-
-double DcmFilePyramidSource::imageHeightMM() const {
-  return firstLevelHeightMm_;
-}
-
-AbstractDicomFileFrame* DcmFilePyramidSource::frame(int64_t idx) const {
-  return framesData_[idx].get();
-}
-
 E_TransferSyntax DcmFilePyramidSource::transferSyntax() const {
   return xfer_;
 }
@@ -428,20 +345,16 @@ DcmXfer DcmFilePyramidSource::transferSyntaxDcmXfer() const {
   return DcmXfer(xfer_);
 }
 
-std::string DcmFilePyramidSource::photometricInterpretation() const {
-  return photometric_;
+absl::string_view DcmFilePyramidSource::studyInstanceUID() const {
+  return studyInstanceUID_.c_str();
 }
 
-std::string DcmFilePyramidSource::studyInstanceUID() const {
-  return studyInstanceUID_;
+absl::string_view DcmFilePyramidSource::seriesInstanceUID() const {
+  return seriesInstanceUID_.c_str();
 }
 
-std::string DcmFilePyramidSource::seriesInstanceUID() const {
-  return seriesInstanceUID_;
-}
-
-std::string DcmFilePyramidSource::seriesDescription() const {
-  return seriesDescription_;
+absl::string_view DcmFilePyramidSource::seriesDescription() const {
+  return seriesDescription_.c_str();
 }
 
 void DcmFilePyramidSource::debugLog() const {
@@ -459,7 +372,8 @@ void DcmFilePyramidSource::debugLog() const {
                              imageHeight() <<  "\n" << "Dim mm: " <<
                              imageHeightMM() << ", " << imageWidthMM() <<
                              "\n" << "Downsample: " << downsample() << "\n" <<
-                             "Photometric: " << photometricInterpretation() <<
+                             "Photometric: " <<
+                      static_cast<std::string>(photometricInterpretation()) <<
                              "\n" << "Frame Count: " << fileFrameCount() <<
                              "\n" << "Tile: " << tile << "\n" <<
                              "Frame Dim: " << frameWidth() << ", " <<

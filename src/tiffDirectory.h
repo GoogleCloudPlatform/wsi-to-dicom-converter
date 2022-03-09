@@ -14,7 +14,7 @@
 
 #ifndef SRC_TIFFDIRECTORY_H_
 #define SRC_TIFFDIRECTORY_H_
-
+#include <absl/strings/string_view.h>
 #include <tiffio.h>
 
 #include <memory>
@@ -68,6 +68,7 @@ class TiffDirectory {
   bool isJpegCompressed() const;
   bool isPhotoMetricRGB() const;
   bool isPhotoMetricYCBCR() const;
+  absl::string_view photoMetrIntStr() const;
   bool isExtractablePyramidImage() const;
   bool doImageDimensionsMatch(int64_t width, int64_t height) const;
 
@@ -83,6 +84,7 @@ class TiffDirectory {
   int64_t bitsPerSample_;            // 258 16bit
   int64_t compression_;              // 259 16bit
   int64_t photoMetric_;              // 262 16bit
+  std::string photoMetricStr_;
   std::string imageDescription_;     // 270
   int64_t orientation_;              // 274 16bit
   int64_t samplePerPixel_;           // 277 16bit

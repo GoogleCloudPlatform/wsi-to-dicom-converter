@@ -153,13 +153,16 @@ std::unique_ptr<DcmFilePyramidSource> WsiToDcm::initDicomIngest() {
   wsiRequest_->frameSizeX = dicomFile->frameWidth();
   wsiRequest_->frameSizeY = dicomFile->frameHeight();
   if (wsiRequest_->studyId.size() < 1) {
-    wsiRequest_->studyId = dicomFile->studyInstanceUID();
+    wsiRequest_->studyId =
+            std::move(static_cast<std::string>(dicomFile->studyInstanceUID()));
   }
   if (wsiRequest_->seriesId.size() < 1) {
-    wsiRequest_->seriesId = dicomFile->seriesInstanceUID();
+    wsiRequest_->seriesId =
+           std::move(static_cast<std::string>(dicomFile->seriesInstanceUID()));
   }
   if (wsiRequest_->imageName.size() < 1) {
-    wsiRequest_->imageName = dicomFile->seriesDescription();
+    wsiRequest_->imageName =
+           std::move(static_cast<std::string>(dicomFile->seriesDescription()));
   }
   return std::move(dicomFile);
 }

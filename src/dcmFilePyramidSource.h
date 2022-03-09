@@ -23,34 +23,23 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include "src/abstractDcmFile.h"
-#include "src/frame.h"
+#include "src/baseFilePyramidSource.h"
 
 namespace wsiToDicomConverter {
 
 // DcmFilePyramidSource forward declared. Defined below in header file.
 class DcmFilePyramidSource;
 
-class AbstractDicomFileFrame : public Frame {
+class AbstractDicomFileFrame : public BaseFileFrame<DcmFilePyramidSource> {
  public:
   AbstractDicomFileFrame(int64_t locationX,
                  int64_t locationY,
                  DcmFilePyramidSource *pyramidSource);
-  virtual ~AbstractDicomFileFrame();
-  virtual void sliceFrame();
-  virtual std::string photoMetrInt() const;
-  virtual bool hasRawABGRFrameBytes() const;
-  virtual void incSourceFrameReadCounter();
-  virtual void setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
-                                                         uint64_t size);
   virtual void debugLog() const;
 
   // Returns frame component of DCM_DerivationDescription
   // describes in text how frame imaging data was saved in frame.
   virtual std::string derivationDescription() const;
-
- protected:
-  DcmFilePyramidSource *pyramidSource_;
 };
 
 class JpegDicomFileFrame : public AbstractDicomFileFrame {
@@ -60,7 +49,6 @@ class JpegDicomFileFrame : public AbstractDicomFileFrame {
                 uint8_t *dicomMem,
                 uint64_t dicomMemSize,
                 DcmFilePyramidSource *pyramidSource);
-  virtual ~JpegDicomFileFrame();
   virtual J_COLOR_SPACE jpegDecodeColorSpace() const;
   virtual int64_t rawABGRFrameBytes(uint8_t *raw_memory, int64_t memorysize);
 
@@ -75,7 +63,6 @@ class Jp2KDicomFileFrame : public AbstractDicomFileFrame {
                 uint8_t *dicomMem,
                 uint64_t dicomMemSize,
                 DcmFilePyramidSource *pyramidSource);
-  virtual ~Jp2KDicomFileFrame();
   virtual int64_t rawABGRFrameBytes(uint8_t *raw_memory, int64_t memorysize);
 
  private:
@@ -89,7 +76,6 @@ class DICOMImageFrame : public AbstractDicomFileFrame {
                   int64_t locationY,
                   uint64_t dicomMemSize,
                   DcmFilePyramidSource *pyramidSource);
-  virtual ~DICOMImageFrame();
   virtual int64_t rawABGRFrameBytes(uint8_t *raw_memory, int64_t memorysize);
 
  private:
@@ -97,23 +83,14 @@ class DICOMImageFrame : public AbstractDicomFileFrame {
 };
 
 // Represents single DICOM file with metadata
-class DcmFilePyramidSource : public AbstractDcmFile {
+class DcmFilePyramidSource :
+                        public BaseFilePyramidSource<AbstractDicomFileFrame> {
  public:
   explicit DcmFilePyramidSource(absl::string_view filePath);
   virtual ~DcmFilePyramidSource();
-  virtual int64_t frameWidth() const;
-  virtual int64_t frameHeight() const;
-  virtual int64_t imageWidth() const;
-  virtual int64_t imageHeight() const;
-  virtual int64_t fileFrameCount() const;
-  virtual int64_t downsample() const;
-  virtual AbstractDicomFileFrame* frame(int64_t idx) const;
-  virtual double imageHeightMM() const;
-  virtual double imageWidthMM() const;
-  virtual std::string photometricInterpretation() const;
-  virtual std::string studyInstanceUID() const;
-  virtual std::string seriesInstanceUID() const;
-  virtual std::string seriesDescription() const;
+  virtual absl::string_view studyInstanceUID() const;
+  virtual absl::string_view seriesInstanceUID() const;
+  virtual absl::string_view seriesDescription() const;
 
   // DICOM transfer syntax objs
   virtual E_TransferSyntax transferSyntax() const;
@@ -121,27 +98,16 @@ class DcmFilePyramidSource : public AbstractDcmFile {
 
   virtual bool tiledFull() const;
   virtual bool tiledSparse() const;
-  void debugLog() const;
-  absl::string_view filename() const;
+  virtual void debugLog() const;
   DcmDataset *dataset();
   boost::mutex *datasetMutex();
 
  private:
   DcmFileFormat dcmFile_;
   E_TransferSyntax xfer_;
-  int64_t frameWidth_;
-  int64_t frameHeight_;
-  int64_t imageWidth_;
-  int64_t imageHeight_;
-  int64_t frameCount_;
   int64_t samplesPerPixel_;
   int64_t planarConfiguration_;
-  std::string photometric_;
-  double firstLevelWidthMm_;
-  double firstLevelHeightMm_;
   std::string dimensionalOrganization_;
-  std::vector<std::unique_ptr<AbstractDicomFileFrame>> framesData_;
-  std::string filename_;
   boost::mutex datasetMutex_;
   DcmDataset *dataset_;
   bool dcmtkCodecRegistered_;
