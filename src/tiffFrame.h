@@ -14,6 +14,7 @@
 
 #ifndef SRC_TIFFFRAME_H_
 #define SRC_TIFFFRAME_H_
+#include <absl/strings/string_view.h>
 #include <jpeglib.h>
 #include <memory>
 #include <string>
@@ -43,7 +44,7 @@ class TiffFrame : public Frame {
 
   virtual ~TiffFrame();
   virtual void sliceFrame();
-  virtual std::string photoMetrInt() const;
+  virtual absl::string_view photoMetrInt() const;
   virtual int64_t rawABGRFrameBytes(uint8_t *raw_memory, int64_t memorysize);
   virtual void incSourceFrameReadCounter();
   TiffFile *tiffFile() const;

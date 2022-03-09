@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <string>
 #include <memory>
+#include <utility>
 #include "src/zlibWrapper.h"
 
 namespace wsiToDicomConverter {
@@ -24,13 +25,7 @@ namespace wsiToDicomConverter {
 ImageFileFrame::ImageFileFrame(int64_t locationX,
                                int64_t locationY,
                                ImageFilePyramidSource* pyramidSource) :
-         Frame(locationX, locationY, pyramidSource->frameWidth(),
-               pyramidSource->frameHeight(), NONE, -1, true),
-         pyramidSource_(pyramidSource) {
-  size_ = 0;
-  dcmPixelItem_ = nullptr;
-  rawCompressedBytes_ = nullptr;
-  done_ = true;
+                            BaseFileFrame(locationX, locationY, pyramidSource) {
 }
 
 int64_t ImageFileFrame::rawABGRFrameBytes(uint8_t *rawMemory,
@@ -59,28 +54,8 @@ int64_t ImageFileFrame::rawABGRFrameBytes(uint8_t *rawMemory,
   return memorySize;
 }
 
-bool ImageFileFrame::hasRawABGRFrameBytes() const {
-  return true;
-}
-
-ImageFileFrame::~ImageFileFrame() {}
-
-void ImageFileFrame::sliceFrame() {}
-
 void ImageFileFrame::debugLog() const {
   BOOST_LOG_TRIVIAL(info) << "Image File Frame: ";
-}
-
-std::string ImageFileFrame::photoMetrInt() const {
-  return "RGB";
-}
-
-void ImageFileFrame::incSourceFrameReadCounter() {
-  // Reads from DICOM FILE no source frame counter to increment.
-}
-
-void ImageFileFrame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
-                                        uint64_t size) {
 }
 
 // Returns frame component of DCM_DerivationDescription
@@ -93,23 +68,24 @@ std::string ImageFileFrame::derivationDescription() const {
 ImageFilePyramidSource::ImageFilePyramidSource(absl::string_view filePath,
                                                uint64_t frameWidth,
                                                uint64_t frameHeight,
-                                               double HeightMm) {
+                                               double HeightMm) :
+                              BaseFilePyramidSource<ImageFileFrame>(filePath) {
   frameWidth_ = frameWidth;
   frameHeight_ = frameHeight;
-  imageWidth_ = 0;
-  imageHeight_ = 0;
-  firstLevelHeightMm_ = HeightMm;
-  filename_ = static_cast<std::string>(filePath);
-  wholeimage_ = cv::imread(filename_.c_str(), cv::IMREAD_COLOR);
+  std::string filename = std::move(static_cast<std::string>(filePath));
+  wholeimage_ = cv::imread(filename.c_str(), cv::IMREAD_COLOR);
   if (wholeimage_.depth() != CV_8U) {
     BOOST_LOG_TRIVIAL(error) << "Cannot build DICOM Pyramid from image: " <<
-                                filename_ <<
+                                filename <<
                                 ". Image does not have unsigned 8-bit "
                                 "channels.";
     return;
   }
   imageWidth_ = wholeimage_.cols;
   imageHeight_ = wholeimage_.rows;
+  firstLevelHeightMm_ = HeightMm;
+  firstLevelWidthMm_ = (HeightMm * static_cast<double>(imageWidth_)) /
+         static_cast<double>(imageHeight_);
   int64_t locationX = 0;
   int64_t locationY = 0;
   uint64_t frameCount =
@@ -130,56 +106,8 @@ ImageFilePyramidSource::ImageFilePyramidSource(absl::string_view filePath,
   }
 }
 
-absl::string_view ImageFilePyramidSource::filename() const {
-  return filename_.c_str();
-}
-
 cv::Mat *ImageFilePyramidSource::image() {
   return &wholeimage_;
-}
-
-ImageFilePyramidSource::~ImageFilePyramidSource() {
-}
-
-int64_t ImageFilePyramidSource::downsample() const {
-  return 1;
-}
-
-std::string ImageFilePyramidSource::photometricInterpretation() const {
-  return "RGB";
-}
-
-int64_t ImageFilePyramidSource::frameWidth() const {
-  return frameWidth_;
-}
-
-int64_t ImageFilePyramidSource::frameHeight() const {
-  return frameHeight_;
-}
-
-int64_t ImageFilePyramidSource::imageWidth() const {
-  return imageWidth_;
-}
-
-int64_t ImageFilePyramidSource::imageHeight() const {
-  return imageHeight_;
-}
-
-int64_t ImageFilePyramidSource::fileFrameCount() const {
-  return framesData_.size();
-}
-
-double ImageFilePyramidSource::imageWidthMM() const {
-  return (imageHeightMM() * static_cast<double>(imageWidth())) /
-         static_cast<double>(imageHeight());
-}
-
-double ImageFilePyramidSource::imageHeightMM() const {
-  return firstLevelHeightMm_;
-}
-
-ImageFileFrame* ImageFilePyramidSource::frame(int64_t idx) const {
-  return framesData_[idx].get();
 }
 
 void ImageFilePyramidSource::debugLog() const {

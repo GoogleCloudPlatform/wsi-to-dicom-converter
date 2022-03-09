@@ -21,65 +21,35 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include "src/abstractDcmFile.h"
-#include "src/frame.h"
+#include "src/baseFilePyramidSource.h"
 
 namespace wsiToDicomConverter {
 
+// ImageFilePyramidSource forward declared. Defined below in header file.
 class ImageFilePyramidSource;
 
-class ImageFileFrame : public Frame {
+class ImageFileFrame : public BaseFileFrame<ImageFilePyramidSource> {
  public:
   ImageFileFrame(int64_t locationX,
                 int64_t locationY,
                 ImageFilePyramidSource* pyramidSource);
-  virtual ~ImageFileFrame();
-  virtual void sliceFrame();
-  virtual std::string photoMetrInt() const;
-  virtual void incSourceFrameReadCounter();
-  virtual void setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
-                                                         uint64_t size);
   virtual void debugLog() const;
   // Returns frame component of DCM_DerivationDescription
   // describes in text how frame imaging data was saved in frame.
   virtual std::string derivationDescription() const;
-
-  virtual bool hasRawABGRFrameBytes() const;
   virtual int64_t rawABGRFrameBytes(uint8_t *rawMemory, int64_t memorySize);
-
- private:
-  ImageFilePyramidSource * pyramidSource_;
 };
 
 // Represents single DICOM file with metadata
-class ImageFilePyramidSource : public AbstractDcmFile {
+class ImageFilePyramidSource : public BaseFilePyramidSource<ImageFileFrame> {
  public:
   explicit ImageFilePyramidSource(absl::string_view filePath,
                                   uint64_t frameWidth, uint64_t frameHeight,
                                   double HeightMm);
-  virtual ~ImageFilePyramidSource();
-  virtual int64_t frameWidth() const;
-  virtual int64_t frameHeight() const;
-  virtual int64_t imageWidth() const;
-  virtual int64_t imageHeight() const;
-  virtual int64_t fileFrameCount() const;
-  virtual int64_t downsample() const;
-  virtual ImageFileFrame* frame(int64_t idx) const;
-  virtual double imageHeightMM() const;
-  virtual double imageWidthMM() const;
-  virtual std::string photometricInterpretation() const;
-  void debugLog() const;
-  absl::string_view filename() const;
+  virtual void debugLog() const;
   cv::Mat *image();
 
  private:
-  int64_t frameWidth_;
-  int64_t frameHeight_;
-  int64_t imageWidth_;
-  int64_t imageHeight_;
-
-  double firstLevelHeightMm_;
-  std::vector<std::unique_ptr<ImageFileFrame>> framesData_;
   std::string filename_;
   cv::Mat wholeimage_;
 };
