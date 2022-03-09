@@ -100,18 +100,20 @@ Otherwise, follow these steps:
   - g++ >=8
   - cmake >=3
   - boost >=1.69: https://www.boost.org/users/history/version_1_69_0.html
-  - dcmtk source ==3.6.2: https://dicom.offis.de/download/dcmtk/dcmtk362/dcmtk-3.6.2.zip
+  - dcmtk source ==3.6.6: https://github.com/DCMTK/dcmtk/archive/refs/tags/DCMTK-3.6.6.zip
   - openslide >=3.4.1
-  - libjpeg >= 8
+  - libjpeg_turbo >= 2.1.2 https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.2.zip
   - openjpeg >= 2.3.0
   - jsoncpp >= 1.8.0
+  - OpenCV >= 4.5.4.     https://github.com/opencv/opencv/archive/refs/tags/4.5.4.zip
+  - abseil >= 20211102.0 https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.zip
 
 3. Run the following commands:
 
 ```shell
 mkdir build
 cd build
-cp -R %dcmtkDir% ./dcmtk-3.6.2
+cp -R %dcmtkDir% ./dcmtk-3.6.6
 cmake ..
 make -j%threads%
 ```
