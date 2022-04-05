@@ -82,6 +82,18 @@ class DICOMImageFrame : public AbstractDicomFileFrame {
   const uint64_t frameNumber_;
 };
 
+class DICOMDatasetReader {
+ public:
+  explicit DICOMDatasetReader(const std::string &filename);
+  DcmDataset *dataset();
+  boost::mutex *datasetMutex();
+
+ private:
+  DcmFileFormat dcmFile_;
+  DcmDataset *dataset_;
+  boost::mutex datasetMutex_;
+};
+
 // Represents single DICOM file with metadata
 class DcmFilePyramidSource :
                         public BaseFilePyramidSource<AbstractDicomFileFrame> {
@@ -102,7 +114,13 @@ class DcmFilePyramidSource :
   DcmDataset *dataset();
   boost::mutex *datasetMutex();
 
+  int getNextDicomDatasetReaderIndex();
+  DICOMDatasetReader *dicomDatasetReader(int readerIndex);
+
  private:
+  int frameReaderIndex_, maxFrameReaderIndex_;
+  std::vector<std::unique_ptr<DICOMDatasetReader>> dicomDatasetSpeedReader_;
+
   DcmFileFormat dcmFile_;
   E_TransferSyntax xfer_;
   int64_t samplesPerPixel_;

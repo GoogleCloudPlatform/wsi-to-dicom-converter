@@ -26,6 +26,7 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 #include <memory>
+#include <utility>
 #include "src/jpegUtil.h"
 
 namespace wsiToDicomConverter {
@@ -45,6 +46,19 @@ void AbstractDicomFileFrame::debugLog() const {
 // describes in text how frame imaging data was saved in frame.
 std::string AbstractDicomFileFrame::derivationDescription() const {
   return "Generated from DICOM";
+}
+
+DICOMDatasetReader::DICOMDatasetReader(const std::string &filename) {
+  dcmFile_.loadFile(filename.c_str());
+  dataset_ = dcmFile_.getDataset();
+}
+
+inline DcmDataset *DICOMDatasetReader::dataset() {
+  return dataset_;
+}
+
+inline boost::mutex* DICOMDatasetReader::datasetMutex() {
+  return &datasetMutex_;
 }
 
 DICOMImageFrame::DICOMImageFrame(int64_t frameNumber,
@@ -68,11 +82,14 @@ int64_t DICOMImageFrame::rawABGRFrameBytes(uint8_t *rawMemory,
   const uint64_t frameCount = 1;
   const uint64_t bufferSize = size_;
   std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(bufferSize);
+  int read_index = pyramidSource_->getNextDicomDatasetReaderIndex();
+  DICOMDatasetReader *datasetReader =
+                                pyramidSource_->dicomDatasetReader(read_index);
   {
-    boost::lock_guard<boost::mutex> guard(*pyramidSource_->datasetMutex());
-    DicomImage img(pyramidSource_->dataset(),
-                   pyramidSource_->transferSyntax(), flags,
-                   static_cast<uint64_t>(frameNumber_), frameCount);
+    boost::lock_guard<boost::mutex> guard(*datasetReader->datasetMutex());
+    DicomImage img(datasetReader->dataset(),
+                  pyramidSource_->transferSyntax(), flags,
+                  static_cast<uint64_t>(frameNumber_), frameCount);
     if (!img.getOutputData(buffer.get(), bufferSize)) {
       return 0;
     }
@@ -144,6 +161,16 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
   seriesDescription_ = "";
   std::string filename = static_cast<std::string>(filePath);
   dcmFile_.loadFile(filename.c_str());
+
+  frameReaderIndex_ = 0;
+  maxFrameReaderIndex_ = 30;
+  dicomDatasetSpeedReader_.reserve(maxFrameReaderIndex_);
+  for (int idx = 0; idx < maxFrameReaderIndex_; ++idx) {
+    std::unique_ptr<DICOMDatasetReader> reader =
+                                std::make_unique<DICOMDatasetReader>(filename);
+    dicomDatasetSpeedReader_.push_back(std::move(reader));
+  }
+
   dataset_ = dcmFile_.getDataset();
   DcmStack stack;
   if (!dataset_->search(DCM_PixelData, stack, ESM_fromHere, OFFalse).good()) {
@@ -257,6 +284,20 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
     locationX += frameWidth_;
   }
   BOOST_LOG_TRIVIAL(info) << "Done Queueing Frames";
+}
+
+inline DICOMDatasetReader *
+                          DcmFilePyramidSource::dicomDatasetReader(int index) {
+  return dicomDatasetSpeedReader_[index].get();
+}
+
+inline int DcmFilePyramidSource::getNextDicomDatasetReaderIndex() {
+  boost::lock_guard<boost::mutex> guard(*datasetMutex());
+  frameReaderIndex_ += 1;
+  if (frameReaderIndex_ >= maxFrameReaderIndex_) {
+    frameReaderIndex_ = 0;
+  }
+  return frameReaderIndex_;
 }
 
 DcmFilePyramidSource::~DcmFilePyramidSource() {
