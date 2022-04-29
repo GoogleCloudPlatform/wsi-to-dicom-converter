@@ -79,15 +79,20 @@ inline OFCondition generateFramePositionMetadata(DcmDataset* resultObject,
 }
 
 inline OFCondition generateSharedFunctionalGroupsSequence(
-    DcmDataset* resultObject, double pixelSizeMm) {
-  if (pixelSizeMm <= 0) {
-    pixelSizeMm = 0.1;
+    DcmDataset* resultObject, double pixelSizeWidthMm,
+    double pixelSizeHeightMm) {
+  if (pixelSizeWidthMm <= 0) {
+    pixelSizeWidthMm = 0.1;
+  }
+  if (pixelSizeHeightMm <= 0) {
+    pixelSizeHeightMm = 0.1;
   }
   std::unique_ptr<DcmItem> sharedFunctionalGroupsSequence =
       std::make_unique<DcmItem>();
   std::unique_ptr<DcmItem> pixelMeasuresSequence = std::make_unique<DcmItem>();
-  std::string pixelSizeMmStr = std::to_string(pixelSizeMm);
-  pixelSizeMmStr = pixelSizeMmStr + "\\" + pixelSizeMmStr;
+  std::string pixelSizeMmStr = std::to_string(pixelSizeHeightMm) + "\\" +
+                               std::to_string(pixelSizeWidthMm);
+
   pixelMeasuresSequence->putAndInsertString(DCM_PixelSpacing,
                                             pixelSizeMmStr.c_str());
   sharedFunctionalGroupsSequence->insertSequenceItem(
@@ -289,7 +294,8 @@ OFCondition DcmtkUtils::populateDataSet(
   if (cond.bad()) return cond;
 
   cond = generateSharedFunctionalGroupsSequence(
-      dataSet, firstLevelHeightMm / imageHeight);
+      dataSet, firstLevelWidthMm / static_cast<double>(imageWidth),
+               firstLevelHeightMm / static_cast<double>(imageHeight));
   if (cond.bad()) return cond;
 
   cond = generateDimensionIndexSequence(dataSet);
