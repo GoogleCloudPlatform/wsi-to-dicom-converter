@@ -24,3 +24,4 @@ wget https://raw.githubusercontent.com/google/styleguide/gh-pages/cpplint/cpplin
 
 checkFolder ./src
 checkFolder ./tests
+rm ./cpplint.py

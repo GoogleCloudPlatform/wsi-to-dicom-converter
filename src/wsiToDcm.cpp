@@ -698,7 +698,7 @@ int WsiToDcm::dicomizeTiff() {
     abstractDicomFile = std::move(initDicomIngest());
     slideLevelDim = std::move(initAbstractDicomFileSourceLevelDim(
                                                          description.c_str()));
-  }  
+  }
   if (abstractDicomFile != nullptr) {
     // Initalize height and width dimensions directly from file measures
     levelWidthMM = abstractDicomDimensionMM(abstractDicomFile->imageWidthMM(),
