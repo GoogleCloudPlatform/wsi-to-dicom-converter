@@ -77,25 +77,25 @@ export PATH=/usr/local/bin:$PATH
 cd ..
 cd ..
 # 7
-wget -O boost_1_79_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.79.0/source/boost_1_79_0.tar.gz > /dev/null && \
-tar xvzf boost_1_79_0.tar.gz  > /dev/null && \
-rm boost_1_79_0.tar.gz && \
-cd boost_1_79_0 && \
-./bootstrap.sh --prefix=/usr/ > /dev/null && \
-./b2 > /dev/null && \
-./b2 install > /dev/null && \
-cd .. && \
+wget -O boost_1_79_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.79.0/source/boost_1_79_0.tar.gz
+tar xvzf boost_1_79_0.tar.gz
+rm boost_1_79_0.tar.gz
+cd boost_1_79_0
+./bootstrap.sh --prefix=/usr/
+./b2
+./b2 install
+cd ..
 rm -rf /boost_1_79_0
 # 8
-wget -O openslide-3.4.1.tar.gz https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz > /dev/null && \ 
-tar xvzf openslide-3.4.1.tar.gz  > /dev/null && \
-rm openslide-3.4.1.tar.gz && \
-cd openslide-3.4.1 && \
-autoreconf -i && \
-./configure && \
-make && \
-make install && \
-cd .. && \
+wget -O openslide-3.4.1.tar.gz https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz
+tar xvzf openslide-3.4.1.tar.gz
+rm openslide-3.4.1.tar.gz
+cd openslide-3.4.1
+autoreconf -i
+./configure
+make
+make install
+cd ..
 rm -rf /openslide-3.4.1
 # Enable python to find openslide library
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
