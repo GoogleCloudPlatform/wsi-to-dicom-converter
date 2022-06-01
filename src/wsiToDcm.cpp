@@ -698,12 +698,7 @@ int WsiToDcm::dicomizeTiff() {
     abstractDicomFile = std::move(initDicomIngest());
     slideLevelDim = std::move(initAbstractDicomFileSourceLevelDim(
                                                          description.c_str()));
-  }
-  if (largestSlideLevelWidth_ <= initialX_ ||
-      largestSlideLevelHeight_ <= initialY_) {
-    BOOST_LOG_TRIVIAL(error) << "Input image dimensions are to small.";
-    return 1;
-  }
+  }  
   if (abstractDicomFile != nullptr) {
     // Initalize height and width dimensions directly from file measures
     levelWidthMM = abstractDicomDimensionMM(abstractDicomFile->imageWidthMM(),
@@ -721,6 +716,11 @@ int WsiToDcm::dicomizeTiff() {
                                   openslideMPP_X);
     levelHeightMM = getDimensionMM(largestSlideLevelHeight_ - initialY_,
                                    openslideMPP_Y);
+  }
+  if (largestSlideLevelWidth_ <= initialX_ ||
+      largestSlideLevelHeight_ <= initialY_) {
+    BOOST_LOG_TRIVIAL(error) << "Input image dimensions are to small.";
+    return 1;
   }
   if (wsiRequest_->studyId.size() < 1) {
     char studyIdGenerated[100];

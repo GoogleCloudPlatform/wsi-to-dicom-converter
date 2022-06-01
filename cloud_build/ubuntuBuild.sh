@@ -19,6 +19,8 @@
 # 4: install opencv
 # 5: install abseil
 # 6: install dcmtk
+# 6: install boost
+# 6: install openslide
 # 7: download and unpack source code of libs for build
 # 8: build
 
@@ -62,40 +64,58 @@ cmake  --build . --target install
 cd ..
 cd ..
 #6
-wget -O dcmtk-3.6.6.zip https://github.com/DCMTK/dcmtk/archive/refs/tags/DCMTK-3.6.6.zip > /dev/null
-unzip dcmtk-3.6.6.zip > /dev/null
-rm dcmtk-3.6.6.zip
-mkdir -p ./dcmtk-DCMTK-3.6.6/build
-cd ./dcmtk-DCMTK-3.6.6/build
-cmake -DDCMTK_FORCE_FPIC_ON_UNIX:BOOL=TRUE -DDCMTK_ENABLE_CXX11:BOOL=TRUE -DDCMTK_ENABLE_CHARSET_CONVERSION:BOOL=FALSE ..
+wget -O dcmtk-3.6.7.zip https://github.com/DCMTK/dcmtk/archive/refs/tags/DCMTK-3.6.7.zip > /dev/null
+unzip dcmtk-3.6.7.zip > /dev/null
+rm dcmtk-3.6.7.zip
+mkdir -p ./dcmtk-DCMTK-3.6.7/build
+cd ./dcmtk-DCMTK-3.6.7/build
+cmake -DDCMTK_FORCE_FPIC_ON_UNIX:BOOL=TRUE -DDCMTK_ENABLE_CXX11:BOOL=TRUE -DDCMTK_ENABLE_CHARSET_CONVERSION:BOOL=FALSE -DBUILD_SHARED_LIBS:BOOL=ON ..
 make -j12
-make DESTDIR=/dcmtk install
-export DCMDICTPATH=/dcmtk/usr/local/share/dcmtk/dicom.dic
-export PATH=/dcmtk/usr/local/bin:$PATH
+make DESTDIR=/ install
+rm -rf /dcmtk-DCMTK-3.6.7
+export DCMDICTPATH=/usr/local/share/dcmtk/dicom.dic
+export PATH=/usr/local/bin:$PATH
 cd ..
 cd ..
-#7
+# 7
+wget -O boost_1_79_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.79.0/source/boost_1_79_0.tar.gz > /dev/null && \
+tar xvzf boost_1_79_0.tar.gz  > /dev/null && \
+rm boost_1_79_0.tar.gz && \
+cd boost_1_79_0 && \
+./bootstrap.sh --prefix=/usr/ > /dev/null && \
+./b2 > /dev/null && \
+./b2 install > /dev/null && \
+cd .. && \
+rm -rf /boost_1_79_0
+# 8
+wget -O openslide-3.4.1.tar.gz https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz > /dev/null && \ 
+tar xvzf openslide-3.4.1.tar.gz  > /dev/null && \
+rm openslide-3.4.1.tar.gz && \
+cd openslide-3.4.1 && \
+autoreconf -i && \
+./configure && \
+make && \
+make install && \
+cd .. && \
+rm -rf /openslide-3.4.1
+# Enable python to find openslide library
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+#9
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
 cd build
 wget https://github.com/uclouvain/openjpeg/archive/v2.3.0.zip > /dev/null
 unzip v2.3.0.zip  > /dev/null
 rm v2.3.0.zip
-wget https://boostorg.jfrog.io/artifactory/main/release/1.69.0/source/boost_1_69_0.tar.gz  > /dev/null
-tar xvzf boost_1_69_0.tar.gz  > /dev/null
-rm boost_1_69_0.tar.gz
 wget https://github.com/open-source-parsers/jsoncpp/archive/0.10.7.zip > /dev/null
 unzip 0.10.7.zip > /dev/null
 rm 0.10.7.zip
-wget https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz > /dev/null
-tar xvzf openslide-3.4.1.tar.gz  > /dev/null
-rm openslide-3.4.1.tar.gz
 #remove documentation to remove flagged javascript security issues.
 set +e
 find /workspace/build -path "*/doc/html" -type d -exec rm -rf {} \;
 find /workspace/build -path "*/doc/*" -type f -name "*.js" -exec rm -f {} \;
 set -e
-#8
+#10
 cmake -DSTATIC_BUILD=ON -DTESTS_BUILD=ON ..
 make -j12
 ./gTests

@@ -157,7 +157,7 @@ TEST(getOpenslideLevelForDownsample, image_with_one_level) {
   request.downsamples = std::move(downsamples);
   request.debug = true;
   wsiToDicomConverter::WsiToDcm converter(&request);
-
+  converter.initOpenSlide();
   // Not great test. Image has one level.
   EXPECT_EQ(0, converter.getOpenslideLevelForDownsample(1));
   EXPECT_EQ(0, converter.getOpenslideLevelForDownsample(99));
@@ -182,6 +182,7 @@ TEST(getOptimalDownSamplingOrder, smallest_slide) {
   request.downsamples = std::move(downsamples);
   request.debug = true;
   wsiToDicomConverter::WsiToDcm converter(&request);
+  converter.initOpenSlide();
   std::vector<int32_t> levels;
   std::vector<bool> saveLevelCompressedRaw;
   converter.getOptimalDownSamplingOrder(&levels,
@@ -219,6 +220,7 @@ TEST(getOptimalDownSamplingOrder, smallest_slide_middle) {
   request.downsamples = std::move(downsamples);
   request.debug = true;
   wsiToDicomConverter::WsiToDcm converter(&request);
+  converter.initOpenSlide();
   std::vector<int32_t> levels;
   std::vector<bool> saveLevelCompressedRaw;
   converter.getOptimalDownSamplingOrder(&levels,
@@ -252,6 +254,7 @@ TEST(getDownsampledLevelDimensionMM, width) {
   request.downsamples = std::move(downsamples);
   request.debug = true;
   wsiToDicomConverter::WsiToDcm converter(&request);
+  converter.initOpenSlide();
   double osDim = converter.getOpenSlideDimensionMM("openslide.mpp-x");
   double dimX = converter.getDimensionMM(2220, osDim);
   ASSERT_TRUE(std::abs(dimX - 1.10778) < 0.0001);
@@ -276,6 +279,7 @@ TEST(getDownsampledLevelDimensionMM, height) {
   request.downsamples = std::move(downsamples);
   request.debug = true;
   wsiToDicomConverter::WsiToDcm converter(&request);
+  converter.initOpenSlide();
   double osDim = converter.getOpenSlideDimensionMM("openslide.mpp-y");
   double dimY = converter.getDimensionMM(2967, osDim);
   ASSERT_TRUE(std::abs(dimY - 1.48053) < 0.0001);
@@ -300,6 +304,7 @@ TEST(getSlideLevelDim, no_progressive) {
   request.downsamples = std::move(downsamples);
   request.debug = true;
   wsiToDicomConverter::WsiToDcm converter(&request);
+  converter.initOpenSlide();
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
   slide_dim = std::move(converter.getSlideLevelDim(1, nullptr));
   EXPECT_EQ(slide_dim->levelWidthDownsampled, 1110);
@@ -338,6 +343,7 @@ TEST(getSlideLevelDim, progressive) {
   request.downsamples = std::move(downsamples);
   request.debug = true;
   wsiToDicomConverter::WsiToDcm converter(&request);
+  converter.initOpenSlide();
   std::vector<int32_t> levels;
   std::vector<bool> saveLevelCompressedRaw;
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
