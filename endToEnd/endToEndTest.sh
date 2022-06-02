@@ -29,8 +29,8 @@ compare () {
 bash ./cloud_build/ubuntuBuild.sh
 
 #set enviromnental vars for DCMTK
-export DCMDICTPATH=/dcmtk/usr/local/share/dcmtk/dicom.dic
-export PATH=/dcmtk/usr/local/bin:$PATH
+export DCMDICTPATH=/usr/local/share/dcmtk/dicom.dic
+export PATH=/usr/local/bin:$PATH
 
 fileName=./tests/CMU-1-Small-Region.svs
 jpegFileName=./tests/bone.jpeg
