@@ -77,7 +77,7 @@ make -j12
 make DESTDIR=/ install
 cd ..
 cd ..
-rm -rf ./dcmtk-DCMTK-3.6.7
+rm -rf dcmtk-DCMTK-3.6.7
 export DCMDICTPATH=/usr/local/share/dcmtk/dicom.dic
 export PATH=/usr/local/bin:$PATH
 # 7
@@ -97,7 +97,7 @@ rm openslide-3.4.1.tar.gz
 cd openslide-3.4.1
 autoreconf -i
 ./configure
-make
+make -j12
 make install
 cd ..
 rm -rf openslide-3.4.1
@@ -125,14 +125,11 @@ make -j12
 make install
 cd ..
 cd ..
-rm -rf /openjpeg-2.5.0
-#remove documentation to remove flagged javascript security issues.
-set +e
-find /workspace/build -path "*/doc/html" -type d -exec rm -rf {} \;
-find /workspace/build -path "*/doc/*" -type f -name "*.js" -exec rm -f {} \;
-set -e
+rm -rf openjpeg-2.5.0
 #11
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
+mkdir build
+cd build
 cmake -DSTATIC_BUILD=ON -DTESTS_BUILD=ON ..
 make -j12
 ./gTests
