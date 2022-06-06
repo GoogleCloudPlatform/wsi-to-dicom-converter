@@ -44,6 +44,19 @@ make install
 cd ..
 cd ..
 rm -rf libjpeg-turbo-2.1.2
+#5
+apt-get install -y liblcms2-dev libzstd-dev libwebp-dev
+wget -O v2.5.0.zip  https://github.com/uclouvain/openjpeg/archive/v2.5.0.zip > /dev/null
+unzip v2.5.0.zip
+mkdir -p ./openjpeg-2.5.0/build
+cd ./openjpeg-2.5.0/build
+cmake  -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS:bool=on  -DCMAKE_INSTALL_PREFIX:path="/usr" ..
+make -j12
+make install
+make clean
+cd ..
+cd ..
+rm -rf openjpeg-2.5.0
 #4
 wget -O opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.5.4.zip > /dev/null
 unzip opencv.zip  > /dev/null
@@ -55,20 +68,6 @@ make -j12
 make install
 cd ..
 cd ..
-rm -rf jsoncpp-1.9.5
-#5
-apt-get install -y liblcms2-dev libzstd-dev libwebp-dev
-wget -O v2.5.0.zip  https://github.com/uclouvain/openjpeg/archive/v2.5.0.zip > /dev/null
-unzip v2.5.0.zip
-mkdir -p ./openjpeg-2.5.0/build
-cd ./openjpeg-2.5.0/build
-cmake  -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS:bool=on  -DCMAKE_INSTALL_PREFIX=/ -DCMAKE_INSTALL_PREFIX:path="/usr" ..
-make -j12
-make install
-make clean
-cd ..
-cd ..
-rm -rf openjpeg-2.5.0
 rm -rf opencv-4.5.4
 #6
 wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.zip > /dev/null
@@ -130,6 +129,7 @@ make -j12
 make install
 cd ..
 cd ..
+rm -rf jsoncpp-1.9.5
 #11
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
