@@ -122,7 +122,7 @@ wget -O v2.5.0.zip  https://github.com/uclouvain/openjpeg/archive/v2.5.0.zip > /
 unzip v2.5.0.zip
 mkdir -p ./openjpeg-2.5.0/build
 cd ./openjpeg-2.5.0/build
-cmake  -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS:bool=on  -DCMAKE_INSTALL_PREFIX=/ ..
+cmake  -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS:bool=on  -DCMAKE_INSTALL_PREFIX=/ -DCMAKE_INSTALL_PREFIX:path="/usr" ..
 make -j12
 make install
 make clean
