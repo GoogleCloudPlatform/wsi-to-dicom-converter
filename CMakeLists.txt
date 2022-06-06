@@ -38,18 +38,16 @@ link_directories(/usr/local/lib)
 set(STATIC_BUILD OFF CACHE BOOL ON)
 set(TESTS_BUILD OFF CACHE BOOL ON)
 
-include(CMake/OpenJpeg.cmake)
-include(CMake/JsonCpp.cmake)
-
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 FIND_PACKAGE(OpenCV REQUIRED)
 FIND_PACKAGE(JPEG REQUIRED)
-
 FIND_PACKAGE(DCMTK REQUIRED)
 SET(DCMTK_DIR /usr/local/include/dcmtk)
 INCLUDE_DIRECTORIES(${DCMTK_INCLUDE_DIRS})
+find_package(OpenJPEG REQUIRED)
+include_directories(${OPENJPEG_INCLUDE_DIRS})
 
 add_library(wsi2dcm SHARED    
     ${OPENJPEG_SRCS}
@@ -75,7 +73,7 @@ set_target_properties(wsi2dcm PROPERTIES
 set_target_properties(wsi2dcmCli PROPERTIES
                         OUTPUT_NAME wsi2dcm
                       )
-target_link_libraries(wsi2dcm pthread ${STATIC_LIBS} z m lzma xml2 ${OpenCV_LIBS} ${TURBOJPEG_LIBRARIES} ofstd ${DCMTK_LIBRARIES}  ${Boost_LIBRARIES} openslide)
+target_link_libraries(wsi2dcm pthread ${STATIC_LIBS} z m lzma xml2 ${OpenCV_LIBS} ${TURBOJPEG_LIBRARIES} ofstd ${DCMTK_LIBRARIES}  ${Boost_LIBRARIES} openslide jsoncpp ${OPENJPEG_LIBRARIES})
 target_link_libraries(wsi2dcmCli wsi2dcm)
 
 if (TESTS_BUILD)

@@ -29,8 +29,8 @@ compare () {
 bash ./cloud_build/ubuntuBuild.sh
 
 #set enviromnental vars for DCMTK
-export DCMDICTPATH=/dcmtk/usr/local/share/dcmtk/dicom.dic
-export PATH=/dcmtk/usr/local/bin:$PATH
+export DCMDICTPATH=/usr/local/share/dcmtk/dicom.dic
+export PATH=/usr/local/bin:$PATH
 
 fileName=./tests/CMU-1-Small-Region.svs
 jpegFileName=./tests/bone.jpeg
@@ -69,7 +69,6 @@ rm ./endToEnd/*.dcm -f
 ./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test5  --levels 6 --startOn 5 --tileHeight 100  --tileWidth 100 --compression raw --opencvDownsampling=AREA
 dcm2pnm ./endToEnd/level-5-frames-0-1.dcm ./endToEnd/test5GeneratedImage.ppm
 diff ./endToEnd/test5GeneratedImage.ppm ./endToEnd/test5ExpectedImage.ppm
-rm ./endToEnd/level-5-frames-0-1.dcm
 
 #test - use bilinear downsampling to generate DICOM with dropped first row and column and compare image with expected one
 echo "Test 6"
