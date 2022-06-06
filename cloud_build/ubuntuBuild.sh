@@ -95,12 +95,14 @@ wget -O openslide-3.4.1.tar.gz https://github.com/openslide/openslide/releases/d
 tar xvzf openslide-3.4.1.tar.gz
 rm openslide-3.4.1.tar.gz
 cd openslide-3.4.1
+apt-get install -y autoconf automake libtool pkg-config
 autoreconf -i
 ./configure
 make -j12
 make install
 cd ..
 rm -rf openslide-3.4.1
+apt-get purge -y autoconf
 # Enable python to find openslide library
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 #9
@@ -123,6 +125,7 @@ cd ./openjpeg-2.5.0/build
 cmake  -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS:bool=on  -DCMAKE_INSTALL_PREFIX=/ ..
 make -j12
 make install
+make clean
 cd ..
 cd ..
 rm -rf openjpeg-2.5.0
