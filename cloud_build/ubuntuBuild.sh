@@ -16,13 +16,13 @@
 # 1: update of ubuntu deb repos
 # 2: install of tools and libs for build
 # 3: install libjpeg turbo
-# 4: install opencv
-# 5: install abseil
-# 6: install dcmtk
-# 7: install boost
-# 8: install openslide
-# 9: install jsoncpp
-# 10: install openjpeg
+# 4: install openjpeg
+# 5: install opencv
+# 6: install abseil
+# 7: install dcmtk
+# 8: install boost
+# 9: install openslide
+# 10: install jsoncpp
 # 11: build
 
 #1
@@ -32,6 +32,7 @@ apt-get update
 DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-essential libjsoncpp-dev libgdk-pixbuf2.0-dev libcairo2-dev libsqlite3-dev cmake libglib2.0-dev libxml2-dev libopenjp2-7-dev g++-9 libgtest-dev -y
 #3
 # installing in /workspace
+apt-get install -y nasm
 wget -O libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.2.zip
 unzip libjpeg_turbo.zip
 rm libjpeg_turbo.zip
@@ -54,8 +55,22 @@ make -j12
 make install
 cd ..
 cd ..
-rm -rf opencv-4.5.4
+rm -rf jsoncpp-1.9.5
 #5
+apt-get install -y liblcms2-dev libzstd-dev libwebp-dev
+wget -O v2.5.0.zip  https://github.com/uclouvain/openjpeg/archive/v2.5.0.zip > /dev/null
+unzip v2.5.0.zip
+mkdir -p ./openjpeg-2.5.0/build
+cd ./openjpeg-2.5.0/build
+cmake  -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS:bool=on  -DCMAKE_INSTALL_PREFIX=/ -DCMAKE_INSTALL_PREFIX:path="/usr" ..
+make -j12
+make install
+make clean
+cd ..
+cd ..
+rm -rf openjpeg-2.5.0
+rm -rf opencv-4.5.4
+#6
 wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20211102.0.zip > /dev/null
 unzip abseil.zip > /dev/null
 rm abseil.zip
@@ -66,7 +81,7 @@ cmake  --build . --target install
 cd ..
 cd ..
 rm -rf abseil-cpp-20211102.0
-#6
+#7
 wget -O dcmtk-3.6.7.zip https://github.com/DCMTK/dcmtk/archive/refs/tags/DCMTK-3.6.7.zip > /dev/null
 unzip dcmtk-3.6.7.zip > /dev/null
 rm dcmtk-3.6.7.zip
@@ -80,7 +95,7 @@ cd ..
 rm -rf dcmtk-DCMTK-3.6.7
 export DCMDICTPATH=/usr/local/share/dcmtk/dicom.dic
 export PATH=/usr/local/bin:$PATH
-# 7
+# 8
 wget -O boost_1_79_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.79.0/source/boost_1_79_0.tar.gz
 tar xvzf boost_1_79_0.tar.gz
 rm boost_1_79_0.tar.gz
@@ -90,7 +105,7 @@ cd boost_1_79_0
 ./b2 install > /dev/null
 cd ..
 rm -rf boost_1_79_0
-# 8
+# 9
 wget -O openslide-3.4.1.tar.gz https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz
 tar xvzf openslide-3.4.1.tar.gz
 rm openslide-3.4.1.tar.gz
@@ -105,7 +120,7 @@ rm -rf openslide-3.4.1
 apt-get purge -y autoconf
 # Enable python to find openslide library
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-#9
+#10
 wget -O 1.9.5.zip https://github.com/open-source-parsers/jsoncpp/archive/refs/tags/1.9.5.zip > /dev/null
 unzip 1.9.5.zip  > /dev/null
 mkdir -p ./jsoncpp-1.9.5/build > /dev/null
@@ -115,20 +130,6 @@ make -j12
 make install
 cd ..
 cd ..
-rm -rf jsoncpp-1.9.5
-#10
-apt-get install -y liblcms2-dev libzstd-dev libwebp-dev
-wget -O v2.5.0.zip  https://github.com/uclouvain/openjpeg/archive/v2.5.0.zip > /dev/null
-unzip v2.5.0.zip
-mkdir -p ./openjpeg-2.5.0/build
-cd ./openjpeg-2.5.0/build
-cmake  -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS:bool=on  -DCMAKE_INSTALL_PREFIX=/ -DCMAKE_INSTALL_PREFIX:path="/usr" ..
-make -j12
-make install
-make clean
-cd ..
-cd ..
-rm -rf openjpeg-2.5.0
 #11
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
