@@ -25,8 +25,11 @@ compare () {
 }
 
 
-#building binaries
-bash ./cloud_build/ubuntuBuild.sh
+if [ "$1" !=  "SKIP_BUILD_ENVIRONMENT" ]
+then
+  #building binaries
+  bash ./cloud_build/ubuntuBuild.sh
+fi
 
 #set enviromnental vars for DCMTK
 export DCMDICTPATH=/usr/local/share/dcmtk/dicom.dic
