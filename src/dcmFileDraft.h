@@ -60,13 +60,15 @@ class DcmFileDraft : public AbstractDcmFile {
 
   DcmFileDraft(std::vector<std::unique_ptr<Frame> > framesData,
                absl::string_view outputFileMask, int64_t imageWidth,
-               int64_t imageHeight, int64_t level, int64_t row, int64_t column,
+               int64_t imageHeight, int64_t instanceNumber, int64_t row,
+               int64_t column,
                absl::string_view studyId, absl::string_view seriesId,
                absl::string_view imageName, DCM_Compression compression,
                bool tiled, DcmTags* additionalTags, double firstLevelWidthMm,
                double firstLevelHeightMmm, int64_t downsample,
               const std::vector<std::unique_ptr<AbstractDcmFile>>
-              *prior_frame_batches, absl::string_view sourceImageDescription);
+              *prior_frame_batches, absl::string_view sourceImageDescription,
+              bool saveDicomInstanceToDisk);
 
   virtual ~DcmFileDraft();
   virtual void saveFile();
@@ -94,7 +96,7 @@ class DcmFileDraft : public AbstractDcmFile {
   int64_t frame_count_;
   int64_t imageWidth_;
   int64_t imageHeight_;
-  int64_t level_;
+  int64_t instanceNumber_;
   int64_t batchNumber_;
   int64_t row_;
   int64_t column_;
@@ -104,6 +106,7 @@ class DcmFileDraft : public AbstractDcmFile {
   double firstLevelHeightMm_;
   int64_t downsample_;
   bool tiled_;
+  bool saveDicomInstanceToDisk_;
 };
 }  // namespace wsiToDicomConverter
 #endif  // SRC_DCMFILEDRAFT_H_

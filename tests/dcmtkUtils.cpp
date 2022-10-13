@@ -56,7 +56,7 @@ TEST(insertBaseImageTagsTest, correctInsert) {
 TEST(insertStaticTagsTest, correctInsert_Level0) {
   std::unique_ptr<DcmDataset> dataSet = std::make_unique<DcmDataset>();
 
-  wsiToDicomConverter::DcmtkUtils::insertStaticTags(dataSet.get(), 0);
+  wsiToDicomConverter::DcmtkUtils::insertStaticTags(dataSet.get(), 1);
 
   char* stringValue;
   findElement(dataSet.get(), DCM_SOPClassUID)->getString(stringValue);
@@ -81,7 +81,7 @@ TEST(insertStaticTagsTest, correctInsert_Level0) {
 TEST(insertStaticTagsTest, correctInsert_Level1) {
   std::unique_ptr<DcmDataset> dataSet = std::make_unique<DcmDataset>();
 
-  wsiToDicomConverter::DcmtkUtils::insertStaticTags(dataSet.get(), 1);
+  wsiToDicomConverter::DcmtkUtils::insertStaticTags(dataSet.get(), 2);
 
   char* stringValue;
   findElement(dataSet.get(), DCM_SOPClassUID)->getString(stringValue);
@@ -125,7 +125,7 @@ TEST(insertMultiFrameTagsTest, correctInsert) {
   imgInfo.rows = 10;
   imgInfo.cols = 10;
   wsiToDicomConverter::DcmtkUtils::insertMultiFrameTags(
-      imgInfo, 5, 10, 0, 0, 0, 0, 0, 10, true, "series", dataSet.get());
+      imgInfo, 5, 10, 0, 0, 1, 0, 0, 10, true, "series", dataSet.get());
 
   char* stringValue;
   findElement(dataSet.get(), DCM_InstanceNumber)->getString(stringValue);

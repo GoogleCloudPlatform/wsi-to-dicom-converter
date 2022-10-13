@@ -32,7 +32,7 @@ TEST(DICOMFileRegionReader, base_test) {
   std::unique_ptr<DcmFileDraft> dcm_file = std::make_unique<DcmFileDraft>(
       std::move(framesData), "./", 1, 1, 0, 0, 0, "study", "series", "image",
       JPEG, true, nullptr, 0.0, 0.0, 1, &dcm_file_vec,
-      "DICOMFileRegionReader base_test");
+      "DICOMFileRegionReader base_test", true);
   dcm_file_vec.push_back(std::move(dcm_file));
   uint32_t mem[1] = { 9 };
 
@@ -58,7 +58,7 @@ TEST(DICOMFileRegionReader, readRegion) {
   std::unique_ptr<DcmFileDraft> dcm_file = std::make_unique<DcmFileDraft>(
       std::move(framesData), "./", 2, 2, 0, 0, 0, "study", "series", "image",
       JPEG, true, nullptr, 0.0, 0.0, 3, &dcm_file_vec,
-      "DICOMFileRegionReader readRegion");
+      "DICOMFileRegionReader readRegion", true);
 
   dcm_file_vec.push_back(std::move(dcm_file));
 
@@ -82,7 +82,7 @@ TEST(DICOMFileRegionReader, read_beyond_region) {
   std::unique_ptr<DcmFileDraft> dcm_file = std::make_unique<DcmFileDraft>(
       std::move(framesData), "./", 2, 2, 0, 0, 0, "study", "series", "image",
       JPEG, true, nullptr, 0.0, 0.0, 3, &dcm_file_vec,
-      "DICOMFileRegionReader read_beyond_region");
+      "DICOMFileRegionReader read_beyond_region", true);
   dcm_file_vec.push_back(std::move(dcm_file));
 
   DICOMFileFrameRegionReader region_reader;
@@ -105,7 +105,7 @@ TEST(DICOMFileRegionReader, read_sub_region1) {
   std::unique_ptr<DcmFileDraft> dcm_file = std::make_unique<DcmFileDraft>(
       std::move(framesData), "./", 4, 4, 0, 0, 0, "study", "series", "image",
       JPEG, true, nullptr, 0.0, 0.0, 5, &dcm_file_vec,
-      "DICOMFileRegionReader read_sub_region1");
+      "DICOMFileRegionReader read_sub_region1", true);
   dcm_file_vec.push_back(std::move(dcm_file));
 
   DICOMFileFrameRegionReader region_reader;
@@ -128,7 +128,7 @@ TEST(DICOMFileRegionReader, read_sub_region2) {
   std::unique_ptr<DcmFileDraft> dcm_file = std::make_unique<DcmFileDraft>(
       std::move(framesData), "./", 4, 4, 0, 0, 0, "study", "series", "image",
       JPEG, true, nullptr, 0.0, 0.0, 5, &dcm_file_vec,
-      "DICOMFileRegionReader read_sub_region2");
+      "DICOMFileRegionReader read_sub_region2", true);
   dcm_file_vec.push_back(std::move(dcm_file));
 
   DICOMFileFrameRegionReader region_reader;
@@ -150,7 +150,7 @@ TEST(DICOMFileRegionReader, read_multi_files) {
     std::unique_ptr<DcmFileDraft> dcm_file = std::make_unique<DcmFileDraft>(
       std::move(framesData), "./", 4, 4, 0, 0, 0, "study", "series", "image",
       JPEG, true, nullptr, 0.0, 0.0, 5, &dcm_file_vec,
-      "DICOMFileRegionReader read_multi_files");
+      "DICOMFileRegionReader read_multi_files", true);
     dcm_file_vec.push_back(std::move(dcm_file));
   }
 

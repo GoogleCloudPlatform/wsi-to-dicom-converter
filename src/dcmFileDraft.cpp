@@ -40,19 +40,21 @@ namespace wsiToDicomConverter {
 DcmFileDraft::DcmFileDraft(
     std::vector<std::unique_ptr<Frame> > framesData,
     absl::string_view outputFileMask, int64_t imageWidth, int64_t imageHeight,
-    int64_t level, int64_t row, int64_t column, absl::string_view studyId,
-    absl::string_view seriesId, absl::string_view imageName,
-    DCM_Compression compression, bool tiled, DcmTags* additionalTags,
-    double firstLevelWidthMm, double firstLevelHeightMm, int64_t downsample,
+    int64_t instanceNumber, int64_t row, int64_t column,
+    absl::string_view studyId, absl::string_view seriesId,
+    absl::string_view imageName, DCM_Compression compression, bool tiled,
+    DcmTags* additionalTags, double firstLevelWidthMm,
+    double firstLevelHeightMm, int64_t downsample,
     const std::vector<std::unique_ptr<AbstractDcmFile>> * prior_frame_batches,
-    absl::string_view sourceImageDescription) {
+    absl::string_view sourceImageDescription, bool saveDicomInstanceToDisk) {
+  saveDicomInstanceToDisk_ = saveDicomInstanceToDisk;
   framesData_ = std::move(framesData);
   outputFileMask_ = std::move(static_cast<std::string>(outputFileMask));
   sourceImageDescription_ = std::move(static_cast<std::string>(
                                                       sourceImageDescription));
   imageWidth_ = imageWidth;
   imageHeight_ = imageHeight;
-  level_ = level;
+  instanceNumber_ = instanceNumber;
   prior_batch_frames_ = 0;
   if (prior_frame_batches == NULL) {
     batchNumber_ = 0;
@@ -259,19 +261,29 @@ void DcmFileDraft::write(DcmOutputStream* outStream) {
       rowSize * (1 + ((imageHeight_ - 1) / frameHeight_));
   DcmtkUtils::startConversion(
       imageHeight_, imageWidth_, rowSize, studyId_, seriesId_, imageName_,
-      std::move(pixelData), imgInfo, batchSize, row_, column_, level_,
-      batchNumber_, numberOfFrames - batchSize, totalNumberOfFrames, tiled_,
-      additionalTags_, firstLevelWidthMm_, firstLevelHeightMm_, outStream);
+      std::move(pixelData), imgInfo, batchSize, row_, column_, instanceNumber_,
+      downsample_, batchNumber_, numberOfFrames - batchSize,
+      totalNumberOfFrames, tiled_, additionalTags_, firstLevelWidthMm_,
+      firstLevelHeightMm_, outStream);
 }
 
 void DcmFileDraft::saveFile() {
+  if (!saveDicomInstanceToDisk_) {
+    const int64_t  frameDataSize = framesData_.size();
+    for (size_t frameNumber = 0; frameNumber < frameDataSize; ++frameNumber) {
+      while (!framesData_[frameNumber]->isDone()) {
+        boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+      }
+    }
+    return;
+  }
   const int64_t batchSize = fileFrameCount();
   const int64_t numberOfFrames = batchSize + prior_batch_frames_;
   OFString fileName =
-      OFString((outputFileMask_ + "/level-" + std::to_string(level_) +
+      OFString((outputFileMask_ + "/instance-" + std::to_string(instanceNumber_) +
                 "-frames-" + std::to_string(numberOfFrames - batchSize) +
                 "-" + std::to_string(numberOfFrames) + ".dcm")
-                   .c_str());
+                  .c_str());
   std::unique_ptr<DcmOutputFileStream> fileStream =
       std::make_unique<DcmOutputFileStream>(fileName);
   write(fileStream.get());
