@@ -389,7 +389,7 @@ TEST(getSlideLevelDim, progressive_virtual_levels) {
   std::vector<wsiToDicomConverter::DownsamplingSlideState> slideLevelProp;
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
   converter.getOptimalDownSamplingOrder(&slideLevelProp, nullptr);
-  EXPECT_EQ(slideLevelProp.size(), 3);  
+  EXPECT_EQ(slideLevelProp.size(), 3);
   EXPECT_EQ(slideLevelProp[0].generateCompressedRaw, false);
   EXPECT_EQ(slideLevelProp[0].saveDicom, true);
   EXPECT_EQ(slideLevelProp[0].instanceNumber, 1);
@@ -406,8 +406,8 @@ TEST(getSlideLevelDim, progressive_virtual_levels) {
   EXPECT_EQ(slideLevelProp[2].downsample, 32);
 }
 
-TEST(getSlideLevelDim, progressive_virtual_level_start) {  
-  std::vector<int>  downsamples;  
+TEST(getSlideLevelDim, progressive_virtual_level_start) {
+  std::vector<int>  downsamples;
   downsamples.push_back(32);  // Level = 5
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = tiffFileName;
@@ -431,11 +431,11 @@ TEST(getSlideLevelDim, progressive_virtual_level_start) {
   std::vector<wsiToDicomConverter::DownsamplingSlideState> slideLevelProp;
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
   converter.getOptimalDownSamplingOrder(&slideLevelProp, nullptr);
-  EXPECT_EQ(slideLevelProp.size(), 2);  
+  EXPECT_EQ(slideLevelProp.size(), 2);
   EXPECT_EQ(slideLevelProp[0].generateCompressedRaw, true);
   EXPECT_EQ(slideLevelProp[0].saveDicom, false);
   EXPECT_EQ(slideLevelProp[0].instanceNumber, 0);
-  EXPECT_EQ(slideLevelProp[0].downsample, 8);  
+  EXPECT_EQ(slideLevelProp[0].downsample, 8);
   EXPECT_EQ(slideLevelProp[1].generateCompressedRaw, false);
   EXPECT_EQ(slideLevelProp[1].saveDicom, true);
   EXPECT_EQ(slideLevelProp[1].instanceNumber, 1);

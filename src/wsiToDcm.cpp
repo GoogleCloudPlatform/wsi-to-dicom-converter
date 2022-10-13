@@ -647,10 +647,10 @@ void WsiToDcm::getOptimalDownSamplingOrder(
             slideState.downsample = 1;
             slideDownsampleState->push_back(slideState);
           } else {
-            // if getting levels from openslide get largest starting level 
+            // if getting levels from openslide get largest starting level
             // which acquires imaging from highest magnification.
             int starting_downsample =  sourceLevelDownsample;
-            while (starting_downsample > 1 && 
+            while (starting_downsample > 1 &&
                    getOpenslideLevelForDownsample(starting_downsample) != 0) {
               starting_downsample = std::max(starting_downsample / 2, 1);
             }
