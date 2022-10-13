@@ -25,7 +25,7 @@ compare () {
 }
 
 
-if [ "$1" !=  "SKIP_BUILD_ENVIROMENT" ]
+if [ "$1" !=  "SKIP_BUILD_ENVIRONMENT" ]
 then
   #building binaries
   bash ./cloud_build/ubuntuBuild.sh
