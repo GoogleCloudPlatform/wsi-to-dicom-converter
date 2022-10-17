@@ -107,7 +107,7 @@ pwd
 export DCMDICTPATH=/usr/local/share/dcmtk/dicom.dic
 export PATH=/usr/local/bin:$PATH
 # 8
-wget -O boost_1_80_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.79.0/source/boost_1_80_0.tar.gz
+wget -O boost_1_80_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
 tar xvzf boost_1_80_0.tar.gz
 rm boost_1_80_0.tar.gz
 cd boost_1_80_0
