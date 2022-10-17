@@ -280,8 +280,8 @@ void DcmFileDraft::saveFile() {
   const int64_t batchSize = fileFrameCount();
   const int64_t numberOfFrames = batchSize + prior_batch_frames_;
   OFString fileName =
-      OFString((outputFileMask_ + "/instance-" +
-                std::to_string(instanceNumber_) +
+      OFString((outputFileMask_ + "/downsample-" +      
+                std::to_string(downsample_) +
                 "-frames-" + std::to_string(numberOfFrames - batchSize) +
                 "-" + std::to_string(numberOfFrames) + ".dcm")
                   .c_str());

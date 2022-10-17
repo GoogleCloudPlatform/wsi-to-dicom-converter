@@ -123,7 +123,7 @@ TEST(fileGeneration, fileSave) {
       "FileGeneration fileSave", true);
 
   draft.saveFile();
-  ASSERT_TRUE(boost::filesystem::exists("./instance-0-frames-0-100.dcm"));
+  ASSERT_TRUE(boost::filesystem::exists("./downsample-1-frames-0-100.dcm"));
 }
 
 TEST(fileGeneration, fileSaveBatch) {
@@ -149,7 +149,7 @@ TEST(fileGeneration, fileSaveBatch) {
      &dicom_file_vec, "FileGeneration fileSaveBatch 2", true);
 
   draft.saveFile();
-  ASSERT_TRUE(boost::filesystem::exists("./instance-2-frames-900-1000.dcm"));
+  ASSERT_TRUE(boost::filesystem::exists("./downsample-1-frames-900-1000.dcm"));
 }
 
 }  // namespace wsiToDicomConverter

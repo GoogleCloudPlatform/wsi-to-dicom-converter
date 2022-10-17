@@ -33,7 +33,7 @@
 TEST(readTiff, simple) {
   std::vector<int>  downsamples;
   downsamples.push_back(1);
-  std::string dcmFile = std::string(testPath) + "instance-1-frames-0-30.dcm";
+  std::string dcmFile = std::string(testPath) + "downsample-1-frames-0-30.dcm";
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = tiffFileName;
   request.outputFileMask = testPath;
@@ -60,7 +60,7 @@ TEST(readTiff, simple) {
 }
 
 TEST(readTiff, withJson) {
-  std::string dcmFile = std::string(testPath) + "instance-1-frames-0-1.dcm";
+  std::string dcmFile = std::string(testPath) + "downsample-1-frames-0-1.dcm";
   std::string jsonFile = std::string(testPath) + "testDateTags.json";
   std::vector<int>  downsamples;
   downsamples.push_back(1);
@@ -94,7 +94,7 @@ TEST(readTiff, withJson) {
 }
 
 TEST(readTiff, multiFile) {
-  std::string dcmFile = std::string(testPath) + "instance-1-frames-";
+  std::string dcmFile = std::string(testPath) + "downsample-1-frames-";
   std::vector<int>  downsamples;
   downsamples.push_back(1);
   wsiToDicomConverter::WsiRequest request;
