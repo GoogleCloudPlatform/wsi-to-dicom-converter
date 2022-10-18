@@ -119,29 +119,37 @@ diff ./endToEnd/test11GeneratedImage.ppm ./endToEnd/test11ExpectedImage.ppm
 echo "Test 12"
 rm ./endToEnd/*.dcm -f
 ./build/wsi2dcm $jpegFileName ./endToEnd/ --seriesDescription test12  --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame --readImage --untiledImageHeightMM 12.0
+dcmj2pnm +cl ./endToEnd/downsample-4-frames-0-1.dcm ./endToEnd/test12GeneratedImage.ppm
 dcm2json ./endToEnd/downsample-4-frames-0-1.dcm ./endToEnd/test12GeneratedTags.json
 compare ./endToEnd/test12GeneratedTags.json ./endToEnd/test12ExpectedTags.json
+diff ./endToEnd/test12GeneratedImage.ppm ./endToEnd/test12ExpectedImage.ppm
 
 #test - test create image pyramid from RawDICOM
 echo "Test 13"
 rm ./endToEnd/*.dcm -f
 ./build/wsi2dcm ./tests/raw.dicom ./endToEnd/ --seriesDescription test13  --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame --readDICOM
+dcmj2pnm +cl ./endToEnd/downsample-4-frames-0-1.dcm ./endToEnd/test13GeneratedImage.ppm
 dcm2json ./endToEnd/downsample-4-frames-0-1.dcm ./endToEnd/test13GeneratedTags.json
 compare ./endToEnd/test13GeneratedTags.json ./endToEnd/test13ExpectedTags.json
+diff ./endToEnd/test13GeneratedImage.ppm ./endToEnd/test13ExpectedImage.ppm
 
 #test - test create image pyramid from JpegDICOM 
 echo "Test 14"
 rm ./endToEnd/*.dcm -f
 ./build/wsi2dcm ./tests/jpeg.dicom ./endToEnd/ --seriesDescription test14  --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame --readDICOM
+dcmj2pnm +cl ./endToEnd/downsample-4-frames-0-1.dcm ./endToEnd/test14GeneratedImage.ppm
 dcm2json ./endToEnd/downsample-4-frames-0-1.dcm ./endToEnd/test14GeneratedTags.json
 compare ./endToEnd/test14GeneratedTags.json ./endToEnd/test14ExpectedTags.json
+diff ./endToEnd/test14GeneratedImage.ppm ./endToEnd/test14ExpectedImage.ppm
 
 #test - test create image pyramid from Jpeg2000
 echo "Test 15"
 rm ./endToEnd/*.dcm -f
 ./build/wsi2dcm ./tests/jpeg2000.dicom ./endToEnd/ --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame --readDICOM
+dcmj2pnm +cl ./endToEnd/downsample-4-frames-0-1.dcm ./endToEnd/test15GeneratedImage.ppm
 dcm2json ./endToEnd/downsample-4-frames-0-1.dcm ./endToEnd/test15GeneratedTags.json
 compare ./endToEnd/test15GeneratedTags.json ./endToEnd/test15ExpectedTags.json
+diff ./endToEnd/test15GeneratedImage.ppm ./endToEnd/test15ExpectedImage.ppm
 
 #test - Selected magnfication generation, 1x & 13x
 echo "Test 16"
