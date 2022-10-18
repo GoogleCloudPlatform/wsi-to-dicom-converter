@@ -51,7 +51,6 @@ std::unique_ptr<uint8_t[]> Jpeg2000Compression::writeToMemory(
     componentsParameters[i].w = width;
     componentsParameters[i].h = height;
     componentsParameters[i].prec = 8;
-    componentsParameters[i].bpp = 8;
     componentsParameters[i].sgnd = 0;
   }
 

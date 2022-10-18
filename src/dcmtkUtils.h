@@ -56,10 +56,10 @@ class DcmtkUtils {
       absl::string_view studyId, absl::string_view seriesId,
       absl::string_view imageName, std::unique_ptr<DcmPixelData> pixelData,
       const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
-      uint32_t column, int level, int batchNumber, unsigned int offset,
-      uint32_t totalNumberOfFrames, bool tiled, DcmTags* additionalTags,
-      double firstLevelWidthMm, double firstLevelHeightMm,
-      DcmOutputStream* outStream);
+      uint32_t column, const int32_t instanceNumber, const int32_t downsample,
+      int batchNumber, unsigned int offset, uint32_t totalNumberOfFrames,
+      bool tiled, DcmTags* additionalTags, double firstLevelWidthMm,
+      double firstLevelHeightMm, DcmOutputStream* outStream);
 
   // Wrapper for startConversion without additional parameters.
   static OFCondition startConversion(
@@ -67,8 +67,9 @@ class DcmtkUtils {
       absl::string_view studyId, absl::string_view seriesId,
       absl::string_view imageName, std::unique_ptr<DcmPixelData> pixelData,
       const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
-      uint32_t column, int level, int batchNumber, uint32_t offset,
-      uint32_t totalNumberOfFrames, bool tiled, DcmOutputStream* outStream);
+      uint32_t column, int32_t instanceNumber, int32_t downsample,
+      int batchNumber, uint32_t offset, uint32_t totalNumberOfFrames,
+      bool tiled, DcmOutputStream* outStream);
 
   // Generates DICOM file object.
   static OFCondition populateDataSet(
@@ -77,7 +78,8 @@ class DcmtkUtils {
       absl::string_view seriesId, absl::string_view imageName,
       std::unique_ptr<DcmPixelData> pixelData, const DcmtkImgDataInfo& imgInfo,
       const uint32_t numberOfFrames, const uint32_t row, const uint32_t column,
-      const int level, const int batchNumber, const uint32_t offset,
+      const int32_t instanceNumber, const int32_t downsample,
+      const int batchNumber, const uint32_t offset,
       const uint32_t totalNumberOfFrames, const bool tiled,
       DcmTags* additionalTags, const double firstLevelWidthMm,
       const double firstLevelHeightMm, DcmDataset* dataSet);
@@ -86,7 +88,7 @@ class DcmtkUtils {
   static OFCondition generateDateTags(DcmDataset* dataSet);
 
   // Inserts which is same for pathology DICOMs.
-  static OFCondition insertStaticTags(DcmDataset* dataSet, int level);
+  static OFCondition insertStaticTags(DcmDataset* dataSet, int downsample);
   // Inserts studyId and seriesId by params and generated instanceId.
   static OFCondition insertIds(absl::string_view studyId,
                                absl::string_view seriesId,
@@ -102,7 +104,7 @@ class DcmtkUtils {
   static OFCondition insertMultiFrameTags(
       const DcmtkImgDataInfo& imgInfo, const uint32_t numberOfFrames,
       const uint32_t rowSize, const uint32_t row, const uint32_t column,
-      const int level, const int batchNumber, const uint32_t offset,
+      const int instanceNumber, const int batchNumber, const uint32_t offset,
       const uint32_t totalNumberOfFrames, const bool tiled,
       absl::string_view seriesId, DcmDataset* dataSet);
 };

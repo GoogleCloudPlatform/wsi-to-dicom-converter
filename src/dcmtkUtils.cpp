@@ -240,8 +240,8 @@ OFCondition DcmtkUtils::populateDataSet(
     absl::string_view seriesId, absl::string_view imageName,
     std::unique_ptr<DcmPixelData> pixelData,
     const DcmtkImgDataInfo& imgInfo, const uint32_t numberOfFrames,
-    const uint32_t row, const uint32_t column, const int level,
-    const int batchNumber, const uint32_t offset,
+    const uint32_t row, const uint32_t column, const int32_t instanceNumber,
+    const int32_t downsample, const int batchNumber, const uint32_t offset,
     const uint32_t totalNumberOfFrames, const bool tiled,
     DcmTags* additionalTags, const double firstLevelWidthMm,
     const double firstLevelHeightMm, DcmDataset* dataSet) {
@@ -284,12 +284,12 @@ OFCondition DcmtkUtils::populateDataSet(
 
   if (cond.bad()) return cond;
 
-  insertMultiFrameTags(imgInfo, numberOfFrames, rowSize, row, column, level,
-                       batchNumber, offset, totalNumberOfFrames, tiled,
-                       seriesId, dataSet);
+  insertMultiFrameTags(imgInfo, numberOfFrames, rowSize, row, column,
+                       instanceNumber, batchNumber, offset,
+                       totalNumberOfFrames, tiled, seriesId, dataSet);
   if (cond.bad()) return cond;
 
-  cond = insertStaticTags(dataSet, level);
+  cond = insertStaticTags(dataSet, downsample);
 
   if (cond.bad()) return cond;
 
@@ -318,13 +318,13 @@ OFCondition DcmtkUtils::generateDateTags(DcmDataset* dataSet) {
   return cond;
 }
 
-OFCondition DcmtkUtils::insertStaticTags(DcmDataset* dataSet, int level) {
+OFCondition DcmtkUtils::insertStaticTags(DcmDataset* dataSet, int downsample) {
   OFCondition cond = dataSet->putAndInsertOFStringArray(
       DCM_SOPClassUID, UID_VLWholeSlideMicroscopyImageStorage);
   if (cond.bad()) return cond;
   cond = dataSet->putAndInsertOFStringArray(DCM_Modality, "SM");
   if (cond.bad()) return cond;
-  if (level == 0) {
+  if (downsample <= 1) {
     cond = dataSet->putAndInsertOFStringArray(DCM_ImageType,
                                           "ORIGINAL\\PRIMARY\\VOLUME\\NONE");
   } else {
@@ -388,7 +388,7 @@ OFCondition DcmtkUtils::insertBaseImageTags(absl::string_view imageName,
 OFCondition DcmtkUtils::insertMultiFrameTags(
     const DcmtkImgDataInfo& imgInfo, const uint32_t numberOfFrames,
     const uint32_t rowSize, const uint32_t row, const uint32_t column,
-    const int level, const int batchNumber, const uint32_t offset,
+    const int instanceNumber, const int batchNumber, const uint32_t offset,
     const uint32_t totalNumberOfFrames, const bool tiled,
     absl::string_view seriesId, DcmDataset* dataSet) {
   unsigned int concatenationTotalNumber;
@@ -403,7 +403,7 @@ OFCondition DcmtkUtils::insertMultiFrameTags(
   }
 
   OFCondition cond = dataSet->putAndInsertOFStringArray(
-      DCM_InstanceNumber, std::to_string(level + 1).c_str());
+      DCM_InstanceNumber, std::to_string(instanceNumber).c_str());
   if (concatenationTotalNumber > 1 && cond.good()) {
     cond =
         dataSet->putAndInsertUint32(DCM_ConcatenationFrameOffsetNumber, offset);
@@ -416,12 +416,12 @@ OFCondition DcmtkUtils::insertMultiFrameTags(
     if (cond.bad()) return cond;
     cond = dataSet->putAndInsertOFStringArray(
         DCM_ConcatenationUID,
-        (seriesId_str + "." + std::to_string(level + 1)).c_str());
+        (seriesId_str + "." + std::to_string(instanceNumber)).c_str());
   }
   if (cond.bad()) return cond;
   cond = dataSet->putAndInsertOFStringArray(
       DCM_FrameOfReferenceUID,
-      (seriesId_str + "." + std::to_string(level + 1)).c_str());
+      (seriesId_str + "." + std::to_string(instanceNumber)).c_str());
   if (cond.bad()) return cond;
   if (tiled) {
     cond = dataSet->putAndInsertOFStringArray(DCM_DimensionOrganizationType,
@@ -441,13 +441,14 @@ OFCondition DcmtkUtils::startConversion(
     absl::string_view studyId, absl::string_view seriesId,
     absl::string_view imageName, std::unique_ptr<DcmPixelData> pixelData,
     const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
-    uint32_t column, int level, int batchNumber, uint32_t offset,
-    uint32_t totalNumberOfFrames, bool tiled, DcmOutputStream* outStream) {
+    uint32_t column, const int32_t instanceNumber, const int32_t downsample,
+    int batchNumber, uint32_t offset, uint32_t totalNumberOfFrames,
+    bool tiled, DcmOutputStream* outStream) {
   return startConversion(imageHeight, imageWidth, rowSize, studyId, seriesId,
                          imageName, std::move(pixelData), imgInfo,
-                         numberOfFrames, row, column, level, batchNumber,
-                         offset, totalNumberOfFrames, tiled, nullptr, 0.0, 0.0,
-                         outStream);
+                         numberOfFrames, row, column, instanceNumber,
+                         downsample, batchNumber, offset, totalNumberOfFrames,
+                         tiled, nullptr, 0.0, 0.0, outStream);
 }
 
 OFCondition DcmtkUtils::startConversion(
@@ -455,10 +456,10 @@ OFCondition DcmtkUtils::startConversion(
     absl::string_view studyId, absl::string_view seriesId,
     absl::string_view imageName, std::unique_ptr<DcmPixelData> pixelData,
     const DcmtkImgDataInfo& imgInfo, uint32_t numberOfFrames, uint32_t row,
-    uint32_t column, int level, int batchNumber, unsigned int offset,
-    uint32_t totalNumberOfFrames, bool tiled, DcmTags* additionalTags,
-    double firstLevelWidthMm, double firstLevelHeightMm,
-    DcmOutputStream* outStream) {
+    uint32_t column, const int32_t instanceNumber, const int32_t downsample,
+    int batchNumber, unsigned int offset, uint32_t totalNumberOfFrames,
+    bool tiled, DcmTags* additionalTags, double firstLevelWidthMm,
+    double firstLevelHeightMm, DcmOutputStream* outStream) {
   E_GrpLenEncoding grpLenEncoding = EGL_recalcGL;
   E_EncodingType encodingType = EET_ExplicitLength;
   E_PaddingEncoding paddingEncoding = EPD_noChange;
@@ -470,9 +471,10 @@ OFCondition DcmtkUtils::startConversion(
 
   OFCondition cond = populateDataSet(
       imageHeight, imageWidth, rowSize, studyId, seriesId, imageName,
-      std::move(pixelData), imgInfo, numberOfFrames, row, column, level,
-      batchNumber, offset, totalNumberOfFrames, tiled, additionalTags,
-      firstLevelWidthMm, firstLevelHeightMm, resultObject.get());
+      std::move(pixelData), imgInfo, numberOfFrames, row, column,
+      instanceNumber, downsample, batchNumber, offset, totalNumberOfFrames,
+      tiled, additionalTags, firstLevelWidthMm, firstLevelHeightMm,
+      resultObject.get());
 
   DcmFileFormat dcmFileFormat(resultObject.get());
 

@@ -174,6 +174,15 @@ struct WsiRequest {
   bool genPyramidFromDicom = false;
 };
 
+
+struct DownsamplingSlideState {
+    int32_t downsample;
+    int32_t instanceNumber;
+    bool generateCompressedRaw;
+    bool saveDicom;
+};
+
+
 // Contains static methods for generation DICOM files
 // from wsi images supported by openslide
 class WsiToDcm {
@@ -196,14 +205,13 @@ class WsiToDcm {
   double getDimensionMM(const int64_t adjustedFirstLevelDim,
                         const double firstLevelMpp);
 
-  void getOptimalDownSamplingOrder(std::vector<int32_t> *slideLevels,
-                                   std::vector<bool> *saveLevelCompressedRaw,
+  void getOptimalDownSamplingOrder(std::vector<DownsamplingSlideState> *state,
                                    SlideLevelDim *startPyramidCreationDim);
 
   // level = downsampled slide level to return. level < 0 forces to return
   // dimensions of largest level, 0
   std::unique_ptr<SlideLevelDim> getSlideLevelDim(
-                                      int32_t level,
+                                      int64_t downsample,
                                       SlideLevelDim *priorLevel);
 
   int32_t getOpenslideLevelForDownsample(int64_t downsample);
