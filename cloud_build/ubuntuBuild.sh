@@ -32,8 +32,6 @@ apt-get update
 DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-essential libjsoncpp-dev libgdk-pixbuf2.0-dev libcairo2-dev libsqlite3-dev cmake libglib2.0-dev libxml2-dev libopenjp2-7-dev g++-9 libgtest-dev -y
 #3
 # installing in /workspace
-echo "WorkingDIR"
-pwd
 apt-get install -y nasm
 wget -O libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.4.zip
 unzip libjpeg_turbo.zip
@@ -46,8 +44,6 @@ make install
 cd ..
 cd ..
 rm -rf libjpeg-turbo-2.1.4
-echo "WorkingDIR"
-pwd
 #5
 apt-get install -y liblcms2-dev libzstd-dev libwebp-dev
 wget -O v2.5.0.zip  https://github.com/uclouvain/openjpeg/archive/v2.5.0.zip > /dev/null
@@ -61,8 +57,6 @@ make clean
 cd ..
 cd ..
 rm -rf openjpeg-2.5.0
-echo "WorkingDIR"
-pwd
 #4
 wget -O opencv.zip https://github.com/opencv/opencv/archive/refs/tags/4.6.0.zip > /dev/null
 unzip opencv.zip  > /dev/null
@@ -75,8 +69,6 @@ make install
 cd ..
 cd ..
 rm -rf opencv-4.6.0
-echo "WorkingDIR"
-pwd
 #6
 wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20220623.0.zip > /dev/null
 unzip abseil.zip > /dev/null
@@ -88,8 +80,6 @@ cmake  --build . --target install
 cd ..
 cd ..
 rm -rf abseil-cpp-20220623.0
-echo "WorkingDIR"
-pwd
 #7
 wget -O dcmtk-3.6.7.zip https://github.com/DCMTK/dcmtk/archive/refs/tags/DCMTK-3.6.7.zip > /dev/null
 unzip dcmtk-3.6.7.zip > /dev/null
@@ -102,8 +92,6 @@ make DESTDIR=/ install
 cd ..
 cd ..
 rm -rf dcmtk-DCMTK-3.6.7
-echo "WorkingDIR"
-pwd
 export DCMDICTPATH=/usr/local/share/dcmtk/dicom.dic
 export PATH=/usr/local/bin:$PATH
 # 8
@@ -116,8 +104,6 @@ cd boost_1_80_0
 ./b2 install > /dev/null
 cd ..
 rm -rf boost_1_80_0
-echo "WorkingDIR"
-pwd
 # 9
 wget -O openslide-3.4.1.tar.gz https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz
 tar xvzf openslide-3.4.1.tar.gz
@@ -131,8 +117,6 @@ make install
 cd ..
 rm -rf openslide-3.4.1
 apt-get purge -y autoconf
-echo "WorkingDIR"
-pwd
 # Enable python to find openslide library
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 #10
@@ -146,8 +130,6 @@ make install
 cd ..
 cd ..
 rm -rf jsoncpp-1.9.5
-echo "WorkingDIR"
-pwd
 #11
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
