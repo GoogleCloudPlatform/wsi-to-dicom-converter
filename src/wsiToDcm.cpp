@@ -92,7 +92,8 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
     initialX_ = 1;
     initialY_ = 1;
   }
-  retile_ = wsiRequest_->retileLevels) > 0 || (wsiRequest_->downsamples.size() > 0);
+  retile_ = (wsiRequest_->retileLevels > 0) ||
+            (wsiRequest_->downsamples.size() > 0);
   customDownSampleFactorsDefined_ = false;
   for (const int ds : wsiRequest_->downsamples) {
     if (ds != 0) {
@@ -506,25 +507,32 @@ bool downsample_order(const std::unique_ptr<LevelProcessOrder> &i,
 void WsiToDcm::getOptimalDownSamplingOrder(
                      std::vector<DownsamplingSlideState> *slideDownsampleState,
                      SlideLevelDim *startPyramidCreationDim) {
-  int32_t levels;  
+  int32_t levels;
   if (retile_ && wsiRequest_->includeSingleFrameDownsample) {
     // Force downsampling to include single frame image
-    double singleframe_downsample_width = std::ceil(static_cast<double>(largestSlideLevelWidth_) /
-                                                    static_cast<double>(wsiRequest_->frameSizeX));
-    double singleframe_downsample_height = std::ceil(static_cast<double>(largestSlideLevelHeight_) /
-                                                     static_cast<double>(wsiRequest_->frameSizeY));    
-    int singleframe_downsample = static_cast<int>(std::max<double>(singleframe_downsample_width, singleframe_downsample_height))
+    double singleframe_downsample_width = std::ceil(
+                                static_cast<double>(largestSlideLevelWidth_) /
+                                static_cast<double>(wsiRequest_->frameSizeX));
+    double singleframe_downsample_height = std::ceil(
+                                 static_cast<double>(largestSlideLevelHeight_) /
+                                 static_cast<double>(wsiRequest_->frameSizeY));
+    int singleframe_downsample = static_cast<int>(std::max<double>(
+                                  singleframe_downsample_width,
+                                  singleframe_downsample_height))
     if wsiRequest_->downsamples.size() > 0) {
       int largest_ds = wsiRequest_->downsamples[0]
-      for (size_t idx=1; idx< wsiRequest_->downsamples.size(); ++idx){
+      for (size_t idx=1; idx< wsiRequest_->downsamples.size(); ++idx) {
         largest_ds = std::max<int>(largest_ds, wsiRequest_->downsamples[idx])
       }
       if (largest_ds < singleframe_downsample) {
         wsiRequest_->downsamples.push_back(singleframe_downsample)
       }
-    } else {      
-      wsiRequest_->retileLevels = std::max<int32_t>(wsiRequest_->retileLevels, 
-                                                    static_cast<int32_t>(std::ceil(log2(singleframe_downsample))));
+    } else {
+      wsiRequest_->retileLevels = std::max<int32_t>(
+                                    wsiRequest_->retileLevels,
+                                    static_cast<int32_t>(
+                                      std::ceil(
+                                        log2(singleframe_downsample))));
     }
   }
 

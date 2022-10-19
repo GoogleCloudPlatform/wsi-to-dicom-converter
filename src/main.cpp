@@ -184,10 +184,11 @@ int main(int argc, char *argv[]) {
         ("untiledImageHeightMM",
         programOptions::value<double>(&untiledImageHeightMM)->default_value(
           0.0), "Height in mm of untiled image (assumed square pixel"
-                " aspect ratio).");
+                " aspect ratio).")
        ("single_frame_downsample",
-        programOptions::value<double>(&includeSingleFrameDownsample)->default_value(
-          false), "Force downsampling to include at least one single frame downsample.");
+        programOptions::value<double>(&includeSingleFrameDownsample)->
+        default_value(false), "Force downsampling to include at least one "
+        "single frame downsample.");
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
     positionalOptions.add("outFolder", 1);
