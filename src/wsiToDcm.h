@@ -172,6 +172,7 @@ struct WsiRequest {
   bool genPyramidFromUntiledImage = false;
   double untiledImageHeightMM = 0.0;
   bool genPyramidFromDicom = false;
+  bool includeSingleFrameDownsample = false;
 };
 
 

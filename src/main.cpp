@@ -54,10 +54,9 @@ int main(int argc, char *argv[]) {
   int compressionQuality;
   bool readUntiledImage;
   double untiledImageHeightMM;
-
   std::vector<int> downsamples;
-  downsamples.resize(1, 0);
   bool sparse;
+  bool includeSingleFrameDownsample;
   try {
     namespace programOptions = boost::program_options;
     programOptions::options_description desc("Options", 90, 20);
@@ -183,8 +182,11 @@ int main(int argc, char *argv[]) {
         ("untiledImageHeightMM",
         programOptions::value<double>(&untiledImageHeightMM)->default_value(
           0.0), "Height in mm of untiled image (assumed square pixel"
-                " aspect ratio).");
-
+                " aspect ratio).")
+       ("singleFrameDownsample",
+        programOptions::bool_switch(&includeSingleFrameDownsample)->
+        default_value(false), "Force downsampling to include at least one "
+        "single frame downsample.");
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
     positionalOptions.add("outFolder", 1);
@@ -256,11 +258,7 @@ int main(int argc, char *argv[]) {
   request.seriesId = seriesId;
   request.jsonFile = jsonFile;
   request.retileLevels = std::max(levels, 0);
-  if (levels > 0 && levels+1 > downsamples.size()) {
-    // fix buffer overun bug.  accessing meory outside of
-    // downsample buffer when retileing.
-    downsamples.resize(levels+1, 0);
-  }
+  request.includeSingleFrameDownsample = includeSingleFrameDownsample;
   for (size_t idx = 0; idx < downsamples.size(); ++idx) {
     downsamples[idx] = std::max(downsamples[idx], 0);
   }
