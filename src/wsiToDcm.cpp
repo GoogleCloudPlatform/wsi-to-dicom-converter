@@ -518,14 +518,14 @@ void WsiToDcm::getOptimalDownSamplingOrder(
                                  static_cast<double>(wsiRequest_->frameSizeY));
     int singleframe_downsample = static_cast<int>(std::max<double>(
                                   singleframe_downsample_width,
-                                  singleframe_downsample_height))
-    if wsiRequest_->downsamples.size() > 0) {
-      int largest_ds = wsiRequest_->downsamples[0]
+                                  singleframe_downsample_height));
+    if (wsiRequest_->downsamples.size() > 0) {
+      int largest_ds = wsiRequest_->downsamples[0];
       for (size_t idx=1; idx< wsiRequest_->downsamples.size(); ++idx) {
-        largest_ds = std::max<int>(largest_ds, wsiRequest_->downsamples[idx])
+        largest_ds = std::max<int>(largest_ds, wsiRequest_->downsamples[idx]);
       }
       if (largest_ds < singleframe_downsample) {
-        wsiRequest_->downsamples.push_back(singleframe_downsample)
+        wsiRequest_->downsamples.push_back(singleframe_downsample);
       }
     } else {
       wsiRequest_->retileLevels = std::max<int32_t>(
@@ -538,7 +538,7 @@ void WsiToDcm::getOptimalDownSamplingOrder(
 
   if (retile_) {
     if (wsiRequest_->downsamples.size() > 0) {
-      levels = wsiRequest_->downsamples.size()
+      levels = wsiRequest_->downsamples.size();
     } else {
       levels = wsiRequest_->retileLevels;
     }
