@@ -36,6 +36,7 @@ int main(int argc, char *argv[]) {
   std::string studyId;
   std::string downsamplingAlgorithm;
   std::string firstlevelCompression;
+  std::string jpegSubsampling;
   int tileHeight;
   int tileWidth;
   int levels;
@@ -186,7 +187,11 @@ int main(int argc, char *argv[]) {
        ("singleFrameDownsample",
         programOptions::bool_switch(&includeSingleFrameDownsample)->
         default_value(false), "Force downsampling to include at least one "
-        "single frame downsample.");
+        "single frame downsample.")
+        ("jpegSubsampling",
+        programOptions::value<std::string>(&jpegSubsampling)->
+        default_value("420"), "JPEG subsampling for Y component, supported: "
+        "444(best-quality), 440, 442, 420(most-compressed).");
     programOptions::positional_options_description positionalOptions;
     positionalOptions.add("input", 1);
     positionalOptions.add("outFolder", 1);
@@ -302,6 +307,20 @@ int main(int argc, char *argv[]) {
     return 1;
   }
   request.debug = debug;
+
+  if (jpegSubsampling == "444") {
+    request.jpegSubsampling = subsample_444;
+  } else if (jpegSubsampling == "440") {
+    request.jpegSubsampling = subsample_440;
+  } else if (jpegSubsampling == "422") {
+    request.jpegSubsampling = subsample_422;
+  } else if (jpegSubsampling == "420") {
+    request.jpegSubsampling = subsample_420;
+  } else {
+    std::cerr << "Unrecognized jpegSubsampling: " <<
+                 jpegSubsampling;
+    return 1;
+  }
   wsiToDicomConverter::WsiToDcm converter(&request);
   return converter.wsi2dcm();
 }

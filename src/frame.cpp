@@ -30,14 +30,16 @@ namespace wsiToDicomConverter {
 
 Frame::Frame(int64_t locationX, int64_t locationY, int64_t frameWidth,
              int64_t frameHeight, DCM_Compression compression,
-             int quality, bool storeRawBytes) : locationX_(locationX),
-                                                  locationY_(locationY),
-                                                  frameWidth_(frameWidth),
-                                                  frameHeight_(frameHeight),
-                                            storeRawBytes_(storeRawBytes) {
+             int quality, JpegSubsampling subsampling, bool storeRawBytes) :
+               locationX_(locationX),
+               locationY_(locationY),
+               frameWidth_(frameWidth),
+               frameHeight_(frameHeight),
+               storeRawBytes_(storeRawBytes) {
     switch (compression) {
         case JPEG:
-            compressor_ = std::make_unique<JpegCompression>(quality);
+            compressor_ = std::make_unique<JpegCompression>(quality,
+                                                            subsampling);
         break;
         case JPEG2000:
             compressor_ = std::make_unique<Jpeg2000Compression>();

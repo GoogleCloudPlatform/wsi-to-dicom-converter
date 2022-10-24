@@ -34,12 +34,14 @@ NearestNeighborFrame::NearestNeighborFrame(
     OpenSlidePtr *osptr, int64_t locationX, int64_t locationY, int64_t level,
     int64_t frameWidthDownsampled, int64_t frameHeightDownsampled,
     double multiplicator, int64_t frameWidth, int64_t frameHeight,
-    DCM_Compression compression, int quality, bool storeRawBytes,
+    DCM_Compression compression, int quality, JpegSubsampling sampling,
+    bool storeRawBytes,
     DICOMFileFrameRegionReader *frame_region_reader): Frame(locationX,
                                                             locationY,
                                                             frameWidth,
                                                              frameHeight,
                                                         compression, quality,
+                                                        sampling,
                                                         storeRawBytes) {
   osptr_ = osptr;
   level_ = level;

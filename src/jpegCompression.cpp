@@ -1,3 +1,5 @@
+// JPEGCompression
+//
 // Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +22,10 @@
 #include <utility>
 #include <vector>
 
-JpegCompression::JpegCompression(int quality) {
+JpegCompression::JpegCompression(int quality,
+                                 const JpegSubsampling subsampling) {
   _quality = quality;
+  _subsampling = subsampling;
   _cinfo.err = jpeg_std_error(&_jerr);
   jpeg_create_compress(&_cinfo);
 }
@@ -54,6 +58,21 @@ std::unique_ptr<uint8_t[]> JpegCompression::compress(
   jpeg_mem_dest(&_cinfo, &imgd, &outlen);
   jpeg_set_defaults(&_cinfo);
   jpeg_set_quality(&_cinfo, _quality, TRUE);
+
+  if (_subsampling == subsample_444) {
+    _cinfo.comp_info[0].h_samp_factor = 1;
+    _cinfo.comp_info[0].v_samp_factor = 1;
+  } else if (_subsampling == subsample_440) {
+    _cinfo.comp_info[0].h_samp_factor = 1;
+    _cinfo.comp_info[0].v_samp_factor = 2;
+  } else if (_subsampling == subsample_422) {
+    _cinfo.comp_info[0].h_samp_factor = 2;
+    _cinfo.comp_info[0].v_samp_factor = 1;
+  } else if (_subsampling == subsample_420) {
+    _cinfo.comp_info[0].h_samp_factor = 2;
+    _cinfo.comp_info[0].v_samp_factor = 2;
+  }
+
   jpeg_start_compress(&_cinfo, TRUE);
   std::vector<boost::gil::pixel<
       uint8_t, boost::gil::layout<typename boost::gil::color_space_type<
@@ -71,3 +90,4 @@ std::unique_ptr<uint8_t[]> JpegCompression::compress(
   *size = outlen;
   return output;
 }
+

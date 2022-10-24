@@ -23,6 +23,7 @@
 
 #include "src/enums.h"
 #include "src/compressor.h"
+#include "src/jpegCompression.h"
 
 namespace wsiToDicomConverter {
 
@@ -31,7 +32,7 @@ class Frame {
  public:
   Frame(int64_t locationX, int64_t locationY, int64_t frameWidth,
         int64_t frameHeight, DCM_Compression compression, int quality,
-        bool storeRawBytes);
+        JpegSubsampling subsampling, bool storeRawBytes);
   virtual ~Frame() {}
 
   // Gets frame by openslide library, performs scaling it and compressing

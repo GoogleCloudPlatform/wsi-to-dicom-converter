@@ -28,7 +28,7 @@ TEST(OpenCVInterpolationFrame, jpeg) {
   DICOMFileFrameRegionReader dicom_frame_reader;
   OpenSlidePtr osptr = OpenSlidePtr(tiffFileName);
   OpenCVInterpolationFrame frame(&osptr, 0, 0, 0, 100, 100, 100, 100, JPEG, 1,
-                                   1000, 1000, 2000, 2000,
+                                   subsample_420, 1000, 1000, 2000, 2000,
                                    false, &dicom_frame_reader,
                                    cv::INTER_LANCZOS4);
   frame.sliceFrame();
@@ -41,8 +41,8 @@ TEST(OpenCVInterpolationFrame, jpeg2000Scaling) {
   DICOMFileFrameRegionReader dicom_frame_reader;
   OpenSlidePtr osptr = OpenSlidePtr(tiffFileName);
   OpenCVInterpolationFrame frame(&osptr, 0, 0, 0, 1000, 1000, 100, 100,
-                                   JPEG2000, 1, 1000, 1000, 2000, 2000,
-                                   true, &dicom_frame_reader,
+                                   JPEG2000, 1, subsample_420, 1000, 1000, 2000,
+                                   2000, true, &dicom_frame_reader,
                                    cv::INTER_LANCZOS4);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());

@@ -21,10 +21,15 @@
 #include "src/enums.h"
 #include "src/compressor.h"
 
+enum JpegSubsampling {subsample_444,
+                      subsample_440,
+                      subsample_422,
+                      subsample_420};
+
 // Implementation of Compressor for jpeg
 class JpegCompression : public Compressor {
  public:
-  explicit JpegCompression(const int quality);
+  explicit JpegCompression(const int quality, const JpegSubsampling sampling);
   virtual ~JpegCompression();
 
   virtual DCM_Compression method() const;
@@ -38,5 +43,6 @@ class JpegCompression : public Compressor {
   jpeg_compress_struct _cinfo;
   jpeg_error_mgr _jerr;
   int _quality;
+  JpegSubsampling _subsampling;
 };
 #endif  // SRC_JPEGCOMPRESSION_H_

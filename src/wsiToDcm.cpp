@@ -911,9 +911,9 @@ int WsiToDcm::dicomizeTiff() {
               osptr_.get(), x, y, levelToGet,
               frameWidthDownsampled, frameHeightDownsampled, levelFrameWidth,
               levelFrameHeight, levelCompression, wsiRequest_->quality,
-              levelWidth, levelHeight, largestSlideLevelWidth_,
-              largestSlideLevelHeight_, saveCompressedRaw,
-              &higherMagnifcationDicomFiles,
+              wsiRequest_->jpegSubsampling, levelWidth, levelHeight,
+              largestSlideLevelWidth_, largestSlideLevelHeight_,
+              saveCompressedRaw, &higherMagnifcationDicomFiles,
               wsiRequest_->openCVInterpolationMethod);
         } else {
           frameData = std::make_unique<NearestNeighborFrame>(
@@ -921,7 +921,8 @@ int WsiToDcm::dicomizeTiff() {
               frameWidthDownsampled, frameHeightDownsampled,
               multiplicator, levelFrameWidth, levelFrameHeight,
               levelCompression, wsiRequest_->quality,
-              saveCompressedRaw, &higherMagnifcationDicomFiles);
+              wsiRequest_->jpegSubsampling, saveCompressedRaw,
+              &higherMagnifcationDicomFiles);
         }
         if (higherMagnifcationDicomFiles.dicomFileCount() != 0) {
           frameData->incSourceFrameReadCounter();

@@ -224,7 +224,7 @@ TiffFrame::TiffFrame(
           conFrameLocationY(tiffFile, tiffFile->directoryLevel(), tileIndex),
           conFrameWidth(tiffFile, tiffFile->directoryLevel()),
           conFrameHeight(tiffFile, tiffFile->directoryLevel()), NONE, -1,
-          storeRawBytes),
+          subsample_420, storeRawBytes),
           tileIndex_(tileIndex) {
   tiffFile_ = tiffFile;
 }

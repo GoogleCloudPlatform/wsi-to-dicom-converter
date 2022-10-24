@@ -35,14 +35,15 @@ OpenCVInterpolationFrame::OpenCVInterpolationFrame(
     OpenSlidePtr *osptr, int64_t locationX, int64_t locationY, int32_t level,
     int64_t frameWidthDownsampled, int64_t frameHeightDownsampled,
     int64_t frameWidth, int64_t frameHeight, DCM_Compression compression,
-    int quality, int64_t levelWidth, int64_t levelHeight, int64_t level0Width,
-    int64_t level0Height, bool storeRawBytes,
-    DICOMFileFrameRegionReader *frame_region_reader,
+    int quality,  JpegSubsampling subsampling, int64_t levelWidth,
+    int64_t levelHeight, int64_t level0Width, int64_t level0Height,
+    bool storeRawBytes, DICOMFileFrameRegionReader *frame_region_reader,
     const cv::InterpolationFlags openCVInterpolationMethod) : Frame(locationX,
                                                                 locationY,
                                                                 frameWidth,
                                                                frameHeight,
                                                       compression, quality,
+                                                           subsampling,
                                                            storeRawBytes) {
   osptr_ = osptr;
   level_ = level;

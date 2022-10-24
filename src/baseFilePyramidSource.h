@@ -76,7 +76,8 @@ BaseFileFrame<T>::BaseFileFrame(int64_t locationX,
                                int64_t locationY,
                                T* pyramidSource) :
          Frame(locationX, locationY, pyramidSource->frameWidth(),
-               pyramidSource->frameHeight(), NONE, -1, true) {
+               pyramidSource->frameHeight(), NONE, -1, subsample_420,
+               true) {
   size_ = 0;
   dcmPixelItem_ = nullptr;
   rawCompressedBytes_ = nullptr;

@@ -28,7 +28,7 @@ TEST(NearestNeighborFrame, jpeg) {
   DICOMFileFrameRegionReader dicom_frame_reader;
   OpenSlidePtr osptr = OpenSlidePtr(tiffFileName);
   NearestNeighborFrame frame(&osptr, 0, 0, 0, 100, 100, 1, 100, 100, JPEG, 1,
-                             false, &dicom_frame_reader);
+                             subsample_420, false, &dicom_frame_reader);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
   EXPECT_FALSE(frame.hasRawABGRFrameBytes());
@@ -39,7 +39,7 @@ TEST(NearestNeighborFrame, jpeg2000Scaling) {
   DICOMFileFrameRegionReader dicom_frame_reader;
   OpenSlidePtr osptr = OpenSlidePtr(tiffFileName);
   NearestNeighborFrame frame(&osptr, 0, 0, 0, 1000, 1000, 1, 100, 100, JPEG2000,
-                             1, true, &dicom_frame_reader);
+                             1, subsample_420, true, &dicom_frame_reader);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
   EXPECT_TRUE(frame.hasRawABGRFrameBytes());
@@ -51,7 +51,7 @@ TEST(NearestNeighborFrame, rawData) {
   DICOMFileFrameRegionReader dicom_frame_reader;
   OpenSlidePtr osptr = OpenSlidePtr(tiffFileName);
   NearestNeighborFrame frame(&osptr, 2219, 2966, 0, 100, 100, 1, 100, 100,
-                             RAW, 1, true, &dicom_frame_reader);
+                             RAW, 1, subsample_420, true, &dicom_frame_reader);
   frame.sliceFrame();
   ASSERT_TRUE(frame.isDone());
   EXPECT_TRUE(frame.hasRawABGRFrameBytes());

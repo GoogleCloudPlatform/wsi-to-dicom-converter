@@ -27,6 +27,7 @@ TestFrame::TestFrame(int64_t width, int64_t height) : Frame(0,
                                                             height,
                                                             RAW,
                                                             100,
+                                                            subsample_420,
                                                             true) {
   rawValue_ = NULL;
   done_ = true;
@@ -48,6 +49,7 @@ TestFrame::TestFrame(int64_t width, int64_t height, uint32_t value) : Frame(0,
                                                                        height,
                                                                           RAW,
                                                                           100,
+                                                                subsample_420,
                                                                         true) {
   done_ = true;
   data_  = NULL;
