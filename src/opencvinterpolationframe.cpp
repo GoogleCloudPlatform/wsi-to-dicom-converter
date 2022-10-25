@@ -66,14 +66,18 @@ OpenCVInterpolationFrame::OpenCVInterpolationFrame(
 
       Actual padding = unscaledMaxPadding * scaling factor.
     */
-    const int unscaledMaxPadding = 5;
-
     widthScaleFactor_ = frameWidthDownsampled_ / frameWidth_;
     heightScaleFactor_ = frameHeightDownsampled_ / frameHeight_;
-    int max_pad_width  = unscaledMaxPadding *
-                                    static_cast<int>(ceil(widthScaleFactor_));
-    int max_pad_height = unscaledMaxPadding *
-                                    static_cast<int>(ceil(heightScaleFactor_));
+    int max_pad_width;
+    int max_pad_height;
+    if (openCVInterpolationMethod == cv::INTER_AREA ||
+        openCVInterpolationMethod == cv::INTER_NEAREST) {
+      max_pad_width  = 0;
+      max_pad_height = 0;
+    } else {
+       max_pad_width = 8;
+       max_pad_height = 8;
+    }
 
     padLeft_ = std::min<int>(max_pad_width, locationX_);
     padTop_ =  std::min<int>(max_pad_height, locationY_);
@@ -101,7 +105,10 @@ OpenCVInterpolationFrame::~OpenCVInterpolationFrame() {}
 
 void OpenCVInterpolationFrame::scalefactorNormPadding(int *padding,
                                                       int scalefactor) {
-  *padding = (*padding / scalefactor) * scalefactor;
+  if (*padding <= 0) {
+    return;
+  }
+  *padding += scalefactor - (*padding % scalefactor);
 }
 
 void OpenCVInterpolationFrame::incSourceFrameReadCounter() {
