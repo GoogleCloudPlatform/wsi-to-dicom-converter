@@ -27,6 +27,7 @@
 #include "src/tiffFile.h"
 #include "src/dcmFilePyramidSource.h"
 #include "src/imageFilePyramidSource.h"
+#include "src/jpegCompression.h"
 
 namespace wsiToDicomConverter {
 
@@ -173,6 +174,7 @@ struct WsiRequest {
   double untiledImageHeightMM = 0.0;
   bool genPyramidFromDicom = false;
   bool includeSingleFrameDownsample = false;
+  JpegSubsampling jpegSubsampling = subsample_420;
 };
 
 

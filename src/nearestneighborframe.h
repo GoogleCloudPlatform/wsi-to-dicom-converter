@@ -49,6 +49,7 @@ class NearestNeighborFrame : public Frame {
                        int64_t frameHeightDownsampled, double multiplicator,
                        int64_t frameWidth, int64_t frameHeight,
                        DCM_Compression compression, int quality,
+                       JpegSubsampling sampling,
                        bool storeRawBytes,
                        DICOMFileFrameRegionReader *frame_region_reader);
 
