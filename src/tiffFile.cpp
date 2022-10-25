@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include <absl/strings/string_view.h>
+#include <boost/log/trivial.hpp>
 #include <memory>
 #include <string>
 #include <utility>
 
+#include "src/openslideUtil.h"
 #include "src/tiffFile.h"
 
 
@@ -53,10 +55,49 @@ TiffFile::TiffFile(const TiffFile &tf, const int32_t dirIndex) :
     }
     TIFFSetDirectory(tiffFile_, currentDirectoryIndex_);
     tileReadBufSize_ = tf.tileReadBufSize_;
+    if (!fileDirectory()->isJpeg2kCompressed()) {
+      osptr_ = nullptr;
+      openslide_level_ = 0;
+    } else {
+      osptr_ = std::make_unique<OpenSlidePtr>(tf.path());
+      openslide_t* opslide = osptr_->osr();
+      int64_t level_width = -1;
+      int64_t level_height = -1;
+      const int64_t targetWidth = fileDirectory()->imageWidth();
+      const int64_t targetHeight = fileDirectory()->imageHeight();
+      if (openslide_get_error(opslide)) {
+        BOOST_LOG_TRIVIAL(error) << openslide_get_error(opslide);
+        throw 1;
+      }
+      const int32_t level_count = openslide_get_level_count(opslide);
+      for (openslide_level_ = 0;
+           openslide_level_ < level_count;
+           ++openslide_level_) {
+        openslide_get_level_dimensions(opslide, openslide_level_,
+                                       &level_width, &level_height);
+        if (level_width == targetWidth && level_height == targetHeight) {
+          break;
+        }
+      }
+      if (level_width != targetWidth && level_height != targetHeight) {
+        BOOST_LOG_TRIVIAL(error) << "Could not find expected level in "
+                                    "JPG2000 encoded tiff.";
+        throw 1;
+      }
+    }
     initalized_ = true;
 }
 
+openslide_t * TiffFile::getOpenslidePtr() {
+  return osptr_->osr();
+}
+
+int32_t TiffFile::getOpenslideLevel() const {
+  return openslide_level_;
+}
+
 TiffFile::~TiffFile() {
+  osptr_ = nullptr;
   close();
 }
 

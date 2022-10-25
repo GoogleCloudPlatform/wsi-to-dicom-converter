@@ -74,18 +74,17 @@ OpenCVInterpolationFrame::OpenCVInterpolationFrame(
                                     static_cast<int>(ceil(widthScaleFactor_));
     int max_pad_height = unscaledMaxPadding *
                                     static_cast<int>(ceil(heightScaleFactor_));
+
     padLeft_ = std::min<int>(max_pad_width, locationX_);
     padTop_ =  std::min<int>(max_pad_height, locationY_);
     int padRight = std::min<int>(std::max<int>(0, levelWidth_ - (locationX_ +
                                       frameWidthDownsampled_)), max_pad_width);
     int padBottom = std::min<int>(std::max<int>(0, levelHeight_ - (locationY_ +
                                     frameHeightDownsampled_)), max_pad_height);
-
     scalefactorNormPadding(&padLeft_, widthScaleFactor_);
-    scalefactorNormPadding(&padTop_, heightScaleFactor_);
     scalefactorNormPadding(&padRight, widthScaleFactor_);
+    scalefactorNormPadding(&padTop_, heightScaleFactor_);
     scalefactorNormPadding(&padBottom, heightScaleFactor_);
-
     padWidth_ =  padLeft_ + padRight;
     padHeight_ = padTop_ + padBottom;
   } else {

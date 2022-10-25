@@ -193,7 +193,9 @@ void WsiToDcm::initOpenSlide() {
   if (wsiRequest_->SVSImportPreferScannerTileingForAllLevels ||
       wsiRequest_->SVSImportPreferScannerTileingForLargestLevel) {
     bool useSVSTileing = false;
-    if (boost::algorithm::iends_with(wsiRequest_->inputFile, ".svs")) {
+    if (boost::algorithm::iends_with(wsiRequest_->inputFile, ".svs") ||
+        boost::algorithm::iends_with(wsiRequest_->inputFile, ".tif") ||
+        boost::algorithm::iends_with(wsiRequest_->inputFile, ".tiff")) {
       tiffFile_ = std::make_unique<TiffFile>(wsiRequest_->inputFile);
       if (tiffFile_->isLoaded()) {
           int32_t level = tiffFile_->getDirectoryIndexMatchingImageDimensions(
@@ -201,9 +203,13 @@ void WsiToDcm::initOpenSlide() {
           if (level != -1) {
             tiffFile_ = std::make_unique<TiffFile>(*tiffFile_, level);
             TiffFrame tiffFrame(tiffFile_.get(), 0, true);
-            if (!tiffFrame.canDecodeJpeg()) {
-              BOOST_LOG_TRIVIAL(error) << "Error svs contains decoding "
-                                          "JPEG in SVS.";
+            if (!tiffFrame.tiffDirectory()->isJpeg2kCompressed() &&
+                !tiffFrame.tiffDirectory()->isJpegCompressed()) {
+              BOOST_LOG_TRIVIAL(error) << "Tiff contains unexpected format.";
+              throw 1;
+            } else if (tiffFrame.tiffDirectory()->isJpegCompressed() &&
+                       !tiffFrame.canDecodeJpeg()) {
+              BOOST_LOG_TRIVIAL(error) << "Error decoding JPEG in SVS.";
               throw 1;
             } else {
               const TiffDirectory * tiffDir = tiffFile_->directory(level);
@@ -874,9 +880,6 @@ int WsiToDcm::dicomizeTiff() {
       // prior level if progressiveDownsample is enabled.
       higherMagnifcationDicomFiles.clearDicomFiles();
     }
-    if (slideLevelDim->readFromTiff) {
-      levelCompression = JPEG;
-    }
     BOOST_LOG_TRIVIAL(debug) << "higherMagnifcationDicomFiles " <<
                           higherMagnifcationDicomFiles.dicomFileCount();
     int64_t y = initialY_;
@@ -897,6 +900,15 @@ int WsiToDcm::dicomizeTiff() {
     if (slideLevelDim->readFromTiff) {
       tiffFrameFilePtr = std::make_unique<TiffFile>(*tiffFile_.get(),
                                                     levelToGet);
+      if (tiffFrameFilePtr->fileDirectory()->isJpegCompressed()) {
+        levelCompression = JPEG;
+      } else if (tiffFrameFilePtr->fileDirectory()->isJpeg2kCompressed()) {
+        levelCompression = JPEG2000;
+      } else {
+        BOOST_LOG_TRIVIAL(error) << "Tiff file is not jpeg or jpeg2000 "
+                                    "encoded.";
+        return 1;
+      }
     }
     while (y < levelHeight) {
       int64_t x = initialX_;
