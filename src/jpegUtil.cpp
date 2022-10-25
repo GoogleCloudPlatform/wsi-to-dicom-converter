@@ -99,7 +99,7 @@ bool decodeJpeg(const int64_t width,
   // requires colorspace  setting for correct decoding.
   // imaging is BGR.  Does not require byte reording.
   if (returnMemoryBuffer == nullptr) {
-    return true
+    return true;
   }
   for (uint64_t sourceCounter = 0;
       sourceCounter < sourceSize;

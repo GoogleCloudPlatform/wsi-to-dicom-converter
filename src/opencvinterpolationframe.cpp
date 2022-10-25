@@ -65,27 +65,30 @@ OpenCVInterpolationFrame::OpenCVInterpolationFrame(
       of the frames pixels that are being resized.
 
       Actual padding = unscaledMaxPadding * scaling factor.
-    */
-    const int unscaledMaxPadding = 5;
-
+    */    
     widthScaleFactor_ = frameWidthDownsampled_ / frameWidth_;
     heightScaleFactor_ = frameHeightDownsampled_ / frameHeight_;
-    int max_pad_width  = unscaledMaxPadding *
-                                    static_cast<int>(ceil(widthScaleFactor_));
-    int max_pad_height = unscaledMaxPadding *
-                                    static_cast<int>(ceil(heightScaleFactor_));
+    int max_pad_width;
+    int max_pad_height;
+    if (openCVInterpolationMethod == cv::INTER_AREA ||
+        openCVInterpolationMethod == cv::INTER_NEAREST) {
+      max_pad_width  = 0;
+      max_pad_height = 0;
+    } else {
+       max_pad_width = 8;
+       max_pad_height = 8;
+    }
+
     padLeft_ = std::min<int>(max_pad_width, locationX_);
     padTop_ =  std::min<int>(max_pad_height, locationY_);
     int padRight = std::min<int>(std::max<int>(0, levelWidth_ - (locationX_ +
                                       frameWidthDownsampled_)), max_pad_width);
     int padBottom = std::min<int>(std::max<int>(0, levelHeight_ - (locationY_ +
                                     frameHeightDownsampled_)), max_pad_height);
-
     scalefactorNormPadding(&padLeft_, widthScaleFactor_);
-    scalefactorNormPadding(&padTop_, heightScaleFactor_);
     scalefactorNormPadding(&padRight, widthScaleFactor_);
+    scalefactorNormPadding(&padTop_, heightScaleFactor_);
     scalefactorNormPadding(&padBottom, heightScaleFactor_);
-
     padWidth_ =  padLeft_ + padRight;
     padHeight_ = padTop_ + padBottom;
   } else {
@@ -102,7 +105,9 @@ OpenCVInterpolationFrame::~OpenCVInterpolationFrame() {}
 
 void OpenCVInterpolationFrame::scalefactorNormPadding(int *padding,
                                                       int scalefactor) {
-  *padding = (*padding / scalefactor) * scalefactor;
+  if (*padding > 0) {
+    *padding += scalefactor - (*padding % scalefactor);
+  }
 }
 
 void OpenCVInterpolationFrame::incSourceFrameReadCounter() {
@@ -205,8 +210,12 @@ void OpenCVInterpolationFrame::sliceFrame() {
                          frameWidthDownsampled_+padWidth_, CV_8UC4,
                           buf_bytes.get());
     cv::Mat resized_image;
-    const int resize_width = frameWidth_ + (padWidth_ / widthScaleFactor_);
-    const int resize_height =  frameHeight_ + (padHeight_ / heightScaleFactor_);
+    const int resize_width = std::max<int>(frameWidth_,
+                                      ((frameWidthDownsampled_ + padWidth_) /
+                                        widthScaleFactor_));
+    const int resize_height = std::max<int>(frameHeight_,
+                                      ((frameHeightDownsampled_ + padHeight_) /
+                                        heightScaleFactor_));
     /*
      ResizeFlags
      cv::INTER_NEAREST = 0,
