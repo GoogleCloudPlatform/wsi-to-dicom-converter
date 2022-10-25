@@ -65,19 +65,15 @@ OpenCVInterpolationFrame::OpenCVInterpolationFrame(
       of the frames pixels that are being resized.
 
       Actual padding = unscaledMaxPadding * scaling factor.
-    */    
+    */
+    const int unscaledMaxPadding = 5;
+
     widthScaleFactor_ = frameWidthDownsampled_ / frameWidth_;
     heightScaleFactor_ = frameHeightDownsampled_ / frameHeight_;
-    int max_pad_width;
-    int max_pad_height;
-    if (openCVInterpolationMethod == cv::INTER_AREA ||
-        openCVInterpolationMethod == cv::INTER_NEAREST) {
-      max_pad_width  = 0;
-      max_pad_height = 0;
-    } else {
-       max_pad_width = 8;
-       max_pad_height = 8;
-    }
+    int max_pad_width  = unscaledMaxPadding *
+                                    static_cast<int>(ceil(widthScaleFactor_));
+    int max_pad_height = unscaledMaxPadding *
+                                    static_cast<int>(ceil(heightScaleFactor_));
 
     padLeft_ = std::min<int>(max_pad_width, locationX_);
     padTop_ =  std::min<int>(max_pad_height, locationY_);
@@ -105,9 +101,7 @@ OpenCVInterpolationFrame::~OpenCVInterpolationFrame() {}
 
 void OpenCVInterpolationFrame::scalefactorNormPadding(int *padding,
                                                       int scalefactor) {
-  if (*padding > 0) {
-    *padding += scalefactor - (*padding % scalefactor);
-  }
+  *padding = (*padding / scalefactor) * scalefactor;
 }
 
 void OpenCVInterpolationFrame::incSourceFrameReadCounter() {
@@ -210,12 +204,8 @@ void OpenCVInterpolationFrame::sliceFrame() {
                          frameWidthDownsampled_+padWidth_, CV_8UC4,
                           buf_bytes.get());
     cv::Mat resized_image;
-    const int resize_width = std::max<int>(frameWidth_,
-                                      ((frameWidthDownsampled_ + padWidth_) /
-                                        widthScaleFactor_));
-    const int resize_height = std::max<int>(frameHeight_,
-                                      ((frameHeightDownsampled_ + padHeight_) /
-                                        heightScaleFactor_));
+    const int resize_width = frameWidth_ + (padWidth_ / widthScaleFactor_);
+    const int resize_height =  frameHeight_ + (padHeight_ / heightScaleFactor_);
     /*
      ResizeFlags
      cv::INTER_NEAREST = 0,
