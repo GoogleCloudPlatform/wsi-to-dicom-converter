@@ -16,12 +16,14 @@
 #define SRC_TIFFFILE_H_
 
 #include <absl/strings/string_view.h>
+#include <openslide.h>
 #include <tiffio.h>
 
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "src/openslideUtil.h"
 #include "src/tiffDirectory.h"
 #include "src/tiffTile.h"
 
@@ -67,6 +69,11 @@ class TiffFile{
   std::string path() const;
   std::unique_ptr<TiffTile> tile(uint32_t tileIndex);
   int32_t directoryLevel() const;
+
+  // Openslide interfaces. Used to decode JPEG2000
+  openslide_t * getOpenslidePtr();
+  int32_t getOpenslideLevel() const;
+
   void close();
 
  private:
@@ -76,6 +83,9 @@ class TiffFile{
   std::vector<std::unique_ptr<TiffDirectory>> tiffDir_;
   const int32_t currentDirectoryIndex_;
   tsize_t tileReadBufSize_;
+
+  std::unique_ptr<OpenSlidePtr> osptr_;
+  int32_t openslide_level_;
 };
 
 

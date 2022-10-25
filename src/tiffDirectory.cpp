@@ -199,6 +199,16 @@ bool TiffDirectory::isJpegCompressed() const {
   return (compression_  == COMPRESSION_JPEG);
 }
 
+bool TiffDirectory::isJpeg2kCompressed() const {
+  // Aperio 33003: YCbCr format, possibly with a chroma subsampling of 4:2:2.
+  const int compression_aperio_YCbCr = 33003;
+  // Aperio 33005: RGB format
+  const int compression_aperio_RGB = 33005;
+  return (compression_  == COMPRESSION_JP2000 ||
+          compression_  == compression_aperio_YCbCr ||
+          compression_  == compression_aperio_RGB);
+}
+
 bool TiffDirectory::isPhotoMetricRGB() const {
   return (photoMetric_  == PHOTOMETRIC_RGB);
 }
@@ -211,6 +221,7 @@ void TiffDirectory::log() const {
   BOOST_LOG_TRIVIAL(info) << "Tiff File Directory\n" <<
     "----------------------\n" <<
     " isJpegCompressed: " << isJpegCompressed() << "\n" <<
+    " isJpeg2kCompressed: " << isJpeg2kCompressed() << "\n" <<
     " isPyramidImage: " << isPyramidImage() << "\n" <<
     " isPhotoMetricYCBCR: " << isPhotoMetricYCBCR() << "\n" <<
     " isPhotoMetricRGB: " << isPhotoMetricRGB() << "\n" <<
@@ -232,7 +243,7 @@ void TiffDirectory::log() const {
 }
 
 bool TiffDirectory::isExtractablePyramidImage() const {
-  return (isJpegCompressed() && isPyramidImage() &&
+  return ((isJpegCompressed() || isJpeg2kCompressed()) && isPyramidImage() &&
           (isPhotoMetricYCBCR() || isPhotoMetricRGB()) &&
           (tileCount() > 0) && (tileWidth() > 0) && (tileHeight() > 0) &&
           (imageWidth() > 0) && (imageHeight() > 0) &&

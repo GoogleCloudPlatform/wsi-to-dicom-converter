@@ -15,6 +15,7 @@
 #include <boost/log/trivial.hpp>
 #include <jpeglib.h>
 #include <dcmtk/dcmdata/dcdeftag.h>
+#include <openslide.h>
 
 #include <string>
 #include <utility>
@@ -280,10 +281,53 @@ int64_t TiffFrame::rawABGRFrameBytes(uint8_t *rawMemory,
   uint64_t abgrBufferSizeRead = 0;
   const uint64_t width = frameWidth();
   const uint64_t height = frameHeight();
-  if (jpegUtil::decodeJpeg(width, height, jpegDecodeColorSpace(),
-                           rawCompressedBytes_.get(),
-                           rawCompressedBytesSize_, rawMemory, memorySize)) {
-    abgrBufferSizeRead = width * height * 4;
+  if (tiffDirectory()->isJpegCompressed() &&
+       jpegUtil::decodeJpeg(width, height, jpegDecodeColorSpace(),
+                            rawCompressedBytes_.get(),
+                            rawCompressedBytesSize_, rawMemory, memorySize)) {
+      abgrBufferSizeRead = width * height * 4;
+  } else if (tiffDirectory()->isJpeg2kCompressed()) {
+    // if frame is jpeg2000 decode using OpenSlide.
+     openslide_t *opslide = tiffFile()->getOpenslidePtr();
+    int32_t level = tiffFile()->getOpenslideLevel();
+    uint32_t * buf_bytes = reinterpret_cast<uint32_t*>(rawMemory);
+    int64_t levelZeroWidth;
+    int64_t levelZeroHeight;
+    openslide_get_level0_dimensions(opslide, &levelZeroWidth, &levelZeroHeight);
+    int64_t levelZeroX = locationX() * levelZeroWidth /
+                         tiffDirectory()->imageWidth();
+    int64_t levelZeroY = locationY() * levelZeroHeight /
+                         tiffDirectory()->imageHeight();
+    openslide_read_region(opslide, buf_bytes, levelZeroX, levelZeroY,
+                          level, width, height);
+    if (openslide_get_error(opslide)) {
+       BOOST_LOG_TRIVIAL(error) << openslide_get_error(opslide);
+       throw 1;
+    }
+    // Uncommon, openslide C++ API premults RGB by alpha.
+    // if alpha is not zero reverse transform to get RGB
+    // https://openslide.org/api/openslide_8h.html
+    const uint32_t size = width * height;
+    for (uint32_t x = 0; x < size; ++x) {
+      const uint32_t pixel = buf_bytes[x];  // Pixel value to be downsampled
+      const int alpha = pixel >> 24;            // Alpha value of pixel
+      if (alpha == 0) {                         // If transparent skip
+        continue;
+      }
+      uint32_t red = (pixel >> 16) & 0xFF;  // Get RGB Bytes
+      uint32_t green = (pixel >> 8) & 0xFF;
+      uint32_t blue = pixel & 0xFF;
+      // Uncommon, openslide C++ API premults RGB by alpha.
+      // if alpha is not zero reverse transform to get RGB
+      // https://openslide.org/api/openslide_8h.html
+      if (alpha != 0xFF) {
+        red = red * 255 / alpha;
+        green = green * 255 / alpha;
+        blue = blue * 255 / alpha;
+      }
+      // Swap red and blue channel for dicom compatiability.
+      buf_bytes[x] = (alpha << 24) | (blue << 16) | (green << 8) | red;
+    }
   }
   decReadCounter();
   return abgrBufferSizeRead;
@@ -299,7 +343,9 @@ void TiffFrame::setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
   // ownership of pointer.
   dcmPixelItem_ = std::make_unique<DcmPixelItem>(DcmTag(DCM_Item, EVR_OB));
   dcmPixelItem_->putUint8Array(rawCompressedBytes_.get(), size_);
-  if (!storeRawBytes_) {
+  // if frame is jpeg2000 decode don't save encoded tiff.
+  // frame will be read using openslide
+  if (!storeRawBytes_ || tiffDirectory()->isJpeg2kCompressed()) {
     rawCompressedBytes_ = nullptr;
   }
 }

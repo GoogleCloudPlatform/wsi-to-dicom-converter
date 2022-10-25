@@ -66,6 +66,7 @@ class TiffDirectory {
   bool isMacroImage() const;
   bool isLabelImage() const;
   bool isJpegCompressed() const;
+  bool isJpeg2kCompressed() const;
   bool isPhotoMetricRGB() const;
   bool isPhotoMetricYCBCR() const;
   absl::string_view photoMetrIntStr() const;
