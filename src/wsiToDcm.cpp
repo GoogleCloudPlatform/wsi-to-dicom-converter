@@ -85,6 +85,7 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
       throw 1;
     }
   }
+  tiffFile_ = nullptr;
   BOOST_LOG_TRIVIAL(info) << "dicomization is started";
   initialX_ = 0;
   initialY_ = 0;
