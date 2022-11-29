@@ -18,7 +18,6 @@
 #include <boost/log/trivial.hpp>
 #include<algorithm>
 #include <string>
-#include <vector>
 
 Jpeg2000Compression::~Jpeg2000Compression() {}
 
