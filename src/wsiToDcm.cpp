@@ -85,7 +85,6 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
       throw 1;
     }
   }
-  tiffFile_ = nullptr;
   BOOST_LOG_TRIVIAL(info) << "dicomization is started";
   initialX_ = 0;
   initialY_ = 0;
@@ -429,8 +428,7 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int64_t downsample,
                         &levelWidthDownsampled,
                         &levelHeightDownsampled,
                         &levelFrameWidth,
-                        &levelFrameHeight,
-                        &levelCompression);
+                        &levelFrameHeight);
   slideLevelDim->level = static_cast<int32_t>(log2(downsample));
   slideLevelDim->readFromTiff = readFromTiff;
   slideLevelDim->levelToGet = levelToGet;
