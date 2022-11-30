@@ -30,8 +30,7 @@ class Jpeg2000Compression : public RawCompression {
 
   // Performs compression
   virtual std::unique_ptr<uint8_t[]> writeToMemory(unsigned int width,
-                                                   unsigned int height,
-                                                   unsigned int pitch,
+                                                   unsigned int height,                                          
                                                    uint8_t* buffer,
                                                    size_t* size);
 
