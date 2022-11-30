@@ -33,7 +33,8 @@ class TiffFile{
  public:
   explicit TiffFile(absl::string_view path, const int32_t dirIndex = 0);
   explicit TiffFile(const TiffFile &tf, const int32_t dirIndex);
-  TiffFile(const TiffFile &tf);  // not implemented no copy constructor
+  TiffFile(const TiffFile &tf) = delete;
+  TiffFile &operator =(const TiffFile &tiffFrame) = delete;
 
   virtual ~TiffFile();
   bool isLoaded() const;
