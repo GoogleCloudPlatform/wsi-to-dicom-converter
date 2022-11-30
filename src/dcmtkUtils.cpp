@@ -228,9 +228,6 @@ OFCondition generateDcmDataset(I2DOutputPlug* outPlug, DcmDataset* resultDset,
     return cond;
   }
 
-  if (cond.bad()) {
-    return cond;
-  }
   return EC_Normal;
 }
 
