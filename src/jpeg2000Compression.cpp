@@ -15,8 +15,9 @@
 #include "src/jpeg2000Compression.h"
 #include <openjpeg.h>
 #include <boost/gil/image.hpp>
+#include <boost/log/trivial.hpp>
+#include<algorithm>
 #include <string>
-#include <vector>
 
 Jpeg2000Compression::~Jpeg2000Compression() {}
 
@@ -28,8 +29,21 @@ std::string Jpeg2000Compression::toString() const {
   return std::string("lossless JPEG2000 compressed");
 }
 
+
+static void openjpeg_error(const char* msg, void* client_data) {
+  BOOST_LOG_TRIVIAL(error) << "JPEG 2000 Error: " << msg;
+}
+
+static void openjpeg_warning(const char* msg, void* client_data) {
+  BOOST_LOG_TRIVIAL(warning) << "JPEG 2000 Warning: " << msg;
+}
+
+static void openjpeg_info(const char* msg, void* client_data) {
+  BOOST_LOG_TRIVIAL(info) << "JPEG 2000 Info: " << msg;
+}
+
 std::unique_ptr<uint8_t[]> Jpeg2000Compression::writeToMemory(
-    unsigned int width, unsigned int height, unsigned int pitch,
+    unsigned int width, unsigned int height,
     uint8_t* buffer, size_t* size) {
   opj_cparameters_t parameters;
   opj_set_default_encoder_parameters(&parameters);
@@ -37,12 +51,27 @@ std::unique_ptr<uint8_t[]> Jpeg2000Compression::writeToMemory(
   parameters.tcp_numlayers = 1;
   parameters.tcp_rates[0] = 0;
   parameters.cp_comment = const_cast<char*>("");
+  // Image sizes below 2^(#resolutions-1) causes
+  // error: Number of resolutions is too high in comparison to the smallest
+  // image dimension.  See: https://groups.google.com/g/openjpeg/c/Lpw6Ydhf7bA
+  unsigned int min_dim = std::min<unsigned int>(width, height);
+  int max_numresolution = static_cast<int>(std::log2(
+                                            static_cast<double>(min_dim))) + 1;
+  max_numresolution = std::min<int>(parameters.numresolution,
+                                    max_numresolution);
+  if (max_numresolution != parameters.numresolution) {
+    BOOST_LOG_TRIVIAL(warning) << "JPEG 2000: Image size is smaller than 2^("
+                                  "numresolution - 1); Changing numresolution "
+                                  "from: " << parameters.numresolution <<
+                                  " to: " << max_numresolution <<
+                                  " to meet encoder requirments.";
+    parameters.numresolution = max_numresolution;
+  }
 
   COLOR_SPACE colorspace;
-  std::vector<opj_image_cmptparm_t> componentsParameters;
+  opj_image_cmptparm_t componentsParameters[3];
 
-  componentsParameters.resize(3);
-  for (size_t i = 0; i < componentsParameters.size(); i++) {
+  for (size_t i = 0; i < 3; i++) {
     memset(&componentsParameters[i], 0, sizeof(opj_image_cmptparm_t));
     componentsParameters[i].dx = 1;
     componentsParameters[i].dy = 1;
@@ -54,8 +83,8 @@ std::unique_ptr<uint8_t[]> Jpeg2000Compression::writeToMemory(
     componentsParameters[i].sgnd = 0;
   }
 
-  opj_image_t* opjImage = opj_image_create(
-      componentsParameters.size(), &componentsParameters[0], colorspace);
+  opj_image_t* opjImage = opj_image_create(3, &componentsParameters[0],
+                                           colorspace);
   opjImage->x0 = 0;
   opjImage->y0 = 0;
   opjImage->x1 = width;
@@ -65,21 +94,25 @@ std::unique_ptr<uint8_t[]> Jpeg2000Compression::writeToMemory(
   int32_t* green = opjImage->comps[1].data;
   int32_t* blue = opjImage->comps[2].data;
 
-  for (unsigned int y = 0; y < height; y++) {
-    const uint8_t* pixel = reinterpret_cast<const uint8_t*>(buffer) + y * pitch;
-
-    for (unsigned int x = 0; x < width; x++) {
-      *red = pixel[0];
-      *green = pixel[1];
-      *blue = pixel[2];
-      pixel += 3;
-      red++;
-      green++;
-      blue++;
-    }
+  const uint8_t* pixel = reinterpret_cast<const uint8_t*>(buffer);
+  const unsigned int pixels_count = height*width*3;
+  for (unsigned int y = 0; y < pixels_count; y+=3) {
+    *red = pixel[y];
+    *green = pixel[y+1];
+    *blue = pixel[y+2];
+    red++;
+    green++;
+    blue++;
   }
 
   opj_codec_t* cinfo = opj_create_compress(OPJ_CODEC_J2K);
+
+  // Uncomment to log info, warnings, & errors
+  //
+  // opj_set_info_handler(cinfo, openjpeg_info, NULL);
+  // opj_set_warning_handler(cinfo, openjpeg_warning, NULL);
+  // opj_set_error_handler(cinfo, openjpeg_error, NULL);
+
   opj_setup_encoder(cinfo, &parameters, opjImage);
 
   opj_stream_t* cio;
@@ -94,7 +127,10 @@ std::unique_ptr<uint8_t[]> Jpeg2000Compression::writeToMemory(
         return size;
       });
 
-  opj_start_compress(cinfo, opjImage, cio);
+  bool result = opj_start_compress(cinfo, opjImage, cio);
+  if (!result) {
+    BOOST_LOG_TRIVIAL(error) << "JPEG 2000 Error starting compression";
+  }
   opj_encode(cinfo, cio);
   opj_end_compress(cinfo, cio);
   std::unique_ptr<uint8_t[]> compressed = std::make_unique<uint8_t[]>(size_);
@@ -111,6 +147,5 @@ std::unique_ptr<uint8_t[]> Jpeg2000Compression::compress(
     const boost::gil::rgb8_view_t& view, size_t* size) {
   std::unique_ptr<uint8_t[]> storage = getRawData(view, size);
 
-  return this->writeToMemory(view.width(), view.height(), view.width() * 3,
-                             storage.get(), size);
+  return this->writeToMemory(view.width(), view.height(), storage.get(), size);
 }

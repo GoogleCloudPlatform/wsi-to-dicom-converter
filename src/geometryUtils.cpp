@@ -21,8 +21,7 @@ void dimensionDownsampling(
     int64_t levelHeight, bool retile, double downsampleOfLevel,
     int64_t *frameWidthDownsampled, int64_t *frameHeightDownsampled,
     int64_t *levelWidthDownsampled, int64_t *levelHeightDownsampled,
-    int64_t *level_frameWidth, int64_t *level_frameHeight,
-    DCM_Compression *compression) {
+    int64_t *level_frameWidth, int64_t *level_frameHeight) {
   *frameWidthDownsampled = frameWidth;
   *frameHeightDownsampled = frameHeight;
   *levelWidthDownsampled = levelWidth;
@@ -48,32 +47,10 @@ void dimensionDownsampling(
   if (levelWidth < *frameWidthDownsampled) {
     *frameWidthDownsampled = levelWidth;
     *level_frameWidth = *levelWidthDownsampled;
-    if (*compression == JPEG2000 && *level_frameWidth < 40) {
-      /*
-        A bug in JPEG2000 Codec segfaults if the size of the allocated
-        frame being compressed is too small. JPEG Codec is fine. As a
-        workaround. Changing the codec to raw for very small frame sizes. This
-        fix should be removed and fixed corrected in the JPEG2000 code base.
-        This code path is hit if the whole slide image is being downsampled to
-        size < 40 pixels x 40 pixels
-      */
-      *compression = RAW;
-    }
   }
   if (levelHeight < *frameHeightDownsampled) {
     *frameHeightDownsampled = levelHeight;
     *level_frameHeight = *levelHeightDownsampled;
-    if (*compression == JPEG2000 && *level_frameWidth < 40) {
-      /*
-        A bug in JPEG2000 Codec segfaults if the size of the allocated
-        frame being compressed is too small. JPEG Codec is fine. As a
-        workaround. Changing the codec to raw for very small frame sizes. This
-        fix should be removed and fixed corrected in the JPEG2000 code base.
-        This code path is hit if the whole slide image is being downsampled to
-        size < 40 pixels x 40 pixels
-      */
-      *compression = RAW;
-    }
   }
 }
 
