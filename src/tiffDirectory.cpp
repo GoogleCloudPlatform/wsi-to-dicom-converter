@@ -267,10 +267,8 @@ void TiffDirectory::_getTiffField_ui32(TIFF *tiff, ttag_t tag,
   *val = -1;
   uint32_t normalint = 0;
   int result = TIFFGetField(tiff, tag, &normalint);
-  if (result != 1) {
-    *val = -1;
-  } else {
-      *val = static_cast<int64_t>(normalint);
+  if (result == 1) {
+    *val = static_cast<int64_t>(normalint);
   }
 }
 
@@ -279,10 +277,8 @@ void TiffDirectory::_getTiffField_ui16(TIFF *tiff, ttag_t tag,
   *val = -1;
   uint16_t normalint = 0;
   int result = TIFFGetField(tiff, tag, &normalint);
-  if (result != 1) {
-    *val = -1;
-  } else {
-      *val = static_cast<int64_t>(normalint);
+  if (result == 1) {
+    *val = static_cast<int64_t>(normalint);
   }
 }
 
