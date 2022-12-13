@@ -196,7 +196,7 @@ void WsiToDcm::initOpenSlide() {
     std::string lower_fname = boost::algorithm::to_lower_copy(
                                                       wsiRequest_->inputFile);
     if (boost::algorithm::iends_with(lower_fname, ".svs") ||
-        boost::algorithm::iends_with(lower_fname, ".tif") ||        
+        boost::algorithm::iends_with(lower_fname, ".tif") ||
         boost::algorithm::iends_with(lower_fname, ".tiff")) {
       tiffFile_ = std::make_unique<TiffFile>(wsiRequest_->inputFile);
       if (tiffFile_->isLoaded()) {
