@@ -42,8 +42,8 @@ class Jpeg2000Compression : public RawCompression {
                             const boost::gil::rgb8_view_t& view, size_t* size);
 
  private:
-  uint8_t* buffer_;
-  size_t size_;
+  uint8_t* buffer_ = nullptr;
+  size_t size_ = 0;
 };
 
 #endif  // SRC_JPEG2000COMPRESSION_H_

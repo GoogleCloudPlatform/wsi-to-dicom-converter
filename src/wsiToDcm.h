@@ -135,11 +135,11 @@ struct WsiRequest {
   // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.17.3.html
   // true:TILED_FULL
   // false:TILED_SPARSE
-  bool tiled;
+  bool tiled = true;
 
   // maximum frames in one file, as limit is exceeded new files is started
   // eg: 3 files will be generated for batchLimit is 10 and 30 frames in level
-  int32_t batchLimit;
+  int32_t batchLimit = 0;
 
   // threads to consume during execution
   int8_t threads = -1;

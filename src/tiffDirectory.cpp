@@ -264,32 +264,31 @@ bool TiffDirectory::isSet(std::string val) const { return val != ""; }
 
 void TiffDirectory::_getTiffField_ui32(TIFF *tiff, ttag_t tag,
                                                    int64_t *val) const {
-  *val = -1;
   uint32_t normalint = 0;
-  int result = TIFFGetField(tiff, tag, &normalint);
-  if (result == 1) {
-    *val = static_cast<int64_t>(normalint);
+  if (1 == TIFFGetField(tiff, tag, &normalint)) {
+      *val = static_cast<int64_t>(normalint);
+  } else {
+    *val = -1;
   }
 }
 
 void TiffDirectory::_getTiffField_ui16(TIFF *tiff, ttag_t tag,
                                                    int64_t *val) const {
-  *val = -1;
   uint16_t normalint = 0;
-  int result = TIFFGetField(tiff, tag, &normalint);
-  if (result == 1) {
-    *val = static_cast<int64_t>(normalint);
+  if (1 == TIFFGetField(tiff, tag, &normalint)) {
+      *val = static_cast<int64_t>(normalint);
+  } else {
+    *val = -1;
   }
 }
 
 void TiffDirectory::_getTiffField_f(TIFF *tiff, ttag_t tag,
                                                 double *val) const {
   float flt;
-  int result = TIFFGetField(tiff, tag, &flt);
-  if (result != 1) {
-    *val = -1.0;
-  } else {
+  if (1 == TIFFGetField(tiff, tag, &flt)) {
       *val = static_cast<double>(flt);
+  } else {
+    *val = -1.0;
   }
 }
 

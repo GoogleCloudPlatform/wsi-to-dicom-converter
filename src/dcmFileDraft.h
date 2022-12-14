@@ -93,7 +93,6 @@ class DcmFileDraft : public AbstractDcmFile {
   DcmTags* additionalTags_;
   DCM_Compression compression_;
   int64_t prior_batch_frames_;
-  int64_t frame_count_;
   int64_t imageWidth_;
   int64_t imageHeight_;
   int64_t instanceNumber_;

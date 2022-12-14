@@ -86,6 +86,9 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
     }
   }
   BOOST_LOG_TRIVIAL(info) << "dicomization is started";
+  largestSlideLevelWidth_ = 0;
+  largestSlideLevelHeight_ = 0;
+  svsLevelCount_ = 0;
   initialX_ = 0;
   initialY_ = 0;
   if (wsiRequest_->dropFirstRowAndColumn) {

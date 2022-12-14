@@ -299,7 +299,7 @@ int main(int argc, char *argv[]) {
   } else if (downsamplingAlgorithm == "NEAREST_EXACT") {
     request.openCVInterpolationMethod = cv::INTER_NEAREST_EXACT;
   } else if (downsamplingAlgorithm == "NONE") {
-    request.openCVInterpolationMethod = cv::INTER_LANCZOS4;
+    request.openCVInterpolationMethod = cv::INTER_AREA;
     request.useOpenCVDownsampling = false;
   } else {
     std::cerr << "Unrecognized OpenCVDownsamplingAlgorithm: " <<
