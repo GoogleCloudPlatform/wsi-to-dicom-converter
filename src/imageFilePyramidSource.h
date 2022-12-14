@@ -50,7 +50,6 @@ class ImageFilePyramidSource : public BaseFilePyramidSource<ImageFileFrame> {
   cv::Mat *image();
 
  private:
-  std::string filename_;
   cv::Mat wholeimage_;
 };
 
