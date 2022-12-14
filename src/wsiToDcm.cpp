@@ -193,9 +193,11 @@ void WsiToDcm::initOpenSlide() {
   if (wsiRequest_->SVSImportPreferScannerTileingForAllLevels ||
       wsiRequest_->SVSImportPreferScannerTileingForLargestLevel) {
     bool useSVSTileing = false;
-    if (boost::algorithm::iends_with(wsiRequest_->inputFile, ".svs") ||
-        boost::algorithm::iends_with(wsiRequest_->inputFile, ".tif") ||
-        boost::algorithm::iends_with(wsiRequest_->inputFile, ".tiff")) {
+    std::string lower_fname = boost::algorithm::to_lower_copy(
+                                                      wsiRequest_->inputFile);
+    if (boost::algorithm::iends_with(lower_fname, ".svs") ||
+        boost::algorithm::iends_with(lower_fname, ".tif") ||
+        boost::algorithm::iends_with(lower_fname, ".tiff")) {
       tiffFile_ = std::make_unique<TiffFile>(wsiRequest_->inputFile);
       if (tiffFile_->isLoaded()) {
           int32_t level = tiffFile_->getDirectoryIndexMatchingImageDimensions(

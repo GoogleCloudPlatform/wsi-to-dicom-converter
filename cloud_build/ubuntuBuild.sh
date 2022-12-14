@@ -99,7 +99,7 @@ wget -O boost_1_80_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1
 tar xvzf boost_1_80_0.tar.gz
 rm boost_1_80_0.tar.gz
 cd boost_1_80_0
-./bootstrap.sh --prefix=/usr/ > /dev/null
+./bootstrap.sh --prefix=/usr/ --with-libraries=system,atomic,thread,chrono,program_options,log,filesystem > /dev/null
 ./b2
 ./b2 install > /dev/null
 cd ..
