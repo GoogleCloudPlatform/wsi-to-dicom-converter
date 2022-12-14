@@ -26,6 +26,8 @@ namespace wsiToDicomConverter {
 TiffFile::TiffFile(absl::string_view path, const int32_t dirIndex) :
   tiffFilePath_(path), currentDirectoryIndex_(dirIndex) {
   initalized_ = false;
+  tileReadBufSize_  = 0;
+  openslide_level_ = 0;
   std::string path_str = std::move(static_cast<std::string>(path));
   tiffFile_ = TIFFOpen(path_str.c_str(), "r");
   if (tiffFile_ == nullptr) {
@@ -44,6 +46,8 @@ TiffFile::TiffFile(absl::string_view path, const int32_t dirIndex) :
 TiffFile::TiffFile(const TiffFile &tf, const int32_t dirIndex) :
     tiffFilePath_(tf.path()), currentDirectoryIndex_(dirIndex) {
     initalized_ = false;
+    tileReadBufSize_  = 0;
+    openslide_level_ = 0;
     tiffFile_ = TIFFOpen(tiffFilePath_.c_str(), "r");
     if (tiffFile_ == nullptr) {
       return;

@@ -218,16 +218,10 @@ OFCondition generateDcmDataset(I2DOutputPlug* outPlug, DcmDataset* resultDset,
   if (!outPlug) return EC_IllegalParameter;
 
   OFCondition cond = insertPixelMetadata(resultDset, imgInfo, numberOfFrames);
-
   if (cond.bad()) {
     return cond;
   }
-
   cond = outPlug->convert(*resultDset);
-  if (cond.bad()) {
-    return cond;
-  }
-
   if (cond.bad()) {
     return cond;
   }
