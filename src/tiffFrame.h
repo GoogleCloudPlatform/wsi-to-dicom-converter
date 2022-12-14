@@ -37,8 +37,8 @@ uint64_t frameIndexFromLocation(const TiffFile *tiffFile, const uint64_t level,
 class TiffFrame : public Frame {
  public:
   TiffFrame(TiffFile *tiffFile, const uint64_t tileIndex, bool storeRawBytes);
-  // not implemented no copy constructor
   TiffFrame(const TiffFrame &tiffFrame) = delete;
+  TiffFrame &operator =(const TiffFrame &tiffFrame) = delete;
 
   bool canDecodeJpeg();
   const TiffDirectory *tiffDirectory() const;
