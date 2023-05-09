@@ -34,7 +34,7 @@ DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-es
 # installing in /workspace
 apt-get install -y nasm
 wget -O libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.4.zip
-unzip libjpeg_turbo.zip
+unzip libjpeg_turbo.zip > /dev/null
 rm libjpeg_turbo.zip
 mkdir -p ./libjpeg-turbo-2.1.4/build
 cd ./libjpeg-turbo-2.1.4/build
@@ -47,7 +47,7 @@ rm -rf libjpeg-turbo-2.1.4
 #5
 apt-get install -y liblcms2-dev libzstd-dev libwebp-dev
 wget -O v2.5.0.zip  https://github.com/uclouvain/openjpeg/archive/v2.5.0.zip > /dev/null
-unzip v2.5.0.zip
+unzip v2.5.0.zip > /dev/null
 mkdir -p ./openjpeg-2.5.0/build
 cd ./openjpeg-2.5.0/build
 cmake  -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS:bool=on  -DCMAKE_INSTALL_PREFIX:path="/usr" ..
@@ -96,7 +96,7 @@ export DCMDICTPATH=/usr/local/share/dcmtk/dicom.dic
 export PATH=/usr/local/bin:$PATH
 # 8
 wget -O boost_1_82_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz
-tar xvzf boost_1_82_0.tar.gz
+tar xvzf boost_1_82_0.tar.gz > /dev/null
 rm boost_1_82_0.tar.gz
 cd boost_1_82_0
 ./bootstrap.sh --prefix=/usr/ --with-libraries=system,atomic,thread,chrono,program_options,log,filesystem > /dev/null
@@ -106,7 +106,7 @@ cd ..
 rm -rf boost_1_82_0
 # 9
 wget -O openslide-3.4.1.tar.gz https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz
-tar xvzf openslide-3.4.1.tar.gz
+tar xvzf openslide-3.4.1.tar.gz > /dev/null
 rm openslide-3.4.1.tar.gz
 cd openslide-3.4.1
 apt-get install -y autoconf automake libtool pkg-config
