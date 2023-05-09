@@ -49,28 +49,22 @@ class SlideLevelDim {
   double downsampleOfLevel;
 
   // width of the source level (pixels)
-  int64_t levelWidth;
+  int64_t sourceLevelWidth;
 
   // height of the source level (pixels)
-  int64_t levelHeight;
-
-  // width of frame to pull from source level
-  int64_t frameWidthDownsampled;
-
-  // height  of frame to pull from source level
-  int64_t frameHeightDownsampled;
+  int64_t sourceLevelHeight;
 
   // width of level being generated (pixels)
-  int64_t levelWidthDownsampled;
+  int64_t downsampledLevelWidth;
 
   // height of level being generated (pixels)
-  int64_t levelHeightDownsampled;
+  int64_t downsampledLevelHeight;
 
   // frame width in level being generated  (pixels)
-  int64_t levelFrameWidth;
+  int64_t downsampledLevelFrameWidth;
 
   // frame height in level being generated (pixels)
-  int64_t levelFrameHeight;
+  int64_t downsampledLevelFrameHeight;
 
   // Compression to use to generate output
   DCM_Compression levelCompression;

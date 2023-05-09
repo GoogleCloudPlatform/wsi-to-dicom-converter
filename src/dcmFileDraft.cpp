@@ -38,13 +38,12 @@
 
 namespace wsiToDicomConverter {
 DcmFileDraft::DcmFileDraft(
-    std::vector<std::unique_ptr<Frame> > framesData,
+    std::vector<std::unique_ptr<Frame>> framesData,
     absl::string_view outputFileMask, int64_t imageWidth, int64_t imageHeight,
-    int64_t instanceNumber, int64_t row, int64_t column,
-    absl::string_view studyId, absl::string_view seriesId,
-    absl::string_view imageName, DCM_Compression compression, bool tiled,
-    DcmTags* additionalTags, double firstLevelWidthMm,
-    double firstLevelHeightMm, int64_t downsample,
+    int64_t instanceNumber, absl::string_view studyId,
+    absl::string_view seriesId, absl::string_view imageName,
+    DCM_Compression compression, bool tiled, DcmTags* additionalTags,
+    double firstLevelWidthMm, double firstLevelHeightMm, int64_t downsample,
     const std::vector<std::unique_ptr<AbstractDcmFile>> * prior_frame_batches,
     absl::string_view sourceImageDescription, bool saveDicomInstanceToDisk) {
   saveDicomInstanceToDisk_ = saveDicomInstanceToDisk;
@@ -65,14 +64,17 @@ DcmFileDraft::DcmFileDraft(
     }
   }
 
-  row_ = row;
-  column_ = column;
   if (framesData_.size() == 0) {
     frameWidth_ = 0;
     frameHeight_ = 0;
+    row_ = 0;
+    column_ = 0;
   } else {
-    frameWidth_ = framesData_.at(0)->frameWidth();
-    frameHeight_ = framesData_.at(0)->frameHeight();
+    Frame *fd = framesData_.at(0).get();
+    frameWidth_ = fd->frameWidth();
+    frameHeight_ = fd->frameHeight();
+    row_ = fd->dicomRow();
+    column_ = fd->dicomColumn();
   }
   studyId_ = std::move(static_cast<std::string>(studyId));
   seriesId_ = std::move(static_cast<std::string>(seriesId));

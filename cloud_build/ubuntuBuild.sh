@@ -70,16 +70,16 @@ cd ..
 cd ..
 rm -rf opencv-4.6.0
 #6
-wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20220623.0.zip > /dev/null
+wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.3.zip > /dev/null
 unzip abseil.zip > /dev/null
 rm abseil.zip
-mkdir -p ./abseil-cpp-20220623.0/build
-cd ./abseil-cpp-20220623.0/build
+mkdir -p ./abseil-cpp-20230125.3/build
+cd ./abseil-cpp-20230125.3/build
 cmake ..  -DCMAKE_INSTALL_PREFIX=/abseil/install
 cmake  --build . --target install
 cd ..
 cd ..
-rm -rf abseil-cpp-20220623.0
+rm -rf abseil-cpp-20230125.3
 #7
 wget -O dcmtk-3.6.7.zip https://github.com/DCMTK/dcmtk/archive/refs/tags/DCMTK-3.6.7.zip > /dev/null
 unzip dcmtk-3.6.7.zip > /dev/null
@@ -95,15 +95,15 @@ rm -rf dcmtk-DCMTK-3.6.7
 export DCMDICTPATH=/usr/local/share/dcmtk/dicom.dic
 export PATH=/usr/local/bin:$PATH
 # 8
-wget -O boost_1_80_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
-tar xvzf boost_1_80_0.tar.gz
-rm boost_1_80_0.tar.gz
-cd boost_1_80_0
+wget -O boost_1_82_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz
+tar xvzf boost_1_82_0.tar.gz
+rm boost_1_82_0.tar.gz
+cd boost_1_82_0
 ./bootstrap.sh --prefix=/usr/ --with-libraries=system,atomic,thread,chrono,program_options,log,filesystem > /dev/null
 ./b2
 ./b2 install > /dev/null
 cd ..
-rm -rf boost_1_80_0
+rm -rf boost_1_82_0
 # 9
 wget -O openslide-3.4.1.tar.gz https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz
 tar xvzf openslide-3.4.1.tar.gz

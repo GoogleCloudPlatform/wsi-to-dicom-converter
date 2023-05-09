@@ -23,8 +23,6 @@ TEST(geometryTest, frameSizeWithoutRetile) {
   int64_t frameHeight = 150;
   bool retile = true;
   double downsampleOfLevel = 1;
-  int64_t frameWidthDownsampled;
-  int64_t frameHeightDownsampled;
   int64_t levelWidthDownsampled;
   int64_t levelHeightDownsampled;
   int64_t level_frameWidth;
@@ -32,11 +30,8 @@ TEST(geometryTest, frameSizeWithoutRetile) {
 
   wsiToDicomConverter::dimensionDownsampling(
       frameWidth, frameHeight, levelWidth, levelHeight, retile,
-      downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
-      &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight);
-  EXPECT_EQ(100, frameWidthDownsampled);
-  EXPECT_EQ(100, frameHeightDownsampled);
+      downsampleOfLevel, &levelWidthDownsampled, &levelHeightDownsampled,
+      &level_frameWidth, &level_frameHeight);
   EXPECT_EQ(100, level_frameWidth);
   EXPECT_EQ(100, level_frameHeight);
 
@@ -45,11 +40,8 @@ TEST(geometryTest, frameSizeWithoutRetile) {
 
   wsiToDicomConverter::dimensionDownsampling(
       frameWidth, frameHeight, levelWidth, levelHeight, retile,
-      downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
-      &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight);
-  EXPECT_EQ(50, frameWidthDownsampled);
-  EXPECT_EQ(50, frameHeightDownsampled);
+      downsampleOfLevel, &levelWidthDownsampled, &levelHeightDownsampled,
+      &level_frameWidth, &level_frameHeight);
   EXPECT_EQ(50, level_frameWidth);
   EXPECT_EQ(50, level_frameHeight);
 }
@@ -61,19 +53,14 @@ TEST(geometryTest, frameSizeWithRetile) {
   int64_t frameHeight = 42;
   bool retile = true;
   double downsampleOfLevel = 2;
-  int64_t frameWidthDownsampled;
-  int64_t frameHeightDownsampled;
   int64_t levelWidthDownsampled;
   int64_t levelHeightDownsampled;
   int64_t level_frameWidth;
   int64_t level_frameHeight;
   wsiToDicomConverter::dimensionDownsampling(
       frameWidth, frameHeight, levelWidth, levelHeight, retile,
-      downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
-      &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight);
-  EXPECT_EQ(84, frameWidthDownsampled);
-  EXPECT_EQ(84, frameHeightDownsampled);
+      downsampleOfLevel, &levelWidthDownsampled, &levelHeightDownsampled,
+      &level_frameWidth, &level_frameHeight);
   EXPECT_EQ(50, levelWidthDownsampled);
   EXPECT_EQ(50, levelHeightDownsampled);
   EXPECT_EQ(42, level_frameWidth);
@@ -84,13 +71,10 @@ TEST(geometryTest, frameSizeWithRetile) {
 
   wsiToDicomConverter::dimensionDownsampling(
       frameWidth, frameHeight, levelWidth, levelHeight, retile,
-      downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
-      &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight);
+      downsampleOfLevel, &levelWidthDownsampled, &levelHeightDownsampled,
+      &level_frameWidth, &level_frameHeight);
   EXPECT_EQ(50, levelWidthDownsampled);
   EXPECT_EQ(50, levelHeightDownsampled);
-  EXPECT_EQ(levelWidth, frameWidthDownsampled);
-  EXPECT_EQ(levelHeight, frameHeightDownsampled);
   EXPECT_EQ(50, level_frameWidth);
   EXPECT_EQ(50, level_frameHeight);
 
@@ -98,13 +82,10 @@ TEST(geometryTest, frameSizeWithRetile) {
 
   wsiToDicomConverter::dimensionDownsampling(
       frameWidth, frameHeight, levelWidth, levelHeight, retile,
-      downsampleOfLevel, &frameWidthDownsampled, &frameHeightDownsampled,
-      &levelWidthDownsampled, &levelHeightDownsampled, &level_frameWidth,
-      &level_frameHeight);
+      downsampleOfLevel, &levelWidthDownsampled, &levelHeightDownsampled,
+      &level_frameWidth, &level_frameHeight);
   EXPECT_EQ(50, levelWidthDownsampled);
   EXPECT_EQ(50, levelHeightDownsampled);
-  EXPECT_EQ(100, frameWidthDownsampled);
-  EXPECT_EQ(84, frameHeightDownsampled);
   EXPECT_EQ(50, level_frameWidth);
   EXPECT_EQ(42, level_frameHeight);
 }

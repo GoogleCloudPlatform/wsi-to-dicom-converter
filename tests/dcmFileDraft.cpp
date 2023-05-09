@@ -36,6 +36,7 @@ namespace wsiToDicomConverter {
 
 static int bufferSize = 10000;
 
+
 TEST(fileGeneration, withoutConcatenation) {
   std::vector<std::unique_ptr<AbstractDcmFile>> empty_dicom_file_vec;
   // emptyPixelData
@@ -43,7 +44,7 @@ TEST(fileGeneration, withoutConcatenation) {
   for (int idx = 0; idx < 100; ++idx) {
       framesData.push_back(std::make_unique<TestFrame>(500, 500));
   }
-  DcmFileDraft draft(std::move(framesData), "./", 50000, 50000, 0, 0, 0,
+  DcmFileDraft draft(std::move(framesData), "./", 50000, 50000, 0,
                 "study", "series", "image", JPEG, false, nullptr, 0.0, 0.0, 1,
                  &empty_dicom_file_vec, "FileGeneration without concatenation",
                  true);
@@ -80,7 +81,7 @@ TEST(fileGeneration, withConcatenation) {
       framesData.push_back(std::make_unique<TestFrame>(500, 500));
   }
   std::unique_ptr<DcmFileDraft> batch_0_dicom = std::make_unique<DcmFileDraft>(
-      std::move(framesData), "./", 50000, 50000, 0, 0, 0,
+      std::move(framesData), "./", 50000, 50000, 0,
       "study", "series", "image", RAW, true, nullptr, 0.0, 0.0, 1,
       &dicom_file_vec, "FileGeneration with concatenation 1", true);
   dicom_file_vec.push_back(std::move(batch_0_dicom));
@@ -89,7 +90,7 @@ TEST(fileGeneration, withConcatenation) {
   for (int idx = 0; idx < 50; ++idx) {
       framesData.push_back(std::make_unique<TestFrame>(500, 500));
   }
-  DcmFileDraft draft(std::move(framesData), "./", 50000, 50000, 0, 0, 0,
+  DcmFileDraft draft(std::move(framesData), "./", 50000, 50000, 0,
       "study", "series", "image", RAW, true, nullptr, 0.0, 0.0, 1,
       &dicom_file_vec, "FileGeneration with concatenation 2", true);
 
@@ -118,7 +119,7 @@ TEST(fileGeneration, fileSave) {
   for (int idx = 0; idx < 100; ++idx) {
       framesData.push_back(std::make_unique<TestFrame>(500, 500));
   }
-  DcmFileDraft draft(std::move(framesData), "./", 50000, 50000, 0, 0, 0,
+  DcmFileDraft draft(std::move(framesData), "./", 50000, 50000, 0,
       "study", "series", "image", JPEG2000, true, nullptr, 0.0, 0.0, 1, NULL,
       "FileGeneration fileSave", true);
 
@@ -135,7 +136,7 @@ TEST(fileGeneration, fileSaveBatch) {
       framesData.push_back(std::make_unique<TestFrame>(50, 50, 1));
     }
     std::unique_ptr<DcmFileDraft> draft = std::make_unique<DcmFileDraft>(
-       std::move(framesData), "./", 50000, 50000, 2, 0, 0, "study", "series",
+       std::move(framesData), "./", 50000, 50000, 2, "study", "series",
        "image", JPEG2000, true, nullptr, 0.0, 0.0, 1, &dicom_file_vec,
        "FileGeneration fileSaveBatch 1", true);
     dicom_file_vec.push_back(std::move(draft));
@@ -144,8 +145,8 @@ TEST(fileGeneration, fileSaveBatch) {
   for (int idx = 0; idx < 100; ++idx) {
       framesData.push_back(std::make_unique<TestFrame>(50, 50, 1));
   }
-  DcmFileDraft draft(std::move(framesData), "./", 50000, 50000, 2, 0,
-     0, "study", "series", "image", JPEG2000, true, nullptr, 0.0, 0.0, 1,
+  DcmFileDraft draft(std::move(framesData), "./", 50000, 50000, 2,
+     "study", "series", "image", JPEG2000, true, nullptr, 0.0, 0.0, 1,
      &dicom_file_vec, "FileGeneration fileSaveBatch 2", true);
 
   draft.saveFile();
