@@ -57,11 +57,11 @@ class Frame {
   virtual void setDicomFrameBytes(std::unique_ptr<uint8_t[]> dcmdata,
                                   uint64_t size);
   int64_t dicomColumn() const {
-      return locationX() / frameWidth() + 1;
+      return (locationX() / frameWidth() + 1);
   }
 
   int64_t dicomRow() const {
-      return locationY() / frameHeight() + 1;
+      return (locationY() / frameHeight() + 1);
   }
 
   // Returns frame component of DCM_DerivationDescription

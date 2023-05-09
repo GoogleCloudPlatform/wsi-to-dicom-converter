@@ -733,8 +733,8 @@ double abstractDicomDimensionMM(double imageDimMM, uint64_t imageDim,
   if (imageDimOffset <= 0) {
     return imageDimMM;
   }
-  return (static_cast<double>(imageDim - imageDimOffset) * imageDimMM) /
-         static_cast<double>(imageDim);
+  return ((static_cast<double>(imageDim - imageDimOffset) * imageDimMM) /
+          static_cast<double>(imageDim));
 }
 
 
@@ -742,8 +742,8 @@ int64_t sourceLevelPixelCoord(int64_t source_level_dim,
                               int64_t downsample_level_dim,
                               int64_t downsample_layer_coord,
                               int64_t inital_offset) {
-  return source_level_dim * downsample_layer_coord / downsample_level_dim +
-         inital_offset;
+  return (source_level_dim * downsample_layer_coord / downsample_level_dim +
+          inital_offset);
 }
 
 
