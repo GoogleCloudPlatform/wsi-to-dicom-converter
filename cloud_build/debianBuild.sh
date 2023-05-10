@@ -25,6 +25,7 @@
 # 10: build
 
 #1
+echo "deb  http://old-releases.ubuntu.com cosmic universe" | tee -a /etc/apt/sources.list
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y \
