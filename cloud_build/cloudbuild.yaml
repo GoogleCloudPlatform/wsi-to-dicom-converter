@@ -1,6 +1,6 @@
 steps:
-- name: 'ubuntu'
-  args: ['bash', './cloud_build/ubuntuBuild.sh']
-timeout: 3600s
+- name: 'debian:11.7-slim'
+  args: ['bash', './cloud_build/debianBuild.sh']
+timeout: 7200s
 
 

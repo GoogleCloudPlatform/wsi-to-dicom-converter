@@ -28,7 +28,7 @@ compare () {
 if [ "$1" !=  "SKIP_BUILD_ENVIRONMENT" ]
 then
   #building binaries
-  bash ./cloud_build/ubuntuBuild.sh
+  bash ./cloud_build/debianBuild.sh
 fi
 
 #set enviromnental vars for DCMTK

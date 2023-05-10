@@ -33,7 +33,7 @@ DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-es
 #3
 # installing in /workspace
 apt-get install -y nasm
-wget -O libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.4.zip
+wget -O libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.4.zip > /dev/null
 unzip libjpeg_turbo.zip > /dev/null
 rm libjpeg_turbo.zip
 mkdir -p ./libjpeg-turbo-2.1.4/build
@@ -95,7 +95,7 @@ rm -rf dcmtk-DCMTK-3.6.7
 export DCMDICTPATH=/usr/local/share/dcmtk/dicom.dic
 export PATH=/usr/local/bin:$PATH
 # 8
-wget -O boost_1_82_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz
+wget -O boost_1_82_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz > /dev/null
 tar xvzf boost_1_82_0.tar.gz > /dev/null
 rm boost_1_82_0.tar.gz
 cd boost_1_82_0
@@ -105,7 +105,7 @@ cd boost_1_82_0
 cd ..
 rm -rf boost_1_82_0
 # 9
-wget -O openslide-3.4.1.tar.gz https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz
+wget -O openslide-3.4.1.tar.gz https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz > /dev/null
 tar xvzf openslide-3.4.1.tar.gz > /dev/null
 rm openslide-3.4.1.tar.gz
 cd openslide-3.4.1
