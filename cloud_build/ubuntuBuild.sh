@@ -70,16 +70,16 @@ cd ..
 cd ..
 rm -rf opencv-4.6.0
 #6
-wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20220623.0.zip > /dev/null
+wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.3.zip > /dev/null
 unzip abseil.zip > /dev/null
 rm abseil.zip
-mkdir -p ./abseil-cpp-220220623.0/build
-cd ./abseil-cpp-20220623.0/build
+mkdir -p ./abseil-cpp-20230125.3/build
+cd ./abseil-cpp-20230125.3/build
 cmake ..  -DCMAKE_INSTALL_PREFIX=/abseil/install
 cmake  --build . --target install
 cd ..
 cd ..
-rm -rf abseil-cpp-20220623.0
+rm -rf abseil-cpp-20230125.3
 #7
 wget -O dcmtk-3.6.7.zip https://github.com/DCMTK/dcmtk/archive/refs/tags/DCMTK-3.6.7.zip > /dev/null
 unzip dcmtk-3.6.7.zip > /dev/null
