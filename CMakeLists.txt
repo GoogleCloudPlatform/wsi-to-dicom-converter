@@ -30,7 +30,7 @@ include_directories(wsi2dcmCli PUBLIC /usr/local/include/openslide)
 link_directories(${TURBOJPEG_LIBDIR})
 
 ADD_DEFINITIONS(-DBOOST_LOG_DYN_LINK)
-find_package(Boost 1.79.0 COMPONENTS log program_options thread chrono REQUIRED)
+find_package(Boost 1.82.0 COMPONENTS log program_options thread chrono REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 link_directories(/usr/local/lib)
