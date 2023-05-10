@@ -25,26 +25,25 @@
 # 10: build
 
 #1
-echo "deb  http://old-releases.ubuntu.com cosmic universe" | tee -a /etc/apt/sources.list
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y \
-      apt-utils \
-      wget \
-      build-essential \
-      cmake \
-      unzip \
-      libgtest-dev \
-      libxml2-dev \
-      libcairo2-dev \
-      libtiff-dev \
-      libgtk-3-dev \
-      sqlite3 \
-      libsqlite3-dev \
-      valgrind \
-      libjsoncpp-dev \
-      libgdk-pixbuf2.0-dev \
-      libglib2.0-dev      
+apt-get update 
+apt-get upgrade -y
+apt-get install -y \
+    apt-utils \
+    wget \
+    build-essential \
+    cmake \
+    unzip \
+    libgtest-dev \
+    libxml2-dev \
+    libcairo2-dev \
+    libtiff-dev \
+    libgtk-3-dev \
+    sqlite3 \
+    libsqlite3-dev \
+    valgrind \
+    libjsoncpp-dev \
+    libgdk-pixbuf2.0-dev \
+    libglib2.0-dev      
 #2
 # installing in /workspace
 apt-get install -y nasm
