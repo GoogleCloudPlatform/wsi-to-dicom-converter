@@ -13,24 +13,38 @@
 # limitations under the License.
 
 # This script updates environment and build wsi2dcm by steps:
-# 1: update of ubuntu deb repos
-# 2: install of tools and libs for build
-# 3: install libjpeg turbo
-# 4: install openjpeg
-# 5: install opencv
-# 6: install abseil
-# 7: install dcmtk
-# 8: install boost
-# 9: install openslide
-# 10: install jsoncpp
-# 11: build
+# 1: install of tools and libs for build
+# 2: install libjpeg turbo
+# 3: install openjpeg
+# 4: install opencv
+# 5: install abseil
+# 6: install dcmtk
+# 7: install boost
+# 8: install openslide
+# 9: install jsoncpp
+# 10: build
 
 #1
-echo "deb  http://old-releases.ubuntu.com cosmic universe" | tee -a /etc/apt/sources.list
-apt-get update
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y \
+      apt-utils \
+      wget \
+      build-essential \
+      cmake \
+      unzip \
+      libgtest-dev \
+      libxml2-dev \
+      libcairo2-dev \
+      libtiff-dev \
+      libgtk-3-dev \
+      sqlite3 \
+      libsqlite3-dev \
+      valgrind \
+      libjsoncpp-dev \
+      libgdk-pixbuf2.0-dev \
+      libglib2.0-dev      
 #2
-DEBIAN_FRONTEND="noninteractive" apt-get install wget libtiff-dev unzip build-essential libjsoncpp-dev libgdk-pixbuf2.0-dev libcairo2-dev libsqlite3-dev cmake libglib2.0-dev libxml2-dev libopenjp2-7-dev g++-9 libgtest-dev -y
-#3
 # installing in /workspace
 apt-get install -y nasm
 wget -O libjpeg_turbo.zip https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.4.zip > /dev/null
@@ -44,7 +58,7 @@ make install
 cd ..
 cd ..
 rm -rf libjpeg-turbo-2.1.4
-#5
+#3
 apt-get install -y liblcms2-dev libzstd-dev libwebp-dev
 wget -O v2.5.0.zip  https://github.com/uclouvain/openjpeg/archive/v2.5.0.zip > /dev/null
 unzip v2.5.0.zip > /dev/null
@@ -69,7 +83,7 @@ make install
 cd ..
 cd ..
 rm -rf opencv-4.6.0
-#6
+#5
 wget -O abseil.zip https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.3.zip > /dev/null
 unzip abseil.zip > /dev/null
 rm abseil.zip
@@ -80,7 +94,7 @@ cmake  --build . --target install
 cd ..
 cd ..
 rm -rf abseil-cpp-20230125.3
-#7
+#6
 wget -O dcmtk-3.6.7.zip https://github.com/DCMTK/dcmtk/archive/refs/tags/DCMTK-3.6.7.zip > /dev/null
 unzip dcmtk-3.6.7.zip > /dev/null
 rm dcmtk-3.6.7.zip
@@ -94,7 +108,7 @@ cd ..
 rm -rf dcmtk-DCMTK-3.6.7
 export DCMDICTPATH=/usr/local/share/dcmtk/dicom.dic
 export PATH=/usr/local/bin:$PATH
-# 8
+# 7
 wget -O boost_1_82_0.tar.gz https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz > /dev/null
 tar xvzf boost_1_82_0.tar.gz > /dev/null
 rm boost_1_82_0.tar.gz
@@ -104,7 +118,7 @@ cd boost_1_82_0
 ./b2 install > /dev/null
 cd ..
 rm -rf boost_1_82_0
-# 9
+# 8
 wget -O openslide-3.4.1.tar.gz https://github.com/openslide/openslide/releases/download/v3.4.1/openslide-3.4.1.tar.gz > /dev/null
 tar xvzf openslide-3.4.1.tar.gz > /dev/null
 rm openslide-3.4.1.tar.gz
@@ -119,7 +133,7 @@ rm -rf openslide-3.4.1
 apt-get purge -y autoconf
 # Enable python to find openslide library
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-#10
+#9
 wget -O 1.9.5.zip https://github.com/open-source-parsers/jsoncpp/archive/refs/tags/1.9.5.zip > /dev/null
 unzip 1.9.5.zip  > /dev/null
 mkdir -p ./jsoncpp-1.9.5/build > /dev/null
@@ -130,7 +144,7 @@ make install
 cd ..
 cd ..
 rm -rf jsoncpp-1.9.5
-#11
+#10
 cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
 cd build
