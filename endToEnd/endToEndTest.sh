@@ -42,7 +42,7 @@ jpegFileName=./tests/bone.jpeg
 echo "Test 1"
 rm ./endToEnd/*.dcm -f
 ./build/wsi2dcm $fileName ./endToEnd/ --seriesDescription test1 --levels 9 --startOn 8 --compression jpeg2000 
-dcm2json ./endToEnd/downsample-1-frames-0-1.dcm ./endToEnd/test1GeneratedTags.json
+dcm2json ./endToEnd/downsample-256-frames-0-1.dcm ./endToEnd/test1GeneratedTags.json
 compare ./endToEnd/test1GeneratedTags.json ./endToEnd/test1ExpectedTags.json
 
 #test - use nearest neighbor downsampling, generate jpeg DICOM, read by dcmtk and check with expected tags
