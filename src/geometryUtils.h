@@ -20,24 +20,11 @@
 
 namespace wsiToDicomConverter {
 
-// Calculates sizes of frame and level to get from openslide
-// based on base level, expected downsample and frame size
-// frameWidth, frameHeight - expected size of frame
-// levelWidth, levelHeight - size of level with source data
-// frameWidthDownsampled, frameHeightDownsampled - size of frame to
-//                                                 get from source level
-// levelWidthDownsampled, levelHeightDownsampled - size of level
-//                                                 according to downsampling
-// level_frameWidth, level_frame: Frame Width and Height to use generate image
-// typically = frameWidth & frameHeight.
-// level_frameWidth, level_frame = levelWidthDownsampled, levelHeightDownsampled
-//  when frame Width & Frame Height is larger than output level dim.
 void dimensionDownsampling(
-    int64_t frameWidth, int64_t frameHeight, int64_t levelWidth,
-    int64_t levelHeight, bool retile, double downsampleOfLevel,
-    int64_t *frameWidthDownsampled, int64_t *frameHeightDownsampled,
-    int64_t *levelWidthDownsampled, int64_t *levelHeightDownsampled,
-    int64_t *level_frameWidth, int64_t *level_frameHeight);
+    int64_t frameWidth, int64_t frameHeight, int64_t sourceLevelWidth,
+    int64_t sourceLevelHeight, bool retile, double downsampleOfLevel,
+    int64_t *downsampledLevelWidth, int64_t *downsampledLevelHeight,
+    int64_t *downsampledLevelFrameWidth, int64_t *downsampledLevelFrameHeight);
 
 }  // namespace wsiToDicomConverter
 #endif  // SRC_GEOMETRYUTILS_H_

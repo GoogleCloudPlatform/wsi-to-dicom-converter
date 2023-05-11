@@ -45,7 +45,6 @@ class DcmFileDraft : public AbstractDcmFile {
   // pixelData - pixel data, requre transfer of ownership
   // imgInfo - image metadata
   // numberOfFrames - how many frames in this file
-  // row, column - position to start
   // level - which level represent this file
   // batchNumber - index number of this file for one level
   // offset - how many frames where already generated
@@ -60,8 +59,7 @@ class DcmFileDraft : public AbstractDcmFile {
 
   DcmFileDraft(std::vector<std::unique_ptr<Frame> > framesData,
                absl::string_view outputFileMask, int64_t imageWidth,
-               int64_t imageHeight, int64_t instanceNumber, int64_t row,
-               int64_t column,
+               int64_t imageHeight, int64_t instanceNumber,
                absl::string_view studyId, absl::string_view seriesId,
                absl::string_view imageName, DCM_Compression compression,
                bool tiled, DcmTags* additionalTags, double firstLevelWidthMm,

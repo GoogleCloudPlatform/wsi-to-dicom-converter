@@ -12,46 +12,27 @@
 // limitations under the License.
 #include <stdlib.h>
 
+#include <algorithm>
+
 #include "src/geometryUtils.h"
 
 namespace wsiToDicomConverter {
 
 void dimensionDownsampling(
-    int64_t frameWidth, int64_t frameHeight, int64_t levelWidth,
-    int64_t levelHeight, bool retile, double downsampleOfLevel,
-    int64_t *frameWidthDownsampled, int64_t *frameHeightDownsampled,
-    int64_t *levelWidthDownsampled, int64_t *levelHeightDownsampled,
-    int64_t *level_frameWidth, int64_t *level_frameHeight) {
-  *frameWidthDownsampled = frameWidth;
-  *frameHeightDownsampled = frameHeight;
-  *levelWidthDownsampled = levelWidth;
-  *levelHeightDownsampled = levelHeight;
-  *level_frameWidth = frameWidth;
-  *level_frameHeight = frameHeight;
+  int64_t frameWidth, int64_t frameHeight, int64_t sourceLevelWidth,
+  int64_t sourceLevelHeight, bool retile, double downsampleOfLevel,
+  int64_t *downsampledLevelWidth, int64_t *downsampledLevelHeight,
+  int64_t *downsampledLevelFrameWidth, int64_t *downsampledLevelFrameHeight) {
+  *downsampledLevelWidth = sourceLevelWidth;
+  *downsampledLevelHeight = sourceLevelHeight;
   if (retile) {
-    *frameWidthDownsampled *= downsampleOfLevel;
-    *frameHeightDownsampled *= downsampleOfLevel;
-    *levelWidthDownsampled /= downsampleOfLevel;
-    *levelHeightDownsampled /= downsampleOfLevel;
+    *downsampledLevelWidth /= downsampleOfLevel;
+    *downsampledLevelHeight /= downsampleOfLevel;
   }
-  /*
-    Frames (frameWidthDownsampled, frameHeightDownsampled) are sampled from
-    source Layers (levelWidth, levelHeight) and downsampled to represent
-    target layer (levelWidthDownsampled, levelHeightDownsampled).  To do this
-    frames are downsampled to dim (level_frameWidth, level_frameHeight).
-    This logic resides in frame.c[[]]
-
-    Normally frame dim < output layer dim. However if frame dim > than layer dim
-    then frame dim = layer dim.
-  */
-  if (levelWidth < *frameWidthDownsampled) {
-    *frameWidthDownsampled = levelWidth;
-    *level_frameWidth = *levelWidthDownsampled;
-  }
-  if (levelHeight < *frameHeightDownsampled) {
-    *frameHeightDownsampled = levelHeight;
-    *level_frameHeight = *levelHeightDownsampled;
-  }
+  *downsampledLevelFrameWidth = std::min<int64_t>(frameWidth,
+                                                  *downsampledLevelWidth);
+  *downsampledLevelFrameHeight = std::min<int64_t>(frameHeight,
+                                                   *downsampledLevelHeight);
 }
 
 }  // namespace wsiToDicomConverter

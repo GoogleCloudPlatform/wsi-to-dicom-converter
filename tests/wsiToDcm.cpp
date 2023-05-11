@@ -304,19 +304,17 @@ TEST(getSlideLevelDim, no_progressive) {
   converter.initOpenSlide();
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
   slide_dim = std::move(converter.getSlideLevelDim(2, nullptr));
-  EXPECT_EQ(slide_dim->levelWidthDownsampled, 1110);
-  EXPECT_EQ(slide_dim->levelHeightDownsampled, 1483);
+  EXPECT_EQ(slide_dim->downsampledLevelWidth, 1110);
+  EXPECT_EQ(slide_dim->downsampledLevelHeight, 1483);
   EXPECT_EQ(slide_dim->levelToGet, 0);
   EXPECT_EQ(slide_dim->downsample, 2);
   EXPECT_EQ(slide_dim->level, 1);
   EXPECT_EQ(slide_dim->multiplicator, 1);
   EXPECT_EQ(slide_dim->downsampleOfLevel, 2);
-  EXPECT_EQ(slide_dim->levelWidth, 2220);
-  EXPECT_EQ(slide_dim->levelHeight, 2967);
-  EXPECT_EQ(slide_dim->levelFrameWidth, 100);
-  EXPECT_EQ(slide_dim->levelFrameHeight, 100);
-  EXPECT_EQ(slide_dim->frameWidthDownsampled, 200);
-  EXPECT_EQ(slide_dim->frameHeightDownsampled, 200);
+  EXPECT_EQ(slide_dim->sourceLevelWidth, 2220);
+  EXPECT_EQ(slide_dim->sourceLevelHeight, 2967);
+  EXPECT_EQ(slide_dim->downsampledLevelFrameWidth, 100);
+  EXPECT_EQ(slide_dim->downsampledLevelFrameHeight, 100);
   EXPECT_TRUE(slide_dim->readOpenslide);
 }
 
@@ -347,19 +345,17 @@ TEST(getSlideLevelDim, progressive) {
   EXPECT_EQ(slideLevelProp.size(), 8);
   slide_dim = std::move(converter.getSlideLevelDim(1, nullptr));
   slide_dim = std::move(converter.getSlideLevelDim(2, slide_dim.get()));
-  EXPECT_EQ(slide_dim->levelWidthDownsampled,  1110);
-  EXPECT_EQ(slide_dim->levelHeightDownsampled, 1483);
+  EXPECT_EQ(slide_dim->downsampledLevelWidth,  1110);
+  EXPECT_EQ(slide_dim->downsampledLevelHeight, 1483);
   EXPECT_EQ(slide_dim->levelToGet, 0);
   EXPECT_EQ(slide_dim->level, 1);
   EXPECT_EQ(slide_dim->downsample, 2);
   EXPECT_EQ(slide_dim->multiplicator, 1);
   EXPECT_EQ(slide_dim->downsampleOfLevel, 2);
-  EXPECT_EQ(slide_dim->levelWidth, 2220);
-  EXPECT_EQ(slide_dim->levelHeight, 2967);
-  EXPECT_EQ(slide_dim->levelFrameWidth, 25);
-  EXPECT_EQ(slide_dim->levelFrameHeight, 25);
-  EXPECT_EQ(slide_dim->frameWidthDownsampled, 50);
-  EXPECT_EQ(slide_dim->frameHeightDownsampled, 50);
+  EXPECT_EQ(slide_dim->sourceLevelWidth, 2220);
+  EXPECT_EQ(slide_dim->sourceLevelHeight, 2967);
+  EXPECT_EQ(slide_dim->downsampledLevelFrameWidth, 25);
+  EXPECT_EQ(slide_dim->downsampledLevelFrameHeight, 25);
   EXPECT_FALSE(slide_dim->readOpenslide);
 }
 
