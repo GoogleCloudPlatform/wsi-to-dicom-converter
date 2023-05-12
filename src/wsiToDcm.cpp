@@ -142,6 +142,9 @@ void WsiToDcm::checkArguments() {
 std::unique_ptr<DcmFilePyramidSource> WsiToDcm::initDicomIngest() {
   std::unique_ptr<DcmFilePyramidSource> dicomFile =
                 std::make_unique<DcmFilePyramidSource>(wsiRequest_->inputFile);
+  if (!dicomFile->isValid()) {
+    throw 1;
+  }
   svsLevelCount_ = 1;
   largestSlideLevelWidth_ = dicomFile->imageWidth();
   largestSlideLevelHeight_ = dicomFile->imageHeight();
