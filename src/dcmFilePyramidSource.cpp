@@ -372,7 +372,7 @@ std::string DcmFilePyramidSource::errorMsg() const {
   return errorMsg_;
 }
 
- DICOMDatasetReader * DcmFilePyramidSource::dicomDatasetReader(int index) {
+DICOMDatasetReader * DcmFilePyramidSource::dicomDatasetReader(int index) {
   return dicomDatasetSpeedReader_[index].get();
 }
 
