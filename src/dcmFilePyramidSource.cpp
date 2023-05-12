@@ -207,7 +207,7 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
     setErrorMsg("DICOM missing SamplesPerPixel.");
     return;
   }
-  planarConfiguration_ = getTagValueUI16(DCM_PlanarConfiguration);  
+  planarConfiguration_ = getTagValueUI16(DCM_PlanarConfiguration);
   bitsAllocated_ = getTagValueUI16(DCM_BitsAllocated);
   if (bitsAllocated_ <= 0) {
     setErrorMsg("DICOM missing BitsAllocated.");
@@ -223,7 +223,7 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
     setErrorMsg("DICOM missing HighBit.");
     return;
   }
-  pixelRepresentation_ = getTagValueUI16(DCM_PixelRepresentation);  
+  pixelRepresentation_ = getTagValueUI16(DCM_PixelRepresentation);
   firstLevelWidthMm_ = getTagValueFloat32(DCM_ImagedVolumeWidth);
   if (firstLevelWidthMm_ <= 0.0) {
     setErrorMsg("DICOM missing ImagedVolumeWidth.");
