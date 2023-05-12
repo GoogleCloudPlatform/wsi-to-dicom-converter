@@ -53,11 +53,11 @@ DICOMDatasetReader::DICOMDatasetReader(const std::string &filename) {
   dataset_ = dcmFile_.getDataset();
 }
 
-inline DcmDataset *DICOMDatasetReader::dataset() {
+DcmDataset *DICOMDatasetReader::dataset() {
   return dataset_;
 }
 
-inline boost::mutex* DICOMDatasetReader::datasetMutex() {
+boost::mutex* DICOMDatasetReader::datasetMutex() {
   return &datasetMutex_;
 }
 
@@ -153,6 +153,7 @@ int64_t Jp2KDicomFileFrame::rawABGRFrameBytes(uint8_t *rawMemory,
 
 DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
                       BaseFilePyramidSource<AbstractDicomFileFrame>(filePath) {
+  errorMsg_ = "";
   xfer_ = EXS_Unknown;
   dcmtkCodecRegistered_ = false;
   dimensionalOrganization_ = "";
@@ -170,45 +171,106 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
                                 std::make_unique<DICOMDatasetReader>(filename);
     dicomDatasetSpeedReader_.push_back(std::move(reader));
   }
-
   dataset_ = dcmFile_.getDataset();
-  DcmStack stack;
-  if (!dataset_->search(DCM_PixelData, stack, ESM_fromHere, OFFalse).good()) {
-    return;
-  }
-  DcmPixelData *pixelData = reinterpret_cast<DcmPixelData *>(stack.top());
-  if (pixelData == nullptr) {
-    return;
-  }
   frameWidth_ = getTagValueUI16(DCM_Columns);
+  if (frameWidth_ <= 0) {
+    setErrorMsg("DICOM missing FrameWidth.");
+    return;
+  }
   frameHeight_ = getTagValueUI16(DCM_Rows);
+  if (frameHeight_ <= 0) {
+    setErrorMsg("DICOM missing FrameHeight.");
+    return;
+  }
   imageWidth_ = getTagValueUI32(DCM_TotalPixelMatrixColumns);
+  if (imageWidth_ <= 0) {
+    setErrorMsg("DICOM missing TotalPixelMatrixColumns.");
+    return;
+  }
   imageHeight_ = getTagValueUI32(DCM_TotalPixelMatrixRows);
+  if (imageHeight_ <= 0) {
+    setErrorMsg("DICOM missing TotalPixelMatrixRows.");
+    return;
+  }
   int64_t frameCount  = getTagValueI64(DCM_NumberOfFrames);
-
+  if (frameCount <= 0) {
+    setErrorMsg("DICOM missing NumberOfFrames.");
+    return;
+  }
   photometric_ = getTagValueString(DCM_PhotometricInterpretation);
+  if (photometric_ == "") {
+    setErrorMsg("DICOM missing PhotometricInterpretation.");
+    return;
+  }
   samplesPerPixel_ = getTagValueUI16(DCM_SamplesPerPixel);
+  if (samplesPerPixel_ <= 0) {
+    setErrorMsg("DICOM missing SamplesPerPixel.");
+    return;
+  }
   planarConfiguration_ = getTagValueUI16(DCM_PlanarConfiguration);
-
   bitsAllocated_ = getTagValueUI16(DCM_BitsAllocated);
+  if (bitsAllocated_ <= 0) {
+    setErrorMsg("DICOM missing BitsAllocated.");
+    return;
+  }
   bitsStored_ = getTagValueUI16(DCM_BitsStored);
+  if (bitsStored_ <= 0) {
+    setErrorMsg("DICOM missing BitsStored.");
+    return;
+  }
   highBit_ = getTagValueUI16(DCM_HighBit);
+  if (highBit_ <= 0) {
+    setErrorMsg("DICOM missing HighBit.");
+    return;
+  }
   pixelRepresentation_ = getTagValueUI16(DCM_PixelRepresentation);
-
   firstLevelWidthMm_ = getTagValueFloat32(DCM_ImagedVolumeWidth);
+  if (firstLevelWidthMm_ <= 0.0) {
+    setErrorMsg("DICOM missing ImagedVolumeWidth.");
+    return;
+  }
   firstLevelHeightMm_ = getTagValueFloat32(DCM_ImagedVolumeHeight);
+  if (firstLevelHeightMm_ <= 0.0) {
+    setErrorMsg("DICOM missing ImagedVolumeHeight.");
+    return;
+  }
+  if (tiledFull()) {
+    uint64_t frames_per_row = imageWidth_ / frameWidth_;
+    if (imageWidth_ % frameWidth_ > 0) {
+      frames_per_row += 1;
+    }
+    uint64_t frames_per_column = imageHeight_ / frameHeight_;
+    if (imageHeight_ % frameHeight_ > 0) {
+      frames_per_column += 1;
+    }
+    if (frameCount != frames_per_row * frames_per_column) {
+      setErrorMsg("Invalid number of frames in DICOM,");
+      return;
+    }
+  }
   dimensionalOrganization_ = getTagValueStringArray(
                                                 DCM_DimensionOrganizationType);
   studyInstanceUID_ = getTagValueStringArray(DCM_StudyInstanceUID);
   seriesInstanceUID_ = getTagValueStringArray(DCM_SeriesInstanceUID);
   seriesDescription_ = getTagValueStringArray(DCM_SeriesDescription);
-
   framesData_.reserve(frameCount);
-  /* get pixel data sequence (if available) */
+
+  // Get pixel data sequence
+  DcmStack stack;
+  if (!dataset_->search(DCM_PixelData, stack, ESM_fromHere, OFFalse).good()) {
+    setErrorMsg("DICOM missing PixelData");
+    return;
+  }
+  DcmPixelData *pixelData = reinterpret_cast<DcmPixelData *>(stack.top());
+  if (pixelData == nullptr || !pixelData->verify().good() ||
+      !pixelData->checkValue().good()) {
+    setErrorMsg("DICOM PixelData is invalid.");
+    return;
+  }
   const DcmRepresentationParameter *repParam = nullptr;
   pixelData->getOriginalRepresentationKey(xfer_, repParam);
   if (xfer_ == EXS_Unknown) {
-    BOOST_LOG_TRIVIAL(error) << "Unknown transfer syntax";
+    setErrorMsg("Unknown DICOM transfer syntax");
     return;
   }
   bool DecodeLossyJPEG  = false;
@@ -219,6 +281,7 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
                                                 repParam,
                                                 pixelSeq).good() ||
       (pixelSeq == nullptr)) {
+      setErrorMsg("Error getting pixel data.");
       return;
     }
     DecodeLossyJPEG = (EXS_JPEGProcess1 == xfer_ &&
@@ -247,6 +310,10 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
     DicomImage img(dataset_, xfer_, flags, static_cast<uint64_t>(0),
                    static_cast<uint64_t>(1));
     outputDicomImageSize = img.getOutputDataSize();
+    if (outputDicomImageSize == 0) {
+      setErrorMsg("Error getting output image size.");
+      return;
+    }
   }
   uint64_t locationX = 0;
   uint64_t locationY = 0;
@@ -257,10 +324,16 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
     }
     if (DecodeLossyJPEG || DecodeJPEG2K) {
       DcmPixelItem *pixelItem;
-      pixelSeq->getItem(pixelItem, idx+1);
+      if (!pixelSeq->getItem(pixelItem, idx+1).good()) {
+        setErrorMsg("Error getting DICOM Frame.");
+        return;
+      }
       uint64_t dicomFrameMemorySize = pixelItem->getLength();
       uint8_t *dicomFrameMemory;
-      pixelItem->getUint8Array(dicomFrameMemory);
+      if (!pixelItem->getUint8Array(dicomFrameMemory).good()) {
+        setErrorMsg("Error getting DICOM Frame Memory.");
+        return;
+      }
       if (DecodeLossyJPEG) {
         framesData_.push_back(std::make_unique<JpegDicomFileFrame>(locationX,
                                                           locationY,
@@ -286,12 +359,24 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
   BOOST_LOG_TRIVIAL(info) << "Done Queueing Frames";
 }
 
-inline DICOMDatasetReader *
-                          DcmFilePyramidSource::dicomDatasetReader(int index) {
+void DcmFilePyramidSource::setErrorMsg(absl::string_view msg) {
+  errorMsg_ = static_cast<std::string>(msg);
+  BOOST_LOG_TRIVIAL(error) << errorMsg_.c_str();
+}
+
+bool DcmFilePyramidSource::isValid() const {
+  return errorMsg_ == "";
+}
+
+std::string DcmFilePyramidSource::errorMsg() const {
+  return errorMsg_;
+}
+
+DICOMDatasetReader * DcmFilePyramidSource::dicomDatasetReader(int index) {
   return dicomDatasetSpeedReader_[index].get();
 }
 
-inline int DcmFilePyramidSource::getNextDicomDatasetReaderIndex() {
+int DcmFilePyramidSource::getNextDicomDatasetReaderIndex() {
   boost::lock_guard<boost::mutex> guard(*datasetMutex());
   frameReaderIndex_ += 1;
   if (frameReaderIndex_ >= maxFrameReaderIndex_) {

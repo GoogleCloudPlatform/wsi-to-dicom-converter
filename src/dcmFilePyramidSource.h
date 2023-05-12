@@ -117,6 +117,9 @@ class DcmFilePyramidSource :
   int getNextDicomDatasetReaderIndex();
   DICOMDatasetReader *dicomDatasetReader(int readerIndex);
 
+  bool isValid() const;
+  std::string errorMsg() const;
+
  private:
   int frameReaderIndex_, maxFrameReaderIndex_;
   std::vector<std::unique_ptr<DICOMDatasetReader>> dicomDatasetSpeedReader_;
@@ -136,6 +139,7 @@ class DcmFilePyramidSource :
   std::string studyInstanceUID_;
   std::string seriesInstanceUID_;
   std::string seriesDescription_;
+  std::string errorMsg_;
 
   double getTagValueFloat32(const DcmTagKey &dcmTag);
   int64_t getTagValueUI16(const DcmTagKey &dcmTag);
@@ -143,6 +147,7 @@ class DcmFilePyramidSource :
   std::string getTagValueString(const DcmTagKey &dcmTag);
   std::string getTagValueStringArray(const DcmTagKey &dcmTag);
   int64_t getTagValueI64(const DcmTagKey &dcmTag);
+  void setErrorMsg(absl::string_view msg);
 };
 
 }  // namespace wsiToDicomConverter
