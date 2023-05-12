@@ -53,11 +53,11 @@ DICOMDatasetReader::DICOMDatasetReader(const std::string &filename) {
   dataset_ = dcmFile_.getDataset();
 }
 
-inline DcmDataset *DICOMDatasetReader::dataset() {
+DcmDataset *DICOMDatasetReader::dataset() {
   return dataset_;
 }
 
-inline boost::mutex* DICOMDatasetReader::datasetMutex() {
+boost::mutex* DICOMDatasetReader::datasetMutex() {
   return &datasetMutex_;
 }
 
@@ -372,12 +372,11 @@ std::string DcmFilePyramidSource::errorMsg() const {
   return errorMsg_;
 }
 
-inline DICOMDatasetReader *
-                          DcmFilePyramidSource::dicomDatasetReader(int index) {
+ DICOMDatasetReader * DcmFilePyramidSource::dicomDatasetReader(int index) {
   return dicomDatasetSpeedReader_[index].get();
 }
 
-inline int DcmFilePyramidSource::getNextDicomDatasetReaderIndex() {
+int DcmFilePyramidSource::getNextDicomDatasetReaderIndex() {
   boost::lock_guard<boost::mutex> guard(*datasetMutex());
   frameReaderIndex_ += 1;
   if (frameReaderIndex_ >= maxFrameReaderIndex_) {
