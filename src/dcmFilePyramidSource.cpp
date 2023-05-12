@@ -365,7 +365,7 @@ void DcmFilePyramidSource::setErrorMsg(absl::string_view msg) {
 }
 
 bool DcmFilePyramidSource::isValid() const {
-  return errorMsg_ != "";
+  return errorMsg_ == "";
 }
 
 std::string DcmFilePyramidSource::errorMsg() const {
