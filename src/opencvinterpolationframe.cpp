@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <utility>
 
-#include "src/jpeg2000Compression.h"
 #include "src/jpegCompression.h"
 #include "src/opencvinterpolationframe.h"
 #include "src/rawCompression.h"

@@ -22,7 +22,6 @@
 #include <utility>
 
 #include "src/dicom_file_region_reader.h"
-#include "src/jpeg2000Compression.h"
 #include "src/jpegCompression.h"
 #include "src/nearestneighborframe.h"
 #include "src/rawCompression.h"
