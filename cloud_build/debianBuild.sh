@@ -119,22 +119,18 @@ cd boost_1_83_0
 cd ..
 rm -rf boost_1_83_0
 # 8
-wget -O openslide-4.0.0.tar.gz https://github.com/openslide/openslide/archive/refs/tags/v4.0.0.tar.gz" > /dev/null
+apt-get update
+apt-get install -y python3-full pip libjpeg-dev ninja-build
+pip3 install --break-system-packages meson
+wget -O openslide-4.0.0.tar.gz https://github.com/openslide/openslide/archive/refs/tags/v4.0.0.tar.gz > /dev/null
 tar xvzf openslide-4.0.0.tar.gz > /dev/null
 rm openslide-4.0.0.tar.gz
 cd openslide-4.0.0
-apt-get install -y autoconf automake libtool pkg-config
-autoreconf -i
-pip3 install -y meson
-meson setup /openslide-build
-meson compile -C /openslide-build
-meson install -C /openslide-build
-pip3 uninstall -y meson
+meson setup ./openslide-build
+meson compile -C ./openslide-build
+meson install -C ./openslide-build
 cd ..
-rm -rf openslide-4.0.0
-apt-get purge -y autoconf
-# Enable python to find openslide library
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/usr/local/lib/aarch64-linux-gnu
 #9
 wget -O 1.9.5.zip https://github.com/open-source-parsers/jsoncpp/archive/refs/tags/1.9.5.zip > /dev/null
 unzip 1.9.5.zip  > /dev/null

@@ -1,5 +1,5 @@
 steps:
-- name: 'debian:12.2'
+- name: 'debian:12.2-slim'
   args: ['bash', './cloud_build/debianBuild.sh']
 timeout: 7200s
 
