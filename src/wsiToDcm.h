@@ -33,10 +33,7 @@ namespace wsiToDicomConverter {
 
 class SlideLevelDim {
  public:
-  // level being generated
-  int32_t level;
-
-  // level being downsampled from
+   // level being downsampled from
   int32_t levelToGet;
 
   // total downsample being done from highest mag (level 0)
@@ -158,7 +155,7 @@ struct WsiRequest {
   // prefer progressive downsampling.
   bool preferProgressiveDownsampling = false;
 
-  cv::InterpolationFlags openCVInterpolationMethod = cv::INTER_LANCZOS4;
+  cv::InterpolationFlags openCVInterpolationMethod = cv::INTER_AREA;
 
   DCM_Compression firstlevelCompression = JPEG;
 
@@ -202,8 +199,8 @@ class WsiToDcm {
   double getDimensionMM(const int64_t adjustedFirstLevelDim,
                         const double firstLevelMpp);
 
-  void getOptimalDownSamplingOrder(std::vector<DownsamplingSlideState> *state,
-                                   SlideLevelDim *startPyramidCreationDim);
+  void getSlideDownSamplingLevels(std::vector<DownsamplingSlideState> *state,
+                                  SlideLevelDim *startPyramidCreationDim);
 
   // level = downsampled slide level to return. level < 0 forces to return
   // dimensions of largest level, 0
@@ -224,7 +221,6 @@ class WsiToDcm {
   int64_t largestSlideLevelWidth_;
   int64_t largestSlideLevelHeight_;
   int32_t svsLevelCount_;
-  bool customDownSampleFactorsDefined_;
   std::unique_ptr<OpenSlidePtr> osptr_;
   std::unique_ptr<TiffFile> tiffFile_;
 

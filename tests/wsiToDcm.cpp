@@ -164,7 +164,7 @@ TEST(getOpenslideLevelForDownsample, image_with_one_level) {
   EXPECT_EQ(0, converter.getOpenslideLevelForDownsample(99));
 }
 
-TEST(getOptimalDownSamplingOrder, smallest_slide) {
+TEST(getSlideDownSamplingLevels, smallest_slide) {
   std::vector<int>  downsamples;
   wsiToDicomConverter::WsiRequest request;
   request.inputFile = tiffFileName;
@@ -186,7 +186,7 @@ TEST(getOptimalDownSamplingOrder, smallest_slide) {
   converter.initOpenSlide();
   std::vector<wsiToDicomConverter::DownsamplingSlideState> slideLevelProp;
   std::vector<bool> saveLevelCompressedRaw;
-  converter.getOptimalDownSamplingOrder(&slideLevelProp, nullptr);
+  converter.getSlideDownSamplingLevels(&slideLevelProp, nullptr);
   ASSERT_EQ(6, slideLevelProp.size());
   for (int level = 0; level < 6; ++level) {
       EXPECT_EQ(level,
@@ -194,7 +194,7 @@ TEST(getOptimalDownSamplingOrder, smallest_slide) {
   }
 }
 
-TEST(getOptimalDownSamplingOrder, smallest_slide_middle) {
+TEST(getSlideDownSamplingLevels, smallest_slide_middle) {
   std::vector<int>  downsamples;
   downsamples.push_back(64);  // ingored; stopDownsamplingAtSingleFrame == true
   downsamples.push_back(32);  // Level = 5
@@ -222,7 +222,7 @@ TEST(getOptimalDownSamplingOrder, smallest_slide_middle) {
   wsiToDicomConverter::WsiToDcm converter(&request);
   converter.initOpenSlide();
   std::vector<wsiToDicomConverter::DownsamplingSlideState> slideLevelProp;
-  converter.getOptimalDownSamplingOrder(&slideLevelProp, nullptr);
+  converter.getSlideDownSamplingLevels(&slideLevelProp, nullptr);
   ASSERT_EQ(6, slideLevelProp.size());
   // levels correspond to position in downsamples vector
   // level 64 ignored due to stopDownsamplingAtSingleFrame = true
@@ -307,8 +307,7 @@ TEST(getSlideLevelDim, no_progressive) {
   EXPECT_EQ(slide_dim->downsampledLevelWidth, 1110);
   EXPECT_EQ(slide_dim->downsampledLevelHeight, 1483);
   EXPECT_EQ(slide_dim->levelToGet, 0);
-  EXPECT_EQ(slide_dim->downsample, 2);
-  EXPECT_EQ(slide_dim->level, 1);
+  EXPECT_EQ(slide_dim->downsample, 2);  
   EXPECT_EQ(slide_dim->multiplicator, 1);
   EXPECT_EQ(slide_dim->downsampleOfLevel, 2);
   EXPECT_EQ(slide_dim->sourceLevelWidth, 2220);
@@ -341,14 +340,13 @@ TEST(getSlideLevelDim, progressive) {
   converter.initOpenSlide();
   std::vector<wsiToDicomConverter::DownsamplingSlideState> slideLevelProp;
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
-  converter.getOptimalDownSamplingOrder(&slideLevelProp, nullptr);
+  converter.getSlideDownSamplingLevels(&slideLevelProp, nullptr);
   EXPECT_EQ(slideLevelProp.size(), 8);
   slide_dim = std::move(converter.getSlideLevelDim(1, nullptr));
   slide_dim = std::move(converter.getSlideLevelDim(2, slide_dim.get()));
   EXPECT_EQ(slide_dim->downsampledLevelWidth,  1110);
   EXPECT_EQ(slide_dim->downsampledLevelHeight, 1483);
-  EXPECT_EQ(slide_dim->levelToGet, 0);
-  EXPECT_EQ(slide_dim->level, 1);
+  EXPECT_EQ(slide_dim->levelToGet, -1);  
   EXPECT_EQ(slide_dim->downsample, 2);
   EXPECT_EQ(slide_dim->multiplicator, 1);
   EXPECT_EQ(slide_dim->downsampleOfLevel, 2);
@@ -384,7 +382,7 @@ TEST(getSlideLevelDim, progressive_virtual_levels) {
   converter.initOpenSlide();
   std::vector<wsiToDicomConverter::DownsamplingSlideState> slideLevelProp;
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
-  converter.getOptimalDownSamplingOrder(&slideLevelProp, nullptr);
+  converter.getSlideDownSamplingLevels(&slideLevelProp, nullptr);
   EXPECT_EQ(slideLevelProp.size(), 3);
   EXPECT_EQ(slideLevelProp[0].generateCompressedRaw, false);
   EXPECT_EQ(slideLevelProp[0].saveDicom, true);
@@ -426,7 +424,7 @@ TEST(getSlideLevelDim, progressive_virtual_level_start) {
   converter.initOpenSlide();
   std::vector<wsiToDicomConverter::DownsamplingSlideState> slideLevelProp;
   std::unique_ptr<wsiToDicomConverter::SlideLevelDim> slide_dim;
-  converter.getOptimalDownSamplingOrder(&slideLevelProp, nullptr);
+  converter.getSlideDownSamplingLevels(&slideLevelProp, nullptr);
   EXPECT_EQ(slideLevelProp.size(), 2);
   EXPECT_EQ(slideLevelProp[0].generateCompressedRaw, true);
   EXPECT_EQ(slideLevelProp[0].saveDicom, false);

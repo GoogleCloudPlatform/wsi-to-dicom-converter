@@ -94,16 +94,21 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
   if (wsiRequest_->dropFirstRowAndColumn) {
     initialX_ = 1;
     initialY_ = 1;
+  }  
+  const size_t downsample_count = wsiRequest_->downsamples.size();
+  if (downsample_count > 0) {            
+      retile_ = true;
+      for (size_t idx=1; idx < downsample_count; ++idx) {
+         if (wsiRequest_->downsamples[idx] < wsiRequest_->downsamples[idx-1]) {
+            BOOST_LOG_TRIVIAL(warning) << "Downsample levels not defined in increasing "
+                                          " sorted order. [e.g., 1, 2, 8]";
+            std::sort (wsiRequest_->downsamples.begin(), wsiRequest_->downsamples.end()); 
+            break;
+         }
+      }
+      wsiRequest_->retileLevels = 0;
   }
-  retile_ = (wsiRequest_->retileLevels > 0) ||
-            (wsiRequest_->downsamples.size() > 0);
-  customDownSampleFactorsDefined_ = false;
-  for (const int ds : wsiRequest_->downsamples) {
-    if (ds != 0) {
-      customDownSampleFactorsDefined_ = true;
-      break;
-    }
-  }
+  retile_ = (wsiRequest_->retileLevels > 0) || (downsample_count > 0);
 }
 
 WsiToDcm::~WsiToDcm() {
@@ -282,7 +287,6 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::initAbstractDicomFileSourceLevelDim(
                                               absl::string_view description) {
   std::unique_ptr<SlideLevelDim> slideLevelDim;
   slideLevelDim = std::make_unique<SlideLevelDim>();
-  slideLevelDim->level = 0;
   slideLevelDim->levelToGet = 0;
   slideLevelDim->multiplicator = 1;
   slideLevelDim->downsample = 1;
@@ -353,7 +357,7 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int64_t downsample,
     downsampleOfLevel = static_cast<double>(downsample) / multiplicator;
     // check that downsampling is going from higher to lower magnification
     if (downsampleOfLevel >= 1.0) {
-      levelToGet = priorLevel->level;
+      levelToGet = -1;  // Progressive downsampling, level to get not used. Init to -1.
       sourceLevelWidth = priorLevel->downsampledLevelWidth;
       sourceLevelHeight = priorLevel->downsampledLevelHeight;
       generateFromPrimarySource = false;
@@ -428,7 +432,6 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int64_t downsample,
                         &downsampledLevelHeight,
                         &downsampledLevelFrameWidth,
                         &downsampledLevelFrameHeight);
-  slideLevelDim->level = static_cast<int32_t>(log2(downsample));
   slideLevelDim->readFromTiff = readFromTiff;
   slideLevelDim->levelToGet = levelToGet;
   slideLevelDim->downsample = downsample;
@@ -463,7 +466,7 @@ double  WsiToDcm::getDimensionMM(const int64_t adjustedFirstLevelDim,
   return static_cast<double>(adjustedFirstLevelDim) * firstLevelMpp / 1000;
 }
 
-struct LevelProcessOrder {
+class LevelProcessOrder {
  public:
   LevelProcessOrder(int32_t level, int64_t downsample, bool readLevelFromTiff);
   int32_t level() const;
@@ -494,50 +497,47 @@ bool LevelProcessOrder::readLevelFromTiff() const {
   return readLevelFromTiff_;
 }
 
-bool downsample_order(const std::unique_ptr<LevelProcessOrder> &i,
-                      const std::unique_ptr<LevelProcessOrder> &j) {
-  const int64_t iDownsample = i->downsample();
-  const int64_t jDownsample = j->downsample();
-  if (iDownsample != jDownsample) {
-    // Sort on downsample: e.g. 1, 2, 4, 8, 16 (highest to lowest mag.)
-    return iDownsample < jDownsample;
-  }
-  // Sort by level e.g., 1, 2, 3, 4
-  return i->level() < j->level();
-}
-
-void WsiToDcm::getOptimalDownSamplingOrder(
+void WsiToDcm::getSlideDownSamplingLevels(
                      std::vector<DownsamplingSlideState> *slideDownsampleState,
                      SlideLevelDim *startPyramidCreationDim) {
   int32_t levels;
-  if (retile_ && wsiRequest_->includeSingleFrameDownsample) {
-    // Force downsampling to include single frame image
-    double singleframe_downsample_width = std::ceil(
-                                static_cast<double>(largestSlideLevelWidth_) /
-                                static_cast<double>(wsiRequest_->frameSizeX));
-    double singleframe_downsample_height = std::ceil(
-                                 static_cast<double>(largestSlideLevelHeight_) /
-                                 static_cast<double>(wsiRequest_->frameSizeY));
-    int singleframe_downsample = static_cast<int>(std::max<double>(
-                                  singleframe_downsample_width,
-                                  singleframe_downsample_height));
-    if (wsiRequest_->downsamples.size() > 0) {
-      int largest_ds = wsiRequest_->downsamples[0];
-      for (size_t idx=1; idx< wsiRequest_->downsamples.size(); ++idx) {
-        largest_ds = std::max<int>(largest_ds, wsiRequest_->downsamples[idx]);
-      }
-      if (largest_ds < singleframe_downsample) {
+  if (retile_) {
+    double singleframe_downsample_width = static_cast<double>(largestSlideLevelWidth_) /
+                                          static_cast<double>(wsiRequest_->frameSizeX);
+    double singleframe_downsample_height = static_cast<double>(largestSlideLevelHeight_) /
+                                           static_cast<double>(wsiRequest_->frameSizeY);
+    double singleframe_downsample = std::max<double>(singleframe_downsample_width, singleframe_downsample_height);    
+    if (wsiRequest_->downsamples.size() > 0 && 
+        (wsiRequest_->stopDownsamplingAtSingleFrame ||
+         wsiRequest_->includeSingleFrameDownsample)) {
+      std::vector<int>::iterator ds_it = wsiRequest_->downsamples.begin();  
+      double largest_ds = *ds_it;
+      for (;ds_it !=  wsiRequest_->downsamples.end(); ++ds_it) {
+        if (*ds_it >= singleframe_downsample) {      
+          if (wsiRequest_->includeSingleFrameDownsample && 
+              *ds_it > singleframe_downsample) {
+            ds_it = wsiRequest_->downsamples.insert(ds_it, singleframe_downsample);
+          }
+          largest_ds = *ds_it;
+          if (wsiRequest_->stopDownsamplingAtSingleFrame) {
+            wsiRequest_->downsamples.resize(std::distance(wsiRequest_->downsamples.begin(), ds_it)+1);      
+          }    
+          break;
+        }          
+        largest_ds = *ds_it;          
+     }
+     if (largest_ds < singleframe_downsample && wsiRequest_->includeSingleFrameDownsample) {
         wsiRequest_->downsamples.push_back(singleframe_downsample);
-      }
-    } else {
-      wsiRequest_->retileLevels = std::max<int32_t>(
-                                    wsiRequest_->retileLevels,
-                                    static_cast<int32_t>(
-                                      std::ceil(
-                                        log2(singleframe_downsample))));
-    }
+     }      
+    } else if (wsiRequest_->downsamples.size() == 0 && wsiRequest_->retileLevels > 0) {
+      int64_t single_frame_level = static_cast<int32_t>(std::ceil(log2(singleframe_downsample))) + 1;
+      if ((wsiRequest_->stopDownsamplingAtSingleFrame && wsiRequest_->includeSingleFrameDownsample) ||
+          (wsiRequest_->stopDownsamplingAtSingleFrame && wsiRequest_->retileLevels > single_frame_level) || 
+           (wsiRequest_->includeSingleFrameDownsample && wsiRequest_->retileLevels < single_frame_level)){
+        wsiRequest_->retileLevels = single_frame_level;
+      } 
+    }    
   }
-
   if (retile_) {
     if (wsiRequest_->downsamples.size() > 0) {
       levels = wsiRequest_->downsamples.size();
@@ -547,11 +547,8 @@ void WsiToDcm::getOptimalDownSamplingOrder(
   } else {
     levels = svsLevelCount_;
   }
-  std::unique_ptr<SlideLevelDim> smallestSlideDim = nullptr;
-  bool smallestLevelIsSingleFrame = false;
-  std::vector<std::unique_ptr<LevelProcessOrder>> levelOrderVec;
-  int64_t smallestDownsample;
-  bool layerHasShownZeroLengthDimMsg = false;
+  std::unique_ptr<SlideLevelDim> smallestSlideDim = nullptr;  
+  std::vector<std::unique_ptr<LevelProcessOrder>> levelOrderVec;    
   SlideLevelDim *priorSlideLevelDim;
   if (startPyramidCreationDim == nullptr) {
     priorSlideLevelDim = nullptr;
@@ -568,165 +565,118 @@ void WsiToDcm::getOptimalDownSamplingOrder(
       if (wsiRequest_->downsamples.size() > level &&
           wsiRequest_->downsamples[level] >= 1) {
         downsample = wsiRequest_->downsamples[level];
+        if (level > 0 &&  downsample ==  wsiRequest_->downsamples[level - 1]) {
+          continue;
+        }
+      } else if (wsiRequest_->downsamples.size() == 0) {
+        downsample = pow(2, level);      
       } else {
-        downsample = static_cast<int64_t>(pow(2, level));
+        continue;
       }
     }
     std::unique_ptr<SlideLevelDim> tempSlideLevelDim =
         std::move(getSlideLevelDim(downsample, priorSlideLevelDim));
     if (tempSlideLevelDim->downsampledLevelWidth == 0 ||
         tempSlideLevelDim->downsampledLevelHeight == 0) {
-      // frame is being downsampled to nothing skip file.
-      if (!layerHasShownZeroLengthDimMsg) {
-        layerHasShownZeroLengthDimMsg = true;
-        BOOST_LOG_TRIVIAL(debug) << "Layer has a 0 length dimension."
-                                    " Skipping dcm generation for layer.";
-      }
-      continue;
+      // frame is being downsampled to nothing skip file.      
+      BOOST_LOG_TRIVIAL(debug) << "Layer has a 0 length dimension."
+                                  " Skipping dcm generation for layer.";      
+      break;
     }
+    smallestSlideDim = std::move(tempSlideLevelDim);
     const int64_t frameX = std::ceil(
-          static_cast<double>(tempSlideLevelDim->downsampledLevelWidth) /
-          static_cast<double>(tempSlideLevelDim->downsampledLevelFrameWidth));
+          static_cast<double>(smallestSlideDim->downsampledLevelWidth) /
+          static_cast<double>(smallestSlideDim->downsampledLevelFrameWidth));
     const int64_t frameY = std::ceil(
-          static_cast<double>(tempSlideLevelDim->downsampledLevelHeight) /
-          static_cast<double>(tempSlideLevelDim->downsampledLevelFrameHeight));
-    const int64_t frameCount = frameX * frameY;
-    const int64_t tempDownsample = tempSlideLevelDim->downsample;
-    const bool readSlideLevelFromTiff = tempSlideLevelDim->readFromTiff;
+          static_cast<double>(smallestSlideDim->downsampledLevelHeight) /
+          static_cast<double>(smallestSlideDim->downsampledLevelFrameHeight));
+    const int64_t frameCount = frameX * frameY;        
     BOOST_LOG_TRIVIAL(debug) << "Dimensions Level[" <<
                                 level << "]: " <<
-                                tempSlideLevelDim->downsampledLevelWidth <<
+                                smallestSlideDim->downsampledLevelWidth <<
                                 ", " <<
-                                tempSlideLevelDim->downsampledLevelHeight;
-    bool setSmallestSlice = false;
-    //
-    // tempDownsample and smallestDownsample are downsampling factors.
-    // Smaller smaller numbers are result in "bigger images".
-    // i.e. Image downsampled with smaller factor is dimensionally bigger
-    //      than the same image downsampled with a larger factor.
-    //
-    if (smallestSlideDim == nullptr) {
-      // if (smallest slice level not initalized)
-      setSmallestSlice = true;
-    } else if (tempDownsample > smallestDownsample &&
-      (!wsiRequest_->stopDownsamplingAtSingleFrame ||
-      !smallestLevelIsSingleFrame)) {
-      // if dimensions are smaller than previous frame and
-      // not stopDownsamplingAtSingleFrame or haven't seen single frame.
-      setSmallestSlice = true;
-    } else if (smallestLevelIsSingleFrame &&
-      wsiRequest_->stopDownsamplingAtSingleFrame &&
-      frameCount == 1 && tempDownsample < smallestDownsample) {
-      // if smallest area is a single frame and stopDownsamplingAtSingleFrame
-      // and temp level is also a single frame and temp level
-      // is bigger than previous found smallest level.
-      //
-      // TLDR logic: smallestSlideDim == largest level that fits in a single
-      // frame.
-      setSmallestSlice = true;
-    }
-    if (setSmallestSlice) {
-      smallestSlideDim = std::move(tempSlideLevelDim);
-      smallestDownsample = tempDownsample;
-      priorSlideLevelDim = smallestSlideDim.get();
-      BOOST_LOG_TRIVIAL(debug) << "Set Smallest";
-    }
-    if (tempDownsample <= smallestDownsample) {
-      levelOrderVec.push_back(std::make_unique<LevelProcessOrder>(level,
-                                                tempDownsample,
-                                                readSlideLevelFromTiff));
-      BOOST_LOG_TRIVIAL(debug) << "Level[" <<level << "] frames:" <<
-                                  frameX << ", " << frameY;
-    }
-    if (wsiRequest_->stopDownsamplingAtSingleFrame && frameCount <= 1) {
-      smallestLevelIsSingleFrame = true;
-      if (!customDownSampleFactorsDefined_) {
-        // If not generating downsamples from a user supplied list of
-        // downsamples. testing additional levels is no longer necessary.
-        BOOST_LOG_TRIVIAL(debug) << "stop searching for smallest frame";
-        break;
-      }
-    }
+                                smallestSlideDim->downsampledLevelHeight;    
+    priorSlideLevelDim = smallestSlideDim.get();    
+    levelOrderVec.push_back(std::make_unique<LevelProcessOrder>(level,
+                                              downsample,
+                                              smallestSlideDim->readFromTiff));
+    BOOST_LOG_TRIVIAL(debug) << "Level[" <<level << "] frames:" <<
+                                frameX << ", " << frameY;
   }
-  // Process process levels in order of area largest to smallest.
-  if (smallestSlideDim != nullptr) {
-    std::sort(levelOrderVec.begin(),
-              levelOrderVec.end(), downsample_order);
-    int32_t idx = -1;
-    const int32_t _levelCount = static_cast<int32_t>(levelOrderVec.size());
-    int64_t sourceLevelDownsample =  1;
-    int64_t instanceNumberCounter = 1;
-    while (idx < _levelCount) {
-      idx += 1;
-      DownsamplingSlideState slideState;
-      while (wsiRequest_->preferProgressiveDownsampling &&
-          levelOrderVec[idx]->downsample() / sourceLevelDownsample > 8) {
-        sourceLevelDownsample = sourceLevelDownsample * 8;
-        slideState.saveDicom = false;
-        slideState.generateCompressedRaw = true;
-        slideState.instanceNumber = 0;
-        if (idx == 0 && slideDownsampleState->size() == 0) {
-          // Highest magnfication is comming from non-openslide source.
-          // create a virtual level for level 1.
-          if (startPyramidCreationDim != nullptr) {
-            slideState.downsample = 1;
-            slideDownsampleState->push_back(slideState);
-          } else {
-            // if getting levels from openslide get largest starting level
-            // which acquires imaging from highest magnification.
-            int starting_downsample =  sourceLevelDownsample;
-            while (starting_downsample > 1 &&
-                   getOpenslideLevelForDownsample(starting_downsample) != 0) {
-              starting_downsample = std::max(starting_downsample / 2, 1);
-            }
-            if (starting_downsample != sourceLevelDownsample) {
-              slideState.downsample = starting_downsample;
-              slideDownsampleState->push_back(slideState);
-            }
-          }
-        }
-        slideState.downsample = sourceLevelDownsample;
-        slideDownsampleState->push_back(slideState);
-      }
-      sourceLevelDownsample = levelOrderVec[idx]->downsample();
-      slideState.downsample = sourceLevelDownsample;
-      slideState.instanceNumber = instanceNumberCounter;
-      instanceNumberCounter += 1;
-      slideState.saveDicom = true;
-      slideState.generateCompressedRaw = false;
-      if (sourceLevelDownsample == smallestSlideDim->downsample) {
-        // if last slice do not save raw
-        slideDownsampleState->push_back(slideState);
-        break;
-      }
-      if (levelOrderVec[idx+1]->readLevelFromTiff()) {
-        // memory & comput optimization
-        // if next slice reads from tiff do save raw
-        slideDownsampleState->push_back(slideState);
-        continue;
-      } else if ((startPyramidCreationDim == nullptr) &&
-                 (slideDownsampleState->size() == 0) &&
-                 !levelOrderVec[idx]->readLevelFromTiff() &&
-                 (0 == getOpenslideLevelForDownsample(
-                  levelOrderVec[idx+1]->downsample()))) {
-        // Memory optimization, not reading from dicom.
-        // if processing an image without downsampling &
-        // openslide is being used to read the imaging
-        // (!levelOrderVec[idx]->readLevelFromTiff()
-        // no downsamples and reading downsample at level will also read the
-        // highest resolution image.  Do not save compressed raw versions of
-        // the highest resolution.  Start progressive downsampling from
-        // downsample level 2 and on.
-        slideDownsampleState->push_back(slideState);
-        continue;
-      } else {
-        // Otherwise save compressed slice if progressive downsampling is
-        // enabled.
-        slideState.generateCompressedRaw = wsiRequest_->
-                                             preferProgressiveDownsampling;
-        slideDownsampleState->push_back(slideState);
-        continue;
-      }
+  if (smallestSlideDim == nullptr) {
+    return;
+  }
+  // Process process levels in order of area largest to smallest.    
+  const int32_t levelCount = static_cast<int32_t>(levelOrderVec.size());
+  double sourceLevelDownsample =  1.0;
+  int64_t instanceNumberCounter = 1;
+  for (int32_t idx = 0; idx <  levelCount; ++idx) {    
+    DownsamplingSlideState slideState;
+    const double next_cross_level_downsample = levelOrderVec[idx]->downsample() / sourceLevelDownsample;
+    if (wsiRequest_->preferProgressiveDownsampling &&
+        next_cross_level_downsample > 8.0) {                 
+       slideState.saveDicom = false;
+       slideState.generateCompressedRaw = true;
+       slideState.instanceNumber = 0;
+       if (idx == 0 && slideDownsampleState->size() == 0) {         
+         // create a virtual level for level 1.
+         if (startPyramidCreationDim != nullptr) {
+           slideState.downsample = 1.0;
+           slideDownsampleState->push_back(slideState);
+         } else {
+           // if getting levels from openslide get largest starting level
+           // which acquires imaging from highest magnification.
+           double starting_downsample = openslide_get_level_downsample(getOpenSlidePtr(), 0);          
+           if (starting_downsample != sourceLevelDownsample) {
+             slideState.downsample = starting_downsample;
+             slideDownsampleState->push_back(slideState);
+           }
+         }
+       }              
+       while (levelOrderVec[idx]->downsample() / sourceLevelDownsample > 8) {       
+          sourceLevelDownsample = sourceLevelDownsample * 8.0;
+          slideState.downsample = sourceLevelDownsample;
+          slideDownsampleState->push_back(slideState);
+       }               
+    }
+    sourceLevelDownsample = levelOrderVec[idx]->downsample();
+    slideState.downsample = sourceLevelDownsample;
+    slideState.instanceNumber = instanceNumberCounter;
+    instanceNumberCounter += 1;
+    slideState.saveDicom = true;
+    slideState.generateCompressedRaw = false;
+    if (sourceLevelDownsample == smallestSlideDim->downsample) {
+      // if last slice do not save raw
+      slideDownsampleState->push_back(slideState);
+      break;
+    }
+    if (levelOrderVec[idx+1]->readLevelFromTiff()) {
+      // memory & compute optimization
+      // if next slice reads from tiff do save raw
+      slideDownsampleState->push_back(slideState);
+      continue;
+    } else if ((startPyramidCreationDim == nullptr) &&
+                (slideDownsampleState->size() == 0) &&
+                !levelOrderVec[idx]->readLevelFromTiff() &&
+                (0 == getOpenslideLevelForDownsample(
+                levelOrderVec[idx+1]->downsample()))) {
+      // Memory optimization, not reading from dicom.
+      // if processing an image without downsampling &
+      // openslide is being used to read the imaging
+      // (!levelOrderVec[idx]->readLevelFromTiff()
+      // no downsamples and reading downsample at level will also read the
+      // highest resolution image.  Do not save compressed raw versions of
+      // the highest resolution.  Start progressive downsampling from
+      // downsample level 2 and on.
+      slideDownsampleState->push_back(slideState);
+      continue;
+    } else {
+      // Otherwise save compressed slice if progressive downsampling is
+      // enabled.
+      slideState.generateCompressedRaw = wsiRequest_->
+                                            preferProgressiveDownsampling;
+      slideDownsampleState->push_back(slideState);
+      continue;
     }
   }
 }
@@ -811,12 +761,9 @@ int WsiToDcm::dicomizeTiff() {
     dcmGenerateUniqueIdentifier(seriesIdGenerated, SITE_SERIES_UID_ROOT);
     wsiRequest_->seriesId = seriesIdGenerated;
   }
-  // Determine smallest_slide downsample dimensions to enable
-  // slide pixel spacing normalization croping to ensure pixel
-  // spacing across all downsample images is uniform.
   std::vector<DownsamplingSlideState> downsampleSlide;
-  getOptimalDownSamplingOrder(&downsampleSlide,
-                              slideLevelDim.get());
+  getSlideDownSamplingLevels(&downsampleSlide,
+                             slideLevelDim.get());
   DICOMFileFrameRegionReader higherMagnifcationDicomFiles;
   std::vector<std::unique_ptr<AbstractDcmFile>> generatedDicomFiles;
   if (abstractDicomFile != nullptr) {
