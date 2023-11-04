@@ -307,7 +307,7 @@ TEST(getSlideLevelDim, no_progressive) {
   EXPECT_EQ(slide_dim->downsampledLevelWidth, 1110);
   EXPECT_EQ(slide_dim->downsampledLevelHeight, 1483);
   EXPECT_EQ(slide_dim->levelToGet, 0);
-  EXPECT_EQ(slide_dim->downsample, 2);  
+  EXPECT_EQ(slide_dim->downsample, 2);
   EXPECT_EQ(slide_dim->multiplicator, 1);
   EXPECT_EQ(slide_dim->downsampleOfLevel, 2);
   EXPECT_EQ(slide_dim->sourceLevelWidth, 2220);
@@ -346,7 +346,7 @@ TEST(getSlideLevelDim, progressive) {
   slide_dim = std::move(converter.getSlideLevelDim(2, slide_dim.get()));
   EXPECT_EQ(slide_dim->downsampledLevelWidth,  1110);
   EXPECT_EQ(slide_dim->downsampledLevelHeight, 1483);
-  EXPECT_EQ(slide_dim->levelToGet, -1);  
+  EXPECT_EQ(slide_dim->levelToGet, -1);
   EXPECT_EQ(slide_dim->downsample, 2);
   EXPECT_EQ(slide_dim->multiplicator, 1);
   EXPECT_EQ(slide_dim->downsampleOfLevel, 2);

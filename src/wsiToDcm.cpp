@@ -94,15 +94,17 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
   if (wsiRequest_->dropFirstRowAndColumn) {
     initialX_ = 1;
     initialY_ = 1;
-  }  
+  }
   const size_t downsample_count = wsiRequest_->downsamples.size();
-  if (downsample_count > 0) {            
+  if (downsample_count > 0) {
       retile_ = true;
       for (size_t idx=1; idx < downsample_count; ++idx) {
          if (wsiRequest_->downsamples[idx] < wsiRequest_->downsamples[idx-1]) {
-            BOOST_LOG_TRIVIAL(warning) << "Downsample levels not defined in increasing "
-                                          " sorted order. [e.g., 1, 2, 8]";
-            std::sort (wsiRequest_->downsamples.begin(), wsiRequest_->downsamples.end()); 
+            BOOST_LOG_TRIVIAL(warning) << "Downsample levels not defined in "
+                                          "increasing  sorted order. "
+                                          "[e.g., 1, 2, 8]";
+            std::sort(wsiRequest_->downsamples.begin(),
+                      wsiRequest_->downsamples.end());
             break;
          }
       }
@@ -357,7 +359,8 @@ std::unique_ptr<SlideLevelDim> WsiToDcm::getSlideLevelDim(int64_t downsample,
     downsampleOfLevel = static_cast<double>(downsample) / multiplicator;
     // check that downsampling is going from higher to lower magnification
     if (downsampleOfLevel >= 1.0) {
-      levelToGet = -1;  // Progressive downsampling, level to get not used. Init to -1.
+      // Progressive downsampling, level to get not used. Init to -1.
+      levelToGet = -1;
       sourceLevelWidth = priorLevel->downsampledLevelWidth;
       sourceLevelHeight = priorLevel->downsampledLevelHeight;
       generateFromPrimarySource = false;
@@ -502,41 +505,52 @@ void WsiToDcm::getSlideDownSamplingLevels(
                      SlideLevelDim *startPyramidCreationDim) {
   int32_t levels;
   if (retile_) {
-    double singleframe_downsample_width = static_cast<double>(largestSlideLevelWidth_) /
-                                          static_cast<double>(wsiRequest_->frameSizeX);
-    double singleframe_downsample_height = static_cast<double>(largestSlideLevelHeight_) /
-                                           static_cast<double>(wsiRequest_->frameSizeY);
-    double singleframe_downsample = std::max<double>(singleframe_downsample_width, singleframe_downsample_height);    
-    if (wsiRequest_->downsamples.size() > 0 && 
+    double singleframe_downsample_width =
+      static_cast<double>(largestSlideLevelWidth_) /
+      static_cast<double>(wsiRequest_->frameSizeX);
+    double singleframe_downsample_height =
+       static_cast<double>(largestSlideLevelHeight_) /
+       static_cast<double>(wsiRequest_->frameSizeY);
+    double singleframe_downsample = std::max<double>(
+                  singleframe_downsample_width, singleframe_downsample_height);
+    if (wsiRequest_->downsamples.size() > 0 &&
         (wsiRequest_->stopDownsamplingAtSingleFrame ||
          wsiRequest_->includeSingleFrameDownsample)) {
-      std::vector<int>::iterator ds_it = wsiRequest_->downsamples.begin();  
+      std::vector<int>::iterator ds_it = wsiRequest_->downsamples.begin();
       double largest_ds = *ds_it;
-      for (;ds_it !=  wsiRequest_->downsamples.end(); ++ds_it) {
-        if (*ds_it >= singleframe_downsample) {      
-          if (wsiRequest_->includeSingleFrameDownsample && 
+      for (; ds_it !=  wsiRequest_->downsamples.end(); ++ds_it) {
+        if (*ds_it >= singleframe_downsample) {
+          if (wsiRequest_->includeSingleFrameDownsample &&
               *ds_it > singleframe_downsample) {
-            ds_it = wsiRequest_->downsamples.insert(ds_it, singleframe_downsample);
+            ds_it = wsiRequest_->downsamples.insert(ds_it,
+                                                    singleframe_downsample);
           }
           largest_ds = *ds_it;
           if (wsiRequest_->stopDownsamplingAtSingleFrame) {
-            wsiRequest_->downsamples.resize(std::distance(wsiRequest_->downsamples.begin(), ds_it)+1);      
-          }    
+            wsiRequest_->downsamples.resize(1 +
+                      std::distance(wsiRequest_->downsamples.begin(), ds_it));
+          }
           break;
-        }          
-        largest_ds = *ds_it;          
+        }
+        largest_ds = *ds_it;
      }
-     if (largest_ds < singleframe_downsample && wsiRequest_->includeSingleFrameDownsample) {
+     if (largest_ds < singleframe_downsample &&
+         wsiRequest_->includeSingleFrameDownsample) {
         wsiRequest_->downsamples.push_back(singleframe_downsample);
-     }      
-    } else if (wsiRequest_->downsamples.size() == 0 && wsiRequest_->retileLevels > 0) {
-      int64_t single_frame_level = static_cast<int32_t>(std::ceil(log2(singleframe_downsample))) + 1;
-      if ((wsiRequest_->stopDownsamplingAtSingleFrame && wsiRequest_->includeSingleFrameDownsample) ||
-          (wsiRequest_->stopDownsamplingAtSingleFrame && wsiRequest_->retileLevels > single_frame_level) || 
-           (wsiRequest_->includeSingleFrameDownsample && wsiRequest_->retileLevels < single_frame_level)){
+     }
+    } else if (wsiRequest_->downsamples.size() == 0 &&
+              wsiRequest_->retileLevels > 0) {
+      int64_t single_frame_level = 1 + static_cast<int32_t>(std::ceil(
+                                       log2(singleframe_downsample)));
+      if ((wsiRequest_->stopDownsamplingAtSingleFrame &&
+           wsiRequest_->includeSingleFrameDownsample) ||
+          (wsiRequest_->stopDownsamplingAtSingleFrame &&
+           wsiRequest_->retileLevels > single_frame_level) ||
+          (wsiRequest_->includeSingleFrameDownsample &&
+           wsiRequest_->retileLevels < single_frame_level)) {
         wsiRequest_->retileLevels = single_frame_level;
-      } 
-    }    
+      }
+    }
   }
   if (retile_) {
     if (wsiRequest_->downsamples.size() > 0) {
@@ -547,8 +561,8 @@ void WsiToDcm::getSlideDownSamplingLevels(
   } else {
     levels = svsLevelCount_;
   }
-  std::unique_ptr<SlideLevelDim> smallestSlideDim = nullptr;  
-  std::vector<std::unique_ptr<LevelProcessOrder>> levelOrderVec;    
+  std::unique_ptr<SlideLevelDim> smallestSlideDim = nullptr;
+  std::vector<std::unique_ptr<LevelProcessOrder>> levelOrderVec;
   SlideLevelDim *priorSlideLevelDim;
   if (startPyramidCreationDim == nullptr) {
     priorSlideLevelDim = nullptr;
@@ -569,7 +583,7 @@ void WsiToDcm::getSlideDownSamplingLevels(
           continue;
         }
       } else if (wsiRequest_->downsamples.size() == 0) {
-        downsample = pow(2, level);      
+        downsample = pow(2, level);
       } else {
         continue;
       }
@@ -578,9 +592,9 @@ void WsiToDcm::getSlideDownSamplingLevels(
         std::move(getSlideLevelDim(downsample, priorSlideLevelDim));
     if (tempSlideLevelDim->downsampledLevelWidth == 0 ||
         tempSlideLevelDim->downsampledLevelHeight == 0) {
-      // frame is being downsampled to nothing skip file.      
+      // frame is being downsampled to nothing skip file.
       BOOST_LOG_TRIVIAL(debug) << "Layer has a 0 length dimension."
-                                  " Skipping dcm generation for layer.";      
+                                  " Skipping dcm generation for layer.";
       break;
     }
     smallestSlideDim = std::move(tempSlideLevelDim);
@@ -590,13 +604,13 @@ void WsiToDcm::getSlideDownSamplingLevels(
     const int64_t frameY = std::ceil(
           static_cast<double>(smallestSlideDim->downsampledLevelHeight) /
           static_cast<double>(smallestSlideDim->downsampledLevelFrameHeight));
-    const int64_t frameCount = frameX * frameY;        
+    const int64_t frameCount = frameX * frameY;
     BOOST_LOG_TRIVIAL(debug) << "Dimensions Level[" <<
                                 level << "]: " <<
                                 smallestSlideDim->downsampledLevelWidth <<
                                 ", " <<
-                                smallestSlideDim->downsampledLevelHeight;    
-    priorSlideLevelDim = smallestSlideDim.get();    
+                                smallestSlideDim->downsampledLevelHeight;
+    priorSlideLevelDim = smallestSlideDim.get();
     levelOrderVec.push_back(std::make_unique<LevelProcessOrder>(level,
                                               downsample,
                                               smallestSlideDim->readFromTiff));
@@ -606,19 +620,20 @@ void WsiToDcm::getSlideDownSamplingLevels(
   if (smallestSlideDim == nullptr) {
     return;
   }
-  // Process process levels in order of area largest to smallest.    
+  // Process process levels in order of area largest to smallest.
   const int32_t levelCount = static_cast<int32_t>(levelOrderVec.size());
   double sourceLevelDownsample =  1.0;
   int64_t instanceNumberCounter = 1;
-  for (int32_t idx = 0; idx <  levelCount; ++idx) {    
+  for (int32_t idx = 0; idx <  levelCount; ++idx) {
     DownsamplingSlideState slideState;
-    const double next_cross_level_downsample = levelOrderVec[idx]->downsample() / sourceLevelDownsample;
+    const double next_cross_level_downsample =
+      levelOrderVec[idx]->downsample() / sourceLevelDownsample;
     if (wsiRequest_->preferProgressiveDownsampling &&
-        next_cross_level_downsample > 8.0) {                 
+        next_cross_level_downsample > 8.0) {
        slideState.saveDicom = false;
        slideState.generateCompressedRaw = true;
        slideState.instanceNumber = 0;
-       if (idx == 0 && slideDownsampleState->size() == 0) {         
+       if (idx == 0 && slideDownsampleState->size() == 0) {
          // create a virtual level for level 1.
          if (startPyramidCreationDim != nullptr) {
            slideState.downsample = 1.0;
@@ -626,18 +641,19 @@ void WsiToDcm::getSlideDownSamplingLevels(
          } else {
            // if getting levels from openslide get largest starting level
            // which acquires imaging from highest magnification.
-           double starting_downsample = openslide_get_level_downsample(getOpenSlidePtr(), 0);          
+           double starting_downsample = openslide_get_level_downsample(
+                                          getOpenSlidePtr(), 0);
            if (starting_downsample != sourceLevelDownsample) {
              slideState.downsample = starting_downsample;
              slideDownsampleState->push_back(slideState);
            }
          }
-       }              
-       while (levelOrderVec[idx]->downsample() / sourceLevelDownsample > 8) {       
+       }
+       while (levelOrderVec[idx]->downsample() / sourceLevelDownsample > 8) {
           sourceLevelDownsample = sourceLevelDownsample * 8.0;
           slideState.downsample = sourceLevelDownsample;
           slideDownsampleState->push_back(slideState);
-       }               
+       }
     }
     sourceLevelDownsample = levelOrderVec[idx]->downsample();
     slideState.downsample = sourceLevelDownsample;

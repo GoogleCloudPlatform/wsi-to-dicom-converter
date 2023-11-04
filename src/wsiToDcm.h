@@ -33,7 +33,7 @@ namespace wsiToDicomConverter {
 
 class SlideLevelDim {
  public:
-   // level being downsampled from
+  // level being downsampled from
   int32_t levelToGet;
 
   // total downsample being done from highest mag (level 0)

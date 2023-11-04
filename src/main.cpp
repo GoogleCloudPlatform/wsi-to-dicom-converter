@@ -242,7 +242,7 @@ int main(int argc, char *argv[]) {
                  "readUntiledImage and readDICOM" << std::endl;
     return ERROR_IN_COMMAND_LINE;
   }
-  if (downsamples.size() > 0 and levels != 0) {
+  if (downsamples.size() > 0 && levels != 0) {
     std::cerr << "Invalid configuration cannot use the combination of "
                  "downsamples and levels." << std::endl;
     return ERROR_IN_COMMAND_LINE;
@@ -269,7 +269,7 @@ int main(int argc, char *argv[]) {
   request.jsonFile = jsonFile;
   request.retileLevels = std::max(levels, 0);
   request.includeSingleFrameDownsample = includeSingleFrameDownsample;
-  for (int downsample: downsamples) {
+  for (int downsample : downsamples) {
     if (downsample > 0) {
       request.downsamples.push_back(downsample);
     }
