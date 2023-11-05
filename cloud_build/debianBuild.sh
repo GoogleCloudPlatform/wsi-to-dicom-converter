@@ -130,7 +130,7 @@ meson setup ./openslide-build
 meson compile -C ./openslide-build
 meson install -C ./openslide-build
 cd ..
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/usr/local/lib/aarch64-linux-gnu
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/usr/local/lib/x86_64-linux-gnu:/usr/local/lib/aarch64-linux-gnu
 #9
 wget -O 1.9.5.zip https://github.com/open-source-parsers/jsoncpp/archive/refs/tags/1.9.5.zip > /dev/null
 unzip 1.9.5.zip  > /dev/null
