@@ -148,6 +148,4 @@ mkdir build
 cd build
 cmake -DSTATIC_BUILD=ON -DTESTS_BUILD=ON ..
 make -j12
-whereis libopenslide.so > out.txt
-cat out.txt
 ./gTests
