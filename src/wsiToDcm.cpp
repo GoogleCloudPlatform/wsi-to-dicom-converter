@@ -97,7 +97,6 @@ WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
   }
   const size_t downsample_count = wsiRequest_->downsamples.size();
   if (downsample_count > 0) {
-      retile_ = true;
       for (size_t idx=1; idx < downsample_count; ++idx) {
          if (wsiRequest_->downsamples[idx] < wsiRequest_->downsamples[idx-1]) {
             BOOST_LOG_TRIVIAL(warning) << "Downsample levels not defined in "
