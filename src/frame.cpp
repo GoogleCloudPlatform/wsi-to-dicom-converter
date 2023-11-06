@@ -140,10 +140,9 @@ std::string Frame::derivationDescription() const {
   // Returns frame component of DCM_DerivationDescription
   // describes in text how frame imaging data was saved in frame.
   if (compressor_->method() != RAW) {
-    return std::string("embedded as encapsulated ") + compressor_->toString() +
-           "; Imaging bytes re-compressed once.";
+    return std::string("embedded as ") + compressor_->toString() + ".";
   } else {
-    return std::string("embedded as RAW; Imaging bytes unchanged.");
+    return std::string("embedded as RAW.");
   }
 }
 

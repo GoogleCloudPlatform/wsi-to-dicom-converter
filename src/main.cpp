@@ -242,6 +242,11 @@ int main(int argc, char *argv[]) {
                  "readUntiledImage and readDICOM" << std::endl;
     return ERROR_IN_COMMAND_LINE;
   }
+  if (downsamples.size() > 0 && levels != 0) {
+    std::cerr << "Invalid configuration cannot use the combination of "
+                 "downsamples and levels." << std::endl;
+    return ERROR_IN_COMMAND_LINE;
+  }
   wsiToDicomConverter::WsiRequest request;
   request.genPyramidFromUntiledImage = readUntiledImage;
   request.untiledImageHeightMM = untiledImageHeightMM;
@@ -264,10 +269,11 @@ int main(int argc, char *argv[]) {
   request.jsonFile = jsonFile;
   request.retileLevels = std::max(levels, 0);
   request.includeSingleFrameDownsample = includeSingleFrameDownsample;
-  for (size_t idx = 0; idx < downsamples.size(); ++idx) {
-    downsamples[idx] = std::max(downsamples[idx], 0);
+  for (int downsample : downsamples) {
+    if (downsample > 0) {
+      request.downsamples.push_back(downsample);
+    }
   }
-  request.downsamples = std::move(downsamples);
   request.tiled = !sparse;
   request.batchLimit = std::max(batch, 0);
   request.threads = std::max(threads, -1);

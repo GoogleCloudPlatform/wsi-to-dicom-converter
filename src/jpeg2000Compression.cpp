@@ -68,7 +68,7 @@ std::unique_ptr<uint8_t[]> Jpeg2000Compression::writeToMemory(
     parameters.numresolution = max_numresolution;
   }
 
-  COLOR_SPACE colorspace = OPJ_CLRSPC_UNSPECIFIED;
+  COLOR_SPACE colorspace = OPJ_CLRSPC_SRGB;
   opj_image_cmptparm_t componentsParameters[3];
 
   for (size_t i = 0; i < 3; i++) {
