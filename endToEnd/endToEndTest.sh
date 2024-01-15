@@ -38,7 +38,9 @@ fi
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/usr/local/lib/x86_64-linux-gnu:/usr/local/lib/aarch64-linux-gnu
 pip install --break-system-packages pillow numpy pydicom
 #set enviromnental vars for DCMTK
-export DCMDICTPATH=/usr/local/share/dcmtk/dicom.dic
+if [[ -z "${DCMDICTPATH}" ]]; then
+  export DCMDICTPATH=/usr/local/share/dcmtk-3.6.8/dicom.dic
+fi
 export PATH=/usr/local/bin:$PATH
 
 fileName=./tests/CMU-1-Small-Region.svs
