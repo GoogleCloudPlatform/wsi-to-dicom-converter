@@ -140,7 +140,7 @@ python3 ./endToEnd/diff_img.py ./endToEnd/test12GeneratedImage.bmp ./endToEnd/te
 #test - test create image pyramid from RawDICOM
 echo "Test 13"
 rm ./endToEnd/*.dcm -f
-./build/wsi2dcm ./tests/raw.dicom ./endToEnd/ --seriesDescription test13  --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame --readDICOM
+./build/wsi2dcm ./tests/raw.dicom ./endToEnd/ --seriesDescription test13  --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame
 dcmj2pnm +obt ./endToEnd/downsample-4-frames-0-1.dcm ./endToEnd/test13GeneratedImage.bmp
 python3 ./endToEnd/strip_pixel_data.py ./endToEnd/downsample-4-frames-0-1.dcm
 dcm2json ./endToEnd/downsample-4-frames-0-1.dcm ./endToEnd/test13GeneratedTags.json
@@ -150,7 +150,7 @@ python3 ./endToEnd/diff_img.py ./endToEnd/test13GeneratedImage.bmp ./endToEnd/te
 #test - test create image pyramid from JpegDICOM 
 echo "Test 14"
 rm ./endToEnd/*.dcm -f
-./build/wsi2dcm ./tests/jpeg.dicom ./endToEnd/ --seriesDescription test14  --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame --readDICOM
+./build/wsi2dcm ./tests/jpeg.dicom ./endToEnd/ --seriesDescription test14  --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame
 dcmj2pnm +obt ./endToEnd/downsample-4-frames-0-1.dcm ./endToEnd/test14GeneratedImage.bmp
 python3 ./endToEnd/strip_pixel_data.py ./endToEnd/downsample-4-frames-0-1.dcm
 dcm2json ./endToEnd/downsample-4-frames-0-1.dcm ./endToEnd/test14GeneratedTags.json
@@ -160,7 +160,7 @@ python3 ./endToEnd/diff_img.py ./endToEnd/test14GeneratedImage.bmp ./endToEnd/te
 #test - test create image pyramid from Jpeg2000
 echo "Test 15"
 rm ./endToEnd/*.dcm -f
-./build/wsi2dcm ./tests/jpeg2000.dicom ./endToEnd/ --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame --readDICOM
+./build/wsi2dcm ./tests/jpeg2000.dicom ./endToEnd/ --levels 6 --tileHeight 256  --tileWidth 256 --progressiveDownsample --compression=RAW --opencvDownsampling=CUBIC --stopDownsamplingAtSingleFrame
 dcmj2pnm +obt ./endToEnd/downsample-4-frames-0-1.dcm ./endToEnd/test15GeneratedImage.bmp
 python3 ./endToEnd/strip_pixel_data.py ./endToEnd/downsample-4-frames-0-1.dcm
 dcm2json ./endToEnd/downsample-4-frames-0-1.dcm ./endToEnd/test15GeneratedTags.json

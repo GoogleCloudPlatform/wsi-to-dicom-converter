@@ -189,8 +189,9 @@ class WsiToDcm {
 
   // Generates tasks and handling thread pool
   double getOpenSlideDimensionMM(const char* openSlideProperty);
-  void initOpenSlide();
-  std::unique_ptr<DcmFilePyramidSource> initDicomIngest();
+  std::string initOpenSlide();
+  std::unique_ptr<DcmFilePyramidSource> initDicomIngest(
+                                  bool load_frame_data_from_dicom_using_dcmtk);
   std::unique_ptr<ImageFilePyramidSource> initUntiledImageIngest();
   std::unique_ptr<SlideLevelDim> initAbstractDicomFileSourceLevelDim(
                                                 absl::string_view description);

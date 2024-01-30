@@ -151,7 +151,8 @@ int64_t Jp2KDicomFileFrame::rawABGRFrameBytes(uint8_t *rawMemory,
   return width * height * 4;
 }
 
-DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
+DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath,
+                                           bool loadframes) :
                       BaseFilePyramidSource<AbstractDicomFileFrame>(filePath) {
   errorMsg_ = "";
   xfer_ = EXS_Unknown;
@@ -164,12 +165,16 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
   dcmFile_.loadFile(filename.c_str());
 
   frameReaderIndex_ = 0;
-  maxFrameReaderIndex_ = 30;
-  dicomDatasetSpeedReader_.reserve(maxFrameReaderIndex_);
-  for (int idx = 0; idx < maxFrameReaderIndex_; ++idx) {
-    std::unique_ptr<DICOMDatasetReader> reader =
+  if (!loadframes) {
+    maxFrameReaderIndex_ = 0;
+  } else {
+    maxFrameReaderIndex_ = 30;
+    dicomDatasetSpeedReader_.reserve(maxFrameReaderIndex_);
+    for (int idx = 0; idx < maxFrameReaderIndex_; ++idx) {
+      std::unique_ptr<DICOMDatasetReader> reader =
                                 std::make_unique<DICOMDatasetReader>(filename);
-    dicomDatasetSpeedReader_.push_back(std::move(reader));
+      dicomDatasetSpeedReader_.push_back(std::move(reader));
+    }
   }
   dataset_ = dcmFile_.getDataset();
   frameWidth_ = getTagValueUI16(DCM_Columns);
@@ -253,7 +258,6 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
   studyInstanceUID_ = getTagValueStringArray(DCM_StudyInstanceUID);
   seriesInstanceUID_ = getTagValueStringArray(DCM_SeriesInstanceUID);
   seriesDescription_ = getTagValueStringArray(DCM_SeriesDescription);
-  framesData_.reserve(frameCount);
 
   // Get pixel data sequence
   DcmStack stack;
@@ -273,6 +277,10 @@ DcmFilePyramidSource::DcmFilePyramidSource(absl::string_view filePath) :
     setErrorMsg("Unknown DICOM transfer syntax");
     return;
   }
+  if (!loadframes) {
+    return;
+  }
+  framesData_.reserve(frameCount);
   bool DecodeLossyJPEG  = false;
   bool DecodeJPEG2K = false;
   DcmPixelSequence *pixelSeq = nullptr;
