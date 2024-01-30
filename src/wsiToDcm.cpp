@@ -77,8 +77,7 @@ inline DCM_Compression compressionFromString(std::string compressionStr) {
 }
 
 WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
-  if (!wsiRequest_->genPyramidFromDicom &&
-      !wsiRequest_->genPyramidFromUntiledImage) {
+  if (!wsiRequest_->genPyramidFromUntiledImage) {
     const char *slideFile = wsiRequest_->inputFile.c_str();
     if (!openslide_detect_vendor(slideFile)) {
       BOOST_LOG_TRIVIAL(error) << "File format is not supported by openslide";
@@ -733,14 +732,7 @@ int WsiToDcm::dicomizeTiff() {
     abstractDicomFile = std::move(initUntiledImageIngest());
     slideLevelDim = std::move(initAbstractDicomFileSourceLevelDim(
                                                          description.c_str()));
-  } else if (wsiRequest_->genPyramidFromDicom) {
-    std::string description = "Image frames generated from "
-      " values extracted from DICOM(" +
-      wsiRequest_->inputFile + ") and ";
-    abstractDicomFile = std::move(initDicomIngest());
-    slideLevelDim = std::move(initAbstractDicomFileSourceLevelDim(
-                                                         description.c_str()));
-  }
+  } 
   if (abstractDicomFile != nullptr) {
     // Initalize height and width dimensions directly from file measures
     levelWidthMM = abstractDicomDimensionMM(abstractDicomFile->imageWidthMM(),
@@ -752,6 +744,8 @@ int WsiToDcm::dicomizeTiff() {
   } else {
     // Initalize openslide
     initOpenSlide();
+    std::string vendor(openslide_get_property_value(getOpenSlidePtr(), OPENSLIDE_PROPERTY_NAME_VENDOR));
+    printf("Vendor: %s", vendor.c_str());
     double openslideMPP_X = getOpenSlideDimensionMM("openslide.mpp-x");
     double openslideMPP_Y = getOpenSlideDimensionMM("openslide.mpp-y");
     levelWidthMM = getDimensionMM(largestSlideLevelWidth_ - initialX_,
