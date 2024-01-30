@@ -163,7 +163,6 @@ struct WsiRequest {
   bool SVSImportPreferScannerTileingForAllLevels = false;
   bool genPyramidFromUntiledImage = false;
   double untiledImageHeightMM = 0.0;
-  bool genPyramidFromDicom = false;
   bool includeSingleFrameDownsample = false;
   JpegSubsampling jpegSubsampling = subsample_420;
 };
@@ -190,8 +189,9 @@ class WsiToDcm {
 
   // Generates tasks and handling thread pool
   double getOpenSlideDimensionMM(const char* openSlideProperty);
-  void initOpenSlide();
-  std::unique_ptr<DcmFilePyramidSource> initDicomIngest();
+  std::string initOpenSlide();
+  std::unique_ptr<DcmFilePyramidSource> initDicomIngest(
+                                  bool load_frame_data_from_dicom_using_dcmtk);
   std::unique_ptr<ImageFilePyramidSource> initUntiledImageIngest();
   std::unique_ptr<SlideLevelDim> initAbstractDicomFileSourceLevelDim(
                                                 absl::string_view description);

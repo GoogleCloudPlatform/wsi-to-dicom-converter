@@ -77,8 +77,7 @@ inline DCM_Compression compressionFromString(std::string compressionStr) {
 }
 
 WsiToDcm::WsiToDcm(WsiRequest *wsiRequest) : wsiRequest_(wsiRequest) {
-  if (!wsiRequest_->genPyramidFromDicom &&
-      !wsiRequest_->genPyramidFromUntiledImage) {
+  if (!wsiRequest_->genPyramidFromUntiledImage) {
     const char *slideFile = wsiRequest_->inputFile.c_str();
     if (!openslide_detect_vendor(slideFile)) {
       BOOST_LOG_TRIVIAL(error) << "File format is not supported by openslide";
@@ -145,9 +144,11 @@ void WsiToDcm::checkArguments() {
   }
 }
 
-std::unique_ptr<DcmFilePyramidSource> WsiToDcm::initDicomIngest() {
+std::unique_ptr<DcmFilePyramidSource> WsiToDcm::initDicomIngest(
+                                 bool load_frame_data_from_dicom_using_dcmtk) {
   std::unique_ptr<DcmFilePyramidSource> dicomFile =
-                std::make_unique<DcmFilePyramidSource>(wsiRequest_->inputFile);
+                std::make_unique<DcmFilePyramidSource>(wsiRequest_->inputFile,
+                                       load_frame_data_from_dicom_using_dcmtk);
   if (!dicomFile->isValid()) {
     throw 1;
   }
@@ -195,21 +196,23 @@ void  WsiToDcm::clearOpenSlidePtr() {
   osptr_ = nullptr;
 }
 
-void WsiToDcm::initOpenSlide() {
+std::string WsiToDcm::initOpenSlide() {
   svsLevelCount_ = openslide_get_level_count(getOpenSlidePtr());
   // Openslide API call 0 returns dimensions of highest resolution image.
   openslide_get_level_dimensions(getOpenSlidePtr(), 0,
                                  &largestSlideLevelWidth_,
                                  &largestSlideLevelHeight_);
+  std::string vendor(openslide_get_property_value(getOpenSlidePtr(),
+                     OPENSLIDE_PROPERTY_NAME_VENDOR));
+  BOOST_LOG_TRIVIAL(info) << "Reading " << vendor.c_str() << " formatted WSI.";
+  if (vendor == "dicom") {
+    wsiRequest_->startOnLevel = std::max(wsiRequest_->startOnLevel, 1);
+  }
   tiffFile_ = nullptr;
   if (wsiRequest_->SVSImportPreferScannerTileingForAllLevels ||
       wsiRequest_->SVSImportPreferScannerTileingForLargestLevel) {
     bool useSVSTileing = false;
-    std::string lower_fname = boost::algorithm::to_lower_copy(
-                                                      wsiRequest_->inputFile);
-    if (boost::algorithm::iends_with(lower_fname, ".svs") ||
-        boost::algorithm::iends_with(lower_fname, ".tif") ||
-        boost::algorithm::iends_with(lower_fname, ".tiff")) {
+    if (vendor == "aperio" || vendor == "generic-tiff") {
       tiffFile_ = std::make_unique<TiffFile>(wsiRequest_->inputFile);
       if (tiffFile_->isLoaded()) {
           int32_t level = tiffFile_->getDirectoryIndexMatchingImageDimensions(
@@ -253,6 +256,7 @@ void WsiToDcm::initOpenSlide() {
   }
   BOOST_LOG_TRIVIAL(debug) << " ";
   BOOST_LOG_TRIVIAL(debug) << "Level Count: " << svsLevelCount_;
+  return vendor;
 }
 
 int32_t WsiToDcm::getOpenslideLevelForDownsample(int64_t downsample) {
@@ -727,21 +731,13 @@ int WsiToDcm::dicomizeTiff() {
   std::unique_ptr<AbstractDcmFile> abstractDicomFile = nullptr;
   double levelWidthMM, levelHeightMM;
   if (wsiRequest_->genPyramidFromUntiledImage) {
+    BOOST_LOG_TRIVIAL(info) << "Reading untiled image.";
     std::string description = "Image frames generated from "
       " values extracted from un-tiled image (" +
       wsiRequest_->inputFile + ") and ";
     abstractDicomFile = std::move(initUntiledImageIngest());
     slideLevelDim = std::move(initAbstractDicomFileSourceLevelDim(
                                                          description.c_str()));
-  } else if (wsiRequest_->genPyramidFromDicom) {
-    std::string description = "Image frames generated from "
-      " values extracted from DICOM(" +
-      wsiRequest_->inputFile + ") and ";
-    abstractDicomFile = std::move(initDicomIngest());
-    slideLevelDim = std::move(initAbstractDicomFileSourceLevelDim(
-                                                         description.c_str()));
-  }
-  if (abstractDicomFile != nullptr) {
     // Initalize height and width dimensions directly from file measures
     levelWidthMM = abstractDicomDimensionMM(abstractDicomFile->imageWidthMM(),
                                             largestSlideLevelWidth_,
@@ -751,13 +747,26 @@ int WsiToDcm::dicomizeTiff() {
                                             initialY_);
   } else {
     // Initalize openslide
-    initOpenSlide();
-    double openslideMPP_X = getOpenSlideDimensionMM("openslide.mpp-x");
-    double openslideMPP_Y = getOpenSlideDimensionMM("openslide.mpp-y");
-    levelWidthMM = getDimensionMM(largestSlideLevelWidth_ - initialX_,
+    if (initOpenSlide() == "dicom") {
+       // DICOM will be read with openslide. Do not init for reading
+       // with DCMTK. Perform minor validation and init dimensions, and uid.
+       // from DICOM provided.
+       std::unique_ptr<AbstractDcmFile> dicom_file =
+                                        std::move(initDicomIngest(false));
+       levelWidthMM = abstractDicomDimensionMM(dicom_file->imageWidthMM(),
+                                            largestSlideLevelWidth_,
+                                            initialX_);
+       levelHeightMM = abstractDicomDimensionMM(dicom_file->imageHeightMM(),
+                                            largestSlideLevelHeight_,
+                                            initialY_);
+    } else {
+      double openslideMPP_X = getOpenSlideDimensionMM("openslide.mpp-x");
+      double openslideMPP_Y = getOpenSlideDimensionMM("openslide.mpp-y");
+      levelWidthMM = getDimensionMM(largestSlideLevelWidth_ - initialX_,
                                   openslideMPP_X);
-    levelHeightMM = getDimensionMM(largestSlideLevelHeight_ - initialY_,
+      levelHeightMM = getDimensionMM(largestSlideLevelHeight_ - initialY_,
                                    openslideMPP_Y);
+    }
   }
   if (largestSlideLevelWidth_ <= initialX_ ||
       largestSlideLevelHeight_ <= initialY_) {

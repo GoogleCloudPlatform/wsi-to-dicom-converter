@@ -98,7 +98,8 @@ class DICOMDatasetReader {
 class DcmFilePyramidSource :
                         public BaseFilePyramidSource<AbstractDicomFileFrame> {
  public:
-  explicit DcmFilePyramidSource(absl::string_view filePath);
+  explicit DcmFilePyramidSource(absl::string_view filePath,
+                                bool loadframes = true);
   virtual ~DcmFilePyramidSource();
   virtual absl::string_view studyInstanceUID() const;
   virtual absl::string_view seriesInstanceUID() const;
