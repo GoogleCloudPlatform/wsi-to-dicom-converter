@@ -730,7 +730,6 @@ int WsiToDcm::dicomizeTiff() {
   std::unique_ptr<SlideLevelDim> slideLevelDim = nullptr;
   std::unique_ptr<AbstractDcmFile> abstractDicomFile = nullptr;
   double levelWidthMM, levelHeightMM;
-  std::string openslide_vendor("");
   if (wsiRequest_->genPyramidFromUntiledImage) {
     BOOST_LOG_TRIVIAL(info) << "Reading untiled image.";
     std::string description = "Image frames generated from "
