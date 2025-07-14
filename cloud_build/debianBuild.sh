@@ -147,7 +147,6 @@ cd ..
 cd ..
 rm -rf jsoncpp-1.9.6
 #10
-cp /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h /usr/include/glib-2.0/glibconfig.h
 mkdir build
 cd build
 cmake -DSTATIC_BUILD=ON -DTESTS_BUILD=ON ..
